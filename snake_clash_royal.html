@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>مار نئونی رویال — نبرد با اژدها</title>
+<title>مار پیکسلی رویال — نبرد با اژدها</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 :root {
-  --bg-deep: #090e1c;
-  --bg-panel: #131e38;
-  --bg-card: #1a2847;
-  --border-royale: #324a7a;
-  --gold: #ffcc33;
+  --bg-deep: #0b141a;
+  --bg-panel: #13222e;
+  --bg-card: #1a2d3d;
+  --border-px: #395b75;
+  --gold: #ffd43b;
   --gold-dark: #c97a00;
-  --neon: #46f88f;
-  --crimson: #ff5470;
-  --text-main: #f1f7ff;
-  --text-dim: #8da4cc;
+  --neon: #68c962;
+  --crimson: #ff4757;
+  --text-main: #f4f8e8;
+  --text-dim: #92b0c2;
 }
 html, body {
   height:100%; overflow:hidden; background:var(--bg-deep); color:var(--text-main);
@@ -30,252 +30,272 @@ html, body {
 .screen { position:fixed; inset:0; display:none; flex-direction:column; }
 .screen.active { display:flex; }
 
-/* ═══════════ منوی کلش رویالی پیکسلی ═══════════ */
+/* ═══════════ تم تمام پیکسلی کلش رویال ═══════════ */
 #menu-screen {
-  background: radial-gradient(circle at 50% 22%, #1d3261 0%, #0d1528 65%, #070b14 100%);
+  background-color:#0d1a24;
+  background-image:
+    linear-gradient(rgba(104,201,98,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(104,201,98,0.04) 1px, transparent 1px);
+  background-size:16px 16px;
 }
 .cr-topbar {
   display:flex; align-items:center; justify-content:space-between; gap:6px;
-  padding:10px 10px 8px;
-  background:linear-gradient(180deg, rgba(10,16,32,.96), rgba(15,24,46,.88));
-  border-bottom:2px solid rgba(255,204,51,.28);
+  padding:8px 10px;
+  background:#11202c;
+  border-bottom:3px solid #2b475c;
+  box-shadow:0 3px 0 #070e14;
   flex-shrink:0;
 }
 .cr-level-badge {
   display:flex; align-items:center; gap:6px;
-  background:linear-gradient(180deg,#2d7dff,#1749a8);
-  border:2px solid #78b4ff; border-radius:11px;
-  padding:4px 8px; box-shadow:0 3px 0 #0d2b6b;
+  background:#2364aa;
+  border:2px solid #73b9ff; border-radius:4px;
+  padding:4px 8px; box-shadow:0 3px 0 #103259, inset 0 2px 0 rgba(255,255,255,.22);
 }
 .cr-level-num { font-weight:bold; font-size:14px; color:#fff; }
 .cr-xp-wrap { display:flex; flex-direction:column; min-width:44px; }
-.cr-xp-lbl { font-size:9px; color:#cfe4ff; }
-.cr-xp-bar { height:5px; border-radius:99px; background:rgba(0,0,0,.45); overflow:hidden; margin-top:2px; }
-.cr-xp-fill { height:100%; background:#46f88f; width:0%; transition:width .3s; }
+.cr-xp-lbl { font-size:9px; color:#d8ecff; }
+.cr-xp-bar { height:6px; border:1px solid #0b1d33; background:#0b1826; margin-top:2px; }
+.cr-xp-fill { height:100%; background:#68c962; width:0%; transition:width .3s; }
 
 .cr-currencies { display:flex; align-items:center; gap:5px; }
 .cr-pill {
   display:flex; align-items:center; gap:4px;
-  background:rgba(7,11,22,.88); border:1.5px solid var(--border-royale);
-  border-radius:999px; padding:4px 8px; font-size:11.5px; font-weight:bold;
+  background:#0a131c; border:2px solid var(--border-px);
+  border-radius:4px; padding:4px 7px; font-size:11.5px; font-weight:bold;
+  box-shadow:inset 0 2px 0 rgba(0,0,0,.45);
 }
-.cr-pill.gold { border-color:rgba(255,204,51,.55); color:var(--gold); }
-.cr-pill.gems { border-color:rgba(70,248,143,.55); color:var(--neon); }
-.cr-pill.trophies { border-color:rgba(255,140,66,.55); color:#ffb347; }
+.cr-pill.gold { border-color:#c98a18; color:var(--gold); }
+.cr-pill.gems { border-color:#2f9e66; color:#68f29e; }
+.cr-pill.trophies { border-color:#cc7029; color:#ffaf40; }
 .cr-icon-btn {
-  width:34px; height:34px; border-radius:10px; cursor:pointer;
-  border:1.5px solid var(--border-royale); background:var(--bg-card); color:#fff;
+  width:34px; height:34px; border-radius:4px; cursor:pointer;
+  border:2px solid var(--border-px); background:var(--bg-card); color:#fff;
+  box-shadow:0 3px 0 #0b151e, inset 0 2px 0 rgba(255,255,255,.15);
   display:flex; align-items:center; justify-content:center;
 }
+.cr-icon-btn:active { transform:translateY(2px); box-shadow:0 1px 0 #0b151e; }
 
 .cr-body {
   flex:1; min-height:0; overflow-y:auto; padding:10px 12px 12px;
   touch-action:pan-y;
 }
-.tab-pane { display:none; flex-direction:column; gap:12px; }
+.tab-pane { display:none; flex-direction:column; gap:11px; }
 .tab-pane.active { display:flex; }
 
 .arena-banner {
-  position:relative; border-radius:18px; padding:12px 14px;
-  background:linear-gradient(135deg, #1b2e59 0%, #101d3b 100%);
-  border:2px solid #4162a3;
-  box-shadow:0 6px 0 #091124, inset 0 1px 0 rgba(255,255,255,.15);
+  border-radius:6px; padding:12px;
+  background:#152736;
+  border:3px solid #3c617d;
+  box-shadow:0 5px 0 #09131c, inset 0 2px 0 rgba(255,255,255,.12);
   display:flex; flex-direction:column; align-items:center; gap:9px;
 }
 .arena-tag {
-  background:linear-gradient(90deg, #ff9900, #ffcc33); color:#241300;
-  font-size:11px; font-weight:bold; padding:3px 12px; border-radius:999px;
-  box-shadow:0 2px 0 #9e5c00;
+  background:#e69d17; color:#1f1100; border:2px solid #ffe066;
+  font-size:11px; font-weight:bold; padding:3px 12px; border-radius:3px;
+  box-shadow:0 2px 0 #7a4b00;
 }
-.arena-title { font-size:19px; font-weight:bold; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
+.arena-title { font-size:18px; font-weight:bold; color:#f4f8e8; text-shadow:2px 2px 0 #081018; }
 .arena-preview-row {
-  display:flex; align-items:center; justify-content:space-around; width:100%; gap:10px;
+  display:flex; align-items:center; justify-content:space-between; width:100%; gap:10px;
 }
 #menuPreviewCanvas {
-  width:124px; height:124px; border-radius:14px;
-  background:#08101c; border:2px solid rgba(70,248,143,.4);
+  width:132px; height:132px; border-radius:4px;
+  background:#112b29; border:3px solid #3c617d;
+  box-shadow:inset 0 0 0 2px #091817;
   image-rendering:pixelated;
 }
 .arena-stats-col { flex:1; display:flex; flex-direction:column; gap:6px; font-size:11.5px; }
 .stat-row {
   display:flex; justify-content:space-between; align-items:center;
-  background:rgba(0,0,0,.32); padding:6px 10px; border-radius:10px;
-  border:1px solid rgba(255,255,255,.07);
+  background:#0d1a24; padding:7px 9px; border-radius:4px;
+  border:2px solid #264054;
 }
 .stat-row b { color:var(--gold); }
 
 .cr-battle-btn {
-  width:100%; padding:15px 16px; border:none; border-radius:16px; cursor:pointer;
-  background:linear-gradient(180deg, #ffe047 0%, #ffb700 55%, #e68a00 100%);
-  color:#2b1600; font-family:inherit; font-size:20px; font-weight:bold;
-  box-shadow:0 6px 0 #995400, 0 10px 24px rgba(255,183,0,.32);
+  width:100%; padding:14px 16px; border:3px solid #fff099; border-radius:6px; cursor:pointer;
+  background:linear-gradient(180deg, #ffd43b 0%, #f09c00 100%);
+  color:#261300; font-family:inherit; font-size:19px; font-weight:bold;
+  box-shadow:0 6px 0 #8a4b00, inset 0 2px 0 rgba(255,255,255,.5);
   display:flex; align-items:center; justify-content:center; gap:8px;
-  transition:transform .08s;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
 }
-.cr-battle-btn:active { transform:translateY(4px); box-shadow:0 2px 0 #995400; }
+.cr-battle-btn:active { transform:translateY(4px); box-shadow:0 2px 0 #8a4b00; }
 
-/* جایگاه تکی صندوق کلش رویالی */
 .section-head {
   display:flex; align-items:center; justify-content:space-between;
-  font-size:13px; font-weight:bold; color:#dbeafe;
+  font-size:12.5px; font-weight:bold; color:#e6f2fa;
 }
-.section-sub { font-size:10.5px; color:var(--text-dim); font-weight:normal; }
+.section-sub { font-size:10px; color:var(--text-dim); font-weight:normal; }
 .single-chest-slot {
-  border-radius:16px; padding:12px 14px;
-  background:rgba(11,18,35,.88); border:2px dashed #324a7a;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border-radius:6px; padding:11px 12px;
+  background:#0e1b26; border:3px dashed #33526b;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
   cursor:pointer; min-height:84px;
 }
 .single-chest-slot.filled {
-  border-style:solid; border-color:#5377c2;
-  background:linear-gradient(135deg,#1f325c,#121f3d);
-  box-shadow:0 5px 0 #091022;
+  border-style:solid; border-color:#4e7ba0;
+  background:#172b3d;
+  box-shadow:0 5px 0 #09121a, inset 0 2px 0 rgba(255,255,255,.12);
 }
 .single-chest-slot.ready {
-  border-color:var(--neon);
-  background:linear-gradient(135deg,#154533,#0c261d);
+  border-color:#68c962;
+  background:#153826;
   animation:chestPulse 1.1s infinite;
 }
-@keyframes chestPulse { 50% { box-shadow:0 0 18px rgba(70,248,143,.55); } }
+@keyframes chestPulse { 50% { box-shadow:0 0 14px rgba(104,201,98,.6), 0 5px 0 #09121a; } }
 .chest-slot-info { flex:1; display:flex; flex-direction:column; gap:4px; }
-.chest-slot-title { font-size:14px; font-weight:bold; color:#fff; }
-.chest-slot-desc { font-size:11px; color:var(--text-dim); }
+.chest-slot-title { font-size:13.5px; font-weight:bold; color:#fff; }
+.chest-slot-desc { font-size:10.5px; color:var(--text-dim); }
 .chest-action-pill {
-  padding:8px 13px; border-radius:11px; font-size:11.5px; font-weight:bold;
-  background:rgba(0,0,0,.45); color:var(--gold); border:1.5px solid rgba(255,204,51,.4);
+  padding:8px 11px; border-radius:4px; font-size:11px; font-weight:bold;
+  background:#0a131b; color:var(--gold); border:2px solid #c98a18;
   display:flex; align-items:center; gap:5px; white-space:nowrap;
 }
 .single-chest-slot.ready .chest-action-pill {
-  background:var(--neon); color:#042412; border-color:#fff;
+  background:#68c962; color:#09210d; border-color:#c6f7c2;
 }
 
-/* تب کلکسیون (اسکین و اکسسوری) */
 .card-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:9px; }
 .cr-card {
-  border-radius:14px; padding:10px; background:var(--bg-card);
-  border:2px solid var(--border-royale); box-shadow:0 4px 0 #0b1224;
+  border-radius:5px; padding:10px; background:var(--bg-card);
+  border:2.5px solid var(--border-px); box-shadow:0 4px 0 #09121a, inset 0 2px 0 rgba(255,255,255,.08);
   display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
   position:relative;
 }
-.cr-card.rarity-common { border-color:#64748b; }
-.cr-card.rarity-rare { border-color:#f59e0b; }
-.cr-card.rarity-epic { border-color:#c054ff; }
-.cr-card.rarity-legend { border-color:#46f88f; box-shadow:0 0 12px rgba(70,248,143,.22), 0 4px 0 #0b1224; }
-.cr-card.equipped { outline:2.5px solid #ffd166; outline-offset:1px; }
+.cr-card.rarity-common { border-color:#5a7891; }
+.cr-card.rarity-rare { border-color:#e69d17; }
+.cr-card.rarity-epic { border-color:#a855f7; }
+.cr-card.rarity-legend { border-color:#68c962; }
+.cr-card.equipped { outline:2.5px solid var(--gold); outline-offset:1px; }
 .card-badge {
-  position:absolute; top:6px; left:6px; font-size:9px; padding:2px 6px; border-radius:999px;
-  background:#ffd166; color:#211200; font-weight:bold;
+  position:absolute; top:5px; left:5px; font-size:9px; padding:2px 6px; border-radius:2px;
+  background:var(--gold); color:#211200; font-weight:bold;
 }
-.card-title { font-size:12.5px; font-weight:bold; color:#fff; }
+.card-title { font-size:12px; font-weight:bold; color:#fff; }
 .card-desc { font-size:10px; color:var(--text-dim); line-height:1.4; min-height:28px; }
 .card-btn {
-  width:100%; border:none; border-radius:10px; padding:7px 8px;
-  font-family:inherit; font-size:11.5px; font-weight:bold; cursor:pointer;
+  width:100%; border:2px solid rgba(255,255,255,.25); border-radius:4px; padding:7px 8px;
+  font-family:inherit; font-size:11px; font-weight:bold; cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:5px;
 }
-.card-btn.buy { background:linear-gradient(180deg,#ffd166,#e09600); color:#241300; }
-.card-btn.equip { background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; }
-.card-btn.active-btn { background:#1c4d35; color:var(--neon); border:1px solid var(--neon); }
+.card-btn.buy { background:#e69d17; color:#241300; border-color:#ffe066; box-shadow:0 3px 0 #7a4b00; }
+.card-btn.equip { background:#2364aa; color:#fff; border-color:#73b9ff; box-shadow:0 3px 0 #103259; }
+.card-btn.active-btn { background:#18452a; color:#85f27e; border-color:#68c962; }
 
 .daily-banner {
-  border-radius:16px; padding:12px;
-  background:linear-gradient(135deg,#3b1d66,#1c1238);
-  border:2px solid #a855f7;
+  border-radius:6px; padding:11px;
+  background:#2a1945; border:2.5px solid #9353d3;
+  box-shadow:0 4px 0 #120921;
   display:flex; align-items:center; justify-content:space-between; gap:10px;
 }
 .daily-btn {
-  border:none; border-radius:12px; padding:8px 13px; font-family:inherit;
-  font-size:11.5px; font-weight:bold; cursor:pointer; flex-shrink:0;
-  background:linear-gradient(180deg,#46f88f,#10b981); color:#022614;
-  box-shadow:0 3px 0 #076344; display:flex; align-items:center; gap:5px;
+  border:2px solid #bdf5b8; border-radius:4px; padding:8px 12px; font-family:inherit;
+  font-size:11px; font-weight:bold; cursor:pointer; flex-shrink:0;
+  background:#4fb849; color:#062107;
+  box-shadow:0 3px 0 #1e591b; display:flex; align-items:center; gap:5px;
 }
-.daily-btn:disabled { background:#2a354d; color:#7f90b0; box-shadow:none; cursor:default; }
+.daily-btn:disabled { background:#233545; color:#7492a8; border-color:#354e63; box-shadow:none; cursor:default; }
 .calendar-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
 .cal-day {
-  border-radius:12px; padding:8px 4px; text-align:center;
-  background:var(--bg-card); border:1.5px solid var(--border-royale);
+  border-radius:4px; padding:8px 4px; text-align:center;
+  background:var(--bg-card); border:2px solid var(--border-px);
   display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px;
 }
-.cal-day.claimed { opacity:.55; border-color:#10b981; }
-.cal-day.today { border-color:var(--gold); background:#2b2310; box-shadow:0 0 12px rgba(255,204,51,.3); }
+.cal-day.claimed { opacity:.55; border-color:#4fb849; }
+.cal-day.today { border-color:var(--gold); background:#332810; }
 .quest-card {
-  border-radius:14px; padding:10px 12px; background:var(--bg-card);
-  border:1.5px solid var(--border-royale); display:flex; align-items:center;
-  justify-content:space-between; gap:10px;
+  border-radius:5px; padding:10px 11px; background:var(--bg-card);
+  border:2px solid var(--border-px); display:flex; align-items:center;
+  justify-content:space-between; gap:10px; box-shadow:0 3px 0 #09121a;
 }
 .quest-info { flex:1; }
-.quest-title { font-size:12px; font-weight:bold; display:flex; align-items:center; gap:6px; }
-.quest-bar { height:7px; border-radius:99px; background:rgba(0,0,0,.5); margin-top:5px; overflow:hidden; }
-.quest-fill { height:100%; background:linear-gradient(90deg,#3b82f6,#46f88f); }
+.quest-title { font-size:11.5px; font-weight:bold; display:flex; align-items:center; gap:6px; }
+.quest-bar { height:8px; border:1px solid #09121a; background:#0b151e; margin-top:5px; overflow:hidden; }
+.quest-fill { height:100%; background:#68c962; }
 
 .cr-bottom-nav {
   display:grid; grid-template-columns:repeat(5, 1fr); gap:4px;
   padding:6px 6px 8px;
-  background:linear-gradient(180deg, #16223d, #0b1222);
-  border-top:2px solid #2d4473;
+  background:#11202c;
+  border-top:3px solid #2b475c;
   flex-shrink:0;
 }
 .nav-tab {
-  border:none; background:transparent; color:var(--text-dim);
-  border-radius:12px; padding:6px 2px; cursor:pointer;
+  border:2px solid transparent; background:transparent; color:var(--text-dim);
+  border-radius:4px; padding:6px 2px; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:3px;
   font-family:inherit; font-size:10px; font-weight:bold;
 }
 .nav-tab.active {
-  background:linear-gradient(180deg,#2b4985,#1a2f5c);
-  color:var(--gold); border:1.5px solid rgba(255,204,51,.45);
+  background:#1f3b52; color:var(--gold); border-color:#c98a18;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.15);
 }
 
 .cr-toast {
-  position:fixed; top:66px; left:50%; transform:translateX(-50%); z-index:40;
-  background:rgba(12,19,36,.95); border:1.5px solid var(--gold); color:#fff;
-  padding:8px 16px; border-radius:999px; font-size:12px; font-weight:bold;
+  position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:40;
+  background:#0d1a24; border:2px solid var(--gold); color:#fff;
+  padding:8px 16px; border-radius:4px; font-size:12px; font-weight:bold;
   pointer-events:none; opacity:0; transition:opacity .22s; white-space:nowrap;
-  box-shadow:0 4px 16px rgba(0,0,0,.5);
+  box-shadow:0 4px 0 #050a0f;
 }
 .cr-toast.show { opacity:1; }
 
 .modal-backdrop {
-  position:fixed; inset:0; z-index:30; background:rgba(4,7,15,.92);
+  position:fixed; inset:0; z-index:30; background:rgba(4,9,14,.92);
   display:none; align-items:center; justify-content:center; padding:18px;
 }
 .modal-backdrop.show { display:flex; }
 .chest-modal {
-  width:100%; max-width:340px; border-radius:22px; padding:22px 18px;
-  background:radial-gradient(circle at 50% 20%, #2a3f75, #101a33);
-  border:2.5px solid var(--gold); text-align:center;
+  width:100%; max-width:340px; border-radius:8px; padding:22px 16px;
+  background:#16293a; border:3px solid var(--gold); text-align:center;
   display:flex; flex-direction:column; align-items:center; gap:14px;
-  box-shadow:0 0 40px rgba(255,204,51,.35);
+  box-shadow:0 8px 0 #070e14;
 }
 .chest-big-wrap { animation:bounceChest .7s infinite alternate; }
 @keyframes bounceChest { from{transform:scale(1) rotate(-3deg)} to{transform:scale(1.08) rotate(3deg)} }
 .loot-list { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; }
 .loot-item {
-  background:rgba(0,0,0,.45); border:1.5px solid var(--gold);
-  border-radius:14px; padding:10px 14px; min-width:88px;
+  background:#0c1721; border:2px solid var(--gold);
+  border-radius:4px; padding:10px 12px; min-width:86px;
   display:flex; flex-direction:column; align-items:center; gap:4px;
-  animation:popIn .35s ease;
+  animation:popIn .32s ease;
 }
 @keyframes popIn { from{transform:scale(.4); opacity:0} to{transform:scale(1); opacity:1} }
 
 /* ═══════════ صفحه بازی پیکسلی ═══════════ */
-#game-screen { background:#050807; }
-#hud { display:flex; align-items:center; justify-content:space-between; padding:6px 14px 2px; }
-.hud-cell { display:flex; flex-direction:column; align-items:center; min-width:68px; }
-.hud-label { font-size:10px; color:#5f8a72; }
-.hud-value { font-weight:bold; font-size:19px; color:#46f88f; line-height:1.25; }
-.hud-cell.best .hud-value { color:#ff5470; font-size:15px; }
-#hud-title { text-align:center; font-weight:bold; font-size:13px; display:flex; flex-direction:column; align-items:center; gap:2px; }
-.combo-badge {
-  background:#ff5470; color:#fff; font-size:10.5px; padding:2px 9px;
-  border-radius:999px; display:none; font-weight:normal;
+#game-screen { background:#0b1514; }
+#hud {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px 4px; gap:6px;
+  background:#0f1d1b; border-bottom:2px solid #24423b;
 }
-.goal-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#ffd166; font-weight:normal; }
+.hud-cell { display:flex; flex-direction:column; align-items:center; min-width:56px; }
+.hud-label { font-size:10px; color:#7aa396; }
+.hud-value { font-weight:bold; font-size:18px; color:#85c278; line-height:1.25; }
+.hud-cell.best .hud-value { color:#ff6b81; font-size:14px; }
+#hud-title { flex:1; text-align:center; font-weight:bold; font-size:12.5px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.combo-badge {
+  background:#ff4757; color:#fff; font-size:10px; padding:2px 8px;
+  border-radius:3px; display:none; font-weight:normal; border:1px solid #fff;
+}
+.goal-chip { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:#ffd43b; font-weight:normal; }
 #heartsRow { display:none; align-items:center; gap:4px; margin-top:2px; }
-#stage-wrap { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:4px 10px; }
+.hud-btns { display:flex; align-items:center; gap:5px; }
+.icon-btn {
+  width:32px; height:32px; border-radius:4px; cursor:pointer;
+  border:2px solid #395b75; background:#152736; color:#85c278;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 0 #070e14;
+}
+.icon-btn:active { transform:translateY(2px); box-shadow:none; }
+
+#stage-wrap { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:6px 10px; }
 #stage {
-  position:relative; border-radius:16px; background:#0b120e;
-  box-shadow:0 0 0 1px rgba(70,248,143,.25), inset 0 0 60px rgba(0,0,0,.5); overflow:hidden;
+  position:relative; box-sizing:content-box; border-radius:6px; background:#112420;
+  border:3px solid #2d544a;
+  box-shadow:0 4px 0 #060d0c; overflow:hidden;
 }
 #game { position:absolute; top:0; left:0; image-rendering:pixelated; }
 #banner {
@@ -283,62 +303,60 @@ html, body {
   pointer-events:none; opacity:0; transition:opacity .35s; padding:0 10px;
 }
 #banner span {
-  display:inline-block; background:rgba(5,8,7,.92); border:1.5px solid rgba(80,170,255,.7);
-  color:#bfe0ff; font-size:14.5px; font-weight:bold; padding:10px 18px; border-radius:16px; line-height:1.9;
+  display:inline-block; background:rgba(10,20,24,.94); border:2px solid #73b9ff;
+  color:#e0f2fe; font-size:14px; font-weight:bold; padding:10px 16px; border-radius:5px; line-height:1.9;
 }
 #banner.show { opacity:1; }
 .overlay {
   position:absolute; inset:0; z-index:5; display:flex; flex-direction:column;
   align-items:center; justify-content:center; gap:11px; text-align:center; padding:18px;
-  background:rgba(5,8,7,.94); opacity:0; pointer-events:none; transition:opacity .22s;
+  background:rgba(8,16,18,.94); opacity:0; pointer-events:none; transition:opacity .2s;
 }
 .overlay.show { opacity:1; pointer-events:auto; }
-.ov-title { font-size:25px; font-weight:bold; color:#46f88f; display:flex; align-items:center; gap:8px; }
-.ov-sub { color:#8da4cc; font-size:12px; max-width:300px; line-height:1.8; }
-.new-record { color:#ffd166; font-weight:bold; animation:pulse .9s infinite; }
+.ov-title { font-size:24px; font-weight:bold; color:#85c278; display:flex; align-items:center; gap:8px; }
+.ov-sub { color:#92b0c2; font-size:12px; max-width:300px; line-height:1.8; }
+.new-record { color:#ffd43b; font-weight:bold; animation:pulse .9s infinite; }
 @keyframes pulse { 50%{opacity:.35} }
 .ov-stats { display:flex; gap:18px; flex-wrap:wrap; justify-content:center; }
-.ov-stat b { display:block; font-size:21px; color:#46f88f; }
-.ov-stat span { font-size:10.5px; color:#8da4cc; display:flex; align-items:center; justify-content:center; gap:4px; }
+.ov-stat b { display:block; font-size:20px; color:#85c278; }
+.ov-stat span { font-size:10.5px; color:#92b0c2; display:flex; align-items:center; justify-content:center; gap:4px; }
 .btn {
-  border:1.5px solid rgba(70,248,143,.55); background:rgba(70,248,143,.14); color:#46f88f;
-  font-family:inherit; font-weight:bold; font-size:15px; padding:11px 28px; border-radius:999px;
+  border:2px solid #9be894; background:#2e6b38; color:#f4f8e8;
+  font-family:inherit; font-weight:bold; font-size:14.5px; padding:10px 26px; border-radius:4px;
   cursor:pointer; touch-action:manipulation; display:inline-flex; align-items:center; gap:6px;
+  box-shadow:0 4px 0 #14361a;
 }
-.btn.gold { border-color:#ffd166; background:rgba(255,209,102,.18); color:#ffd166; }
-.btn.sec { border-color:#64748b; background:rgba(100,116,139,.15); color:#cbd5e1; font-size:13.5px; padding:9px 22px; }
-.btn:active { transform:scale(.94); }
+.btn.gold { border-color:#ffe066; background:#d98a00; color:#1f1100; box-shadow:0 4px 0 #7a4b00; }
+.btn.sec { border-color:#5a7891; background:#1c2e3d; color:#dbeafe; font-size:13px; padding:8px 20px; box-shadow:0 3px 0 #09121a; }
+.btn:active { transform:translateY(3px); box-shadow:0 1px 0 #09121a; }
+
 #controls {
   direction:ltr !important; display:grid; grid-template-columns:repeat(3,68px);
-  grid-template-rows:repeat(2,54px); gap:7px; justify-content:center; align-content:center;
+  grid-template-rows:repeat(2,52px); gap:7px; justify-content:center; align-content:center;
   margin:4px auto 10px; flex-shrink:0;
 }
 .dpad-btn {
-  border:1.5px solid rgba(70,248,143,.38); background:rgba(70,248,143,.08);
-  border-radius:14px; display:flex; align-items:center; justify-content:center;
-  color:#46f88f; font-size:18px; cursor:pointer; touch-action:none;
+  border:2px solid #395b75; background:#152736;
+  border-radius:5px; display:flex; align-items:center; justify-content:center;
+  color:#85c278; font-size:18px; cursor:pointer; touch-action:none;
+  box-shadow:0 4px 0 #081017, inset 0 2px 0 rgba(255,255,255,.12);
 }
-.dpad-btn.pressed { background:rgba(70,248,143,.38); transform:scale(.92); }
+.dpad-btn.pressed { background:#2c5243; transform:translateY(3px); box-shadow:0 1px 0 #081017; }
 .dp-up{grid-column:2;grid-row:1} .dp-left{grid-column:1;grid-row:2}
 .dp-down{grid-column:2;grid-row:2} .dp-right{grid-column:3;grid-row:2}
-#float-actions { position:absolute; bottom:8px; left:10px; display:flex; gap:8px; z-index:4; }
-.icon-btn {
-  width:34px; height:34px; border-radius:10px; cursor:pointer;
-  border:1px solid rgba(70,248,143,.35); background:rgba(5,8,7,.78); color:#46f88f;
-  display:flex; align-items:center; justify-content:center;
-}
+
 #hpbar { position:absolute; top:6px; left:50%; transform:translateX(-50%); z-index:4; width:74%; display:none; }
-#hpbar .hptxt { font-size:10.5px; color:#ffb3c0; text-align:center; margin-bottom:2px; font-weight:bold; }
+#hpbar .hptxt { font-size:10.5px; color:#ffd4dc; text-align:center; margin-bottom:2px; font-weight:bold; text-shadow:1px 1px 0 #000; }
 #hpbar .hptrack {
-  height:11px; border-radius:999px; background:rgba(0,0,0,.6);
-  border:1px solid rgba(255,84,112,.6); overflow:hidden;
+  height:12px; border-radius:3px; background:#14080c;
+  border:2px solid #ff4757; overflow:hidden;
 }
-#hpbar .hpfill { height:100%; width:100%; background:linear-gradient(90deg,#ff5470,#ffd166); transition:width .2s; }
+#hpbar .hpfill { height:100%; width:100%; background:linear-gradient(90deg,#ff4757,#ffd43b); transition:width .2s; }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ منوی کلش رویالی تمام پیکسلی ═══════════════ -->
+<!-- ═══════════════ منوی پیکسلی کلش رویال ═══════════════ -->
 <div id="menu-screen" class="screen active">
   <header class="cr-topbar">
     <div class="cr-level-badge">
@@ -357,17 +375,16 @@ html, body {
   </header>
 
   <main class="cr-body">
-    <!-- تب ۳: نبرد -->
     <section id="tab-battle" class="tab-pane active">
       <div class="arena-banner">
         <span class="arena-tag" id="uiArenaTag">آرنا ۱ • جنگل نئونی</span>
-        <div class="arena-title">مار نئونی رویال</div>
+        <div class="arena-title">مار پیکسلی رویال</div>
         <div class="arena-preview-row">
-          <canvas id="menuPreviewCanvas" width="160" height="160"></canvas>
+          <canvas id="menuPreviewCanvas" width="96" height="96"></canvas>
           <div class="arena-stats-col">
             <div class="stat-row"><span>رکورد امتیاز</span><b id="uiBest">۰</b></div>
             <div class="stat-row"><span>اژدهای شکست‌خورده</span><b id="uiBossWins">۰</b></div>
-            <div class="stat-row"><span>شخصیت فعال</span><b id="uiActiveSkinName">مار نئونی</b></div>
+            <div class="stat-row"><span>شخصیت فعال</span><b id="uiActiveSkinName">مار جنگلی</b></div>
           </div>
         </div>
       </div>
@@ -379,12 +396,11 @@ html, body {
 
       <div class="section-head">
         <span>جایگاه صندوق</span>
-        <span class="section-sub">فقط یک جایگاه • برنز ۵دق | نقره ۱۰دق | طلا ۲۰دق</span>
+        <span class="section-sub">برنز ۵دق | نقره ۱۰دق | طلا ۲۰دق</span>
       </div>
       <div id="singleChestSlot"></div>
     </section>
 
-    <!-- تب ۲: کلکسیون اسکین و اکسسوری -->
     <section id="tab-deck" class="tab-pane">
       <div class="section-head">
         <span>شخصیت‌ها و اسکین‌های پیکسلی مار</span>
@@ -399,39 +415,36 @@ html, body {
       <div class="card-grid" id="accGrid"></div>
     </section>
 
-    <!-- تب ۱: فروشگاه -->
     <section id="tab-shop" class="tab-pane">
       <div class="daily-banner">
         <div>
-          <div style="font-weight:bold;font-size:14px;color:#fff;">هدیه روزانه فروشگاه</div>
-          <div style="font-size:11px;color:#d8b4fe;margin-top:3px;" id="shopGiftDesc">۱۵ سکه + ۱ الماس رایگان</div>
+          <div style="font-weight:bold;font-size:13.5px;color:#fff;">هدیه روزانه فروشگاه</div>
+          <div style="font-size:11px;color:#d8b4fe;margin-top:3px;">۱۵ سکه + ۱ الماس رایگان</div>
         </div>
         <button class="daily-btn" id="btnShopGift">دریافت</button>
       </div>
 
       <div class="section-head">
         <span>فروشگاه صندوق‌های پیکسلی</span>
-        <span class="section-sub">خرید مستقیم و باز شدن فوری</span>
+        <span class="section-sub">باز شدن فوری با خرید مستقیم</span>
       </div>
       <div class="card-grid" id="shopChestsGrid"></div>
     </section>
 
-    <!-- تب ۴: جایزه روزانه و ماموریت‌ها -->
     <section id="tab-events" class="tab-pane">
       <div class="section-head">
         <span>تقویم جایزه روزانه (۷ روزه)</span>
-        <button class="daily-btn" id="btnClaimDaily" style="padding:6px 12px;font-size:11px;">دریافت امروز</button>
+        <button class="daily-btn" id="btnClaimDaily" style="padding:6px 11px;font-size:11px;">دریافت امروز</button>
       </div>
       <div class="calendar-grid" id="dailyCalendar"></div>
 
       <div class="section-head" style="margin-top:6px;">
         <span>ماموریت‌ها</span>
-        <span class="section-sub">با انجام ماموریت سکه و الماس بگیر</span>
+        <span class="section-sub">سکه و الماس بیشتر بگیر</span>
       </div>
       <div id="questsList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </section>
 
-    <!-- تب ۵: مسیر کاپ و آمار -->
     <section id="tab-social" class="tab-pane">
       <div class="section-head">
         <span>مسیر کاپ</span>
@@ -460,51 +473,50 @@ html, body {
   <header id="hud">
     <div class="hud-cell"><span class="hud-label">امتیاز</span><span class="hud-value" id="hScore">۰</span></div>
     <div id="hud-title">
-      <span>مار نئونی</span>
       <span class="combo-badge" id="comboBadge"></span>
       <span class="goal-chip" id="goalChip"></span>
       <div id="heartsRow"></div>
     </div>
     <div class="hud-cell best"><span class="hud-label">رکورد</span><span class="hud-value" id="hBest">۰</span></div>
+    <div class="hud-btns">
+      <button class="icon-btn" id="btnSound"></button>
+      <button class="icon-btn" id="btnPause"></button>
+    </div>
   </header>
   <main id="stage-wrap">
     <div id="stage">
       <canvas id="game"></canvas>
       <div id="hpbar"><div class="hptxt" id="hpTxt">جان اژدها</div><div class="hptrack"><div class="hpfill" id="hpfill"></div></div></div>
       <div id="banner"><span id="bannerText"></span></div>
-      <div id="float-actions">
-        <button class="icon-btn" id="btnSound"></button>
-        <button class="icon-btn" id="btnPause"></button>
-      </div>
 
       <div class="overlay" id="ovOver">
-        <div class="ov-title" style="color:#ff5470" id="overTitle">بازی تمام شد!</div>
+        <div class="ov-title" style="color:#ff4757" id="overTitle">بازی تمام شد!</div>
         <div class="new-record" id="ovRec" style="display:none">* رکورد جدید *</div>
         <div class="ov-stats">
           <div class="ov-stat"><b id="ovS">۰</b><span>امتیاز</span></div>
           <div class="ov-stat"><b id="ovL">۳</b><span>طول مار</span></div>
-          <div class="ov-stat"><b id="ovGoldEarned" style="color:#ffd166">+۰</b><span id="ovCoinLbl">سکه</span></div>
+          <div class="ov-stat"><b id="ovGoldEarned" style="color:#ffd43b">+۰</b><span id="ovCoinLbl">سکه</span></div>
         </div>
-        <div class="ov-sub" id="ovChestNotice" style="color:#46f88f;font-weight:bold;"></div>
+        <div class="ov-sub" id="ovChestNotice" style="color:#85c278;font-weight:bold;"></div>
         <button class="btn" id="btnRetry">نبرد دوباره</button>
         <button class="btn sec" id="btnBackMenuOver">بازگشت به منو</button>
       </div>
 
       <div class="overlay" id="ovWin">
-        <div class="ov-title" style="color:#ffd166" id="ovWinTitle">اژدها شکست خورد!</div>
+        <div class="ov-title" style="color:#ffd43b">اژدها شکست خورد!</div>
         <p class="ov-sub">پیروزی باشکوه! سکه، الماس و صندوق جایزه گرفتی!</p>
         <div class="ov-stats">
           <div class="ov-stat"><b id="ovWS">۰</b><span>امتیاز نهایی</span></div>
-          <div class="ov-stat"><b id="ovWinGold" style="color:#ffd166">+۶۰</b><span>سکه</span></div>
+          <div class="ov-stat"><b id="ovWinGold" style="color:#ffd43b">+۶۰</b><span>سکه</span></div>
           <div class="ov-stat"><b id="ovWinGems" style="color:#7fe3ff">+۴</b><span>الماس</span></div>
         </div>
-        <div class="ov-sub" id="ovWinChestNotice" style="color:#ffd166;font-weight:bold;"></div>
+        <div class="ov-sub" id="ovWinChestNotice" style="color:#ffd43b;font-weight:bold;"></div>
         <button class="btn gold" id="btnAgain">نبرد مجدد</button>
         <button class="btn sec" id="btnBackMenuWin">بازگشت به منو</button>
       </div>
 
       <div class="overlay" id="ovPause">
-        <div class="ov-title" style="font-size:26px">متوقف شد</div>
+        <div class="ov-title" style="font-size:24px">متوقف شد</div>
         <button class="btn" id="btnResume">ادامه</button>
         <button class="btn sec" id="btnQuitMenu">خروج به منو</button>
       </div>
@@ -523,9 +535,9 @@ html, body {
 <div class="modal-backdrop" id="chestModal">
   <div class="chest-modal">
     <div class="chest-big-wrap" id="modalChestArt"></div>
-    <div style="font-size:19px;font-weight:bold;color:#ffd166;" id="modalChestTitle">صندوق باز شد!</div>
+    <div style="font-size:18px;font-weight:bold;color:#ffd43b;" id="modalChestTitle">صندوق باز شد!</div>
     <div class="loot-list" id="modalLootList"></div>
-    <button class="cr-battle-btn" id="btnCloseChestModal" style="font-size:15px;padding:11px;">جمع‌آوری</button>
+    <button class="cr-battle-btn" id="btnCloseChestModal" style="font-size:15px;padding:10px;">جمع‌آوری</button>
   </div>
 </div>
 
@@ -554,7 +566,7 @@ function lsSet(k,v){
   try{ window.localStorage.setItem(k,v); }catch(e){}
 }
 
-/* ═══════════════ موتور بافر پیکسلی (مشترک برای اژدها، آیتم‌ها، صندوق‌ها و منو) ═══════════════ */
+/* ═══════════════ بافر پیکسلی اژدها ═══════════════ */
 var SP_W=200, SP_H=150, SP_OX=32, SP_OY=36, SP_AX=50, SP_AY=52;
 function newBuf(){ return { b:new Uint8Array(SP_W*SP_H) }; }
 function bpx(g,x,y,i){ x=Math.round(x)+SP_OX; y=Math.round(y)+SP_OY;
@@ -593,33 +605,19 @@ function bakeBuf(g,pal){
   return c;
 }
 
-/* بافر پیکسلی کوچک (۱۶×۱۶ یا ۲۰×۲۰) برای تمام اشیا و آیکون‌های بازی و منو */
-function makePixelIcon(size, rows, cmap){
-  var g = new Uint8Array(size*size);
-  var palette = ['#000000'];
-  var map = { '.':0, '#':1 };
-  var idx = 2;
-  for (var k in cmap){ palette[idx] = cmap[k]; map[k] = idx++; }
-  for (var y=0; y<rows.length && y<size; y++){
-    var row = rows[y];
-    for (var x=0; x<row.length && x<size; x++){
-      var ch = row[x];
-      if (ch !== '.' && map[ch] !== undefined) g[y*size+x] = map[ch];
-    }
-  }
-  /* دورگیری مشکی خودکار ۱ پیکسلی */
-  var src = new Uint8Array(g);
-  for (var py=0; py<size; py++) for (var px=0; px<size; px++){
-    if (src[py*size+px]) continue;
-    var l=px>0?src[py*size+px-1]:0, r=px<size-1?src[py*size+px+1]:0,
-        u=py>0?src[(py-1)*size+px]:0, d=py<size-1?src[(py+1)*size+px]:0;
-    if ((l&&l!==1)||(r&&r!==1)||(u&&u!==1)||(d&&d!==1)) g[py*size+px]=1;
-  }
-  var c = document.createElement('canvas'); c.width = size; c.height = size;
+/* رسم اسپرایت پیکسلی با دورگیری صریح (بدون کثیف‌کاری حاشیه) */
+function makeCleanSprite(w, h, rows, cmap){
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
   var cc = c.getContext('2d');
-  for (var yy=0; yy<size; yy++) for (var xx=0; xx<size; xx++){
-    var val = g[yy*size+xx];
-    if (val){ cc.fillStyle = palette[val]; cc.fillRect(xx,yy,1,1); }
+  for (var y=0; y<rows.length && y<h; y++){
+    var r = rows[y];
+    for (var x=0; x<r.length && x<w; x++){
+      var ch = r[x];
+      if (ch !== '.' && cmap[ch]){
+        cc.fillStyle = cmap[ch];
+        cc.fillRect(x, y, 1, 1);
+      }
+    }
   }
   return c;
 }
@@ -628,477 +626,165 @@ var PX_ICONS = {};
 var PX_URLS = {};
 function initPixelIcons(){
   var defs = {
-    apple: [16, [
-      '........gg......',
-      '.......gggg.....',
-      '......b.........',
-      '....rrrr.rrrr...',
-      '...rRRRRrRRRrr..',
-      '..rRRWWrrrrrrdd.',
-      '..rRRWrrrrrrrrd.',
-      '..rrrrrrrrrrrrd.',
-      '..rrrrrrrrrrddd.',
-      '..rrrrrrrrrdddd.',
-      '...rrrrrrrrddd..',
-      '...rrrrrrrrdd...',
-      '....rrrrrrdd....',
-      '.....rr..rr.....',
-      '................',
-      '................'
-    ], { r:'#e62e4c', R:'#ff5470', d:'#991128', W:'#ffd4dc', b:'#8b5a2b', g:'#46f88f' }],
-
-    gold: [16, [
-      '.......yy.......',
-      '.......yY.......',
-      '......yYYy......',
-      '......yYYy......',
-      '..yyyyYYYYyyyy..',
-      '.yYYYYWWWWYYYYy.',
-      '..yYYYYYYYYYYd..',
-      '...yYYYYYYYYd...',
-      '....yYYYYYYd....',
-      '...yYYYYYYYYd...',
-      '...yYYYddYYYd...',
-      '..yYYdd..ddYYd..',
-      '..ydd......ddy..',
-      '................',
-      '................',
-      '................'
-    ], { y:'#f59e0b', Y:'#ffd83e', d:'#b45309', W:'#fff7cc' }],
-
-    bomb: [16, [
-      '...........oY...',
-      '..........o..o..',
-      '.........b......',
-      '........b.......',
-      '......mmmm......',
-      '....ddKKKKdd....',
-      '...dKKWWKKKKd...',
-      '..dKKWKKKKKKKd..',
-      '..dKKKKKKKKKKd..',
-      '..dKKKKKKKKKKd..',
-      '..dKKKKKKKKKKd..',
-      '...dKKKKKKKKd...',
-      '....dddddddd....',
-      '................',
-      '................',
-      '................'
-    ], { K:'#334155', d:'#1e293b', m:'#94a3b8', W:'#cbd5e1', b:'#a16207', o:'#ff6d2e', Y:'#ffd83e' }],
-
-    ghost: [16, [
-      '.....cccccc.....',
-      '...ccCCCCCCcc...',
-      '..cCCWWWWCCCCc..',
-      '..cCCCCCCCCCCc..',
-      '.cCCCkkCCkkCCCc.',
-      '.cCCCkkCCkkCCCc.',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCccCCCCccCCc.',
-      '.cCc..cCCc..cCc.',
-      '..c....cc....c..',
-      '................',
-      '................',
-      '................'
-    ], { c:'#60a5fa', C:'#bfdbfe', W:'#ffffff', k:'#0f172a' }],
-
-    slow: [16, [
-      '................',
-      '.....oooooo.....',
-      '...ooYYYYYYoo...',
-      '..oYYooooooYYo..',
-      '..oYoYYddYYoYo..',
-      '..oYoYd..dYoYo..',
-      '...ooYYYYYYoo.g.',
-      '....oooooooo.g..',
-      '..ggggggggggg...',
-      '.gGGGGGGGGGGgg..',
-      '.gGGGGGGGGGGGGg.',
-      '..gggggggggggg..',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { o:'#d97706', Y:'#fbbf24', d:'#92400e', g:'#06b6d4', G:'#67e8f9' }],
-
-    double: [16, [
-      '.....yyyyyy.....',
-      '....yYYYYYYy....',
-      '.....dddddd.....',
-      '...bbBBBBBBbb...',
-      '..bBBBBBBBBBBb..',
-      '.bBBYYBBBBYYBBb.',
-      '.bBBYYBBBBYYBBb.',
-      '.bBBYYYYYYYYBBb.',
-      '.bBBYYYYYYYYBBb.',
-      '.bBBBBBBBBBBBBb.',
-      '..bBBBBBBBBBBb..',
-      '...bbbbbbbbbb...',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { b:'#b45309', B:'#f59e0b', y:'#fde047', Y:'#fef08a', d:'#78350f' }],
-
-    orb: [16, [
-      '................',
-      '.....cccccc.....',
-      '...ccCCCCCCcc...',
-      '..cCCWWWWCCCCc..',
-      '..cCCWWCCCCCCc..',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCCCCCCddddCc.',
-      '..cCCCCCddddCc..',
-      '..cCCCCCCddCCc..',
-      '...ccCCCCCCcc...',
-      '.....cccccc.....',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { c:'#0284c7', C:'#38bdf8', d:'#0369a1', W:'#e0f2fe' }],
-
-    acid: [16, [
-      '.......pp.......',
-      '......pPPp......',
-      '....ppPPPPpp....',
-      '...pPPWWWWPPp...',
-      '..pPPPPPPPPPPp..',
-      '..pPPddPPddPPp..',
-      '..pPPPPPPPPPPp..',
-      '...pPPPPPPPPp...',
-      '..pPppppppppPp..',
-      '..pppppppppppp..',
-      '....pp....pp....',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { p:'#9333ea', P:'#d946ef', d:'#581c87', W:'#fae8ff' }],
-
-    portal: [16, [
-      '.....cccccc.....',
-      '...ccWWWWWWcc...',
-      '..cWWccccccWWc..',
-      '.cWcCCCCCCCCcWc.',
-      '.cWcCWWWWWWCcWc.',
-      '.cWcCWppppWCcWc.',
-      '.cWcCWpWWpWCcWc.',
-      '.cWcCWppppWCcWc.',
-      '.cWcCWWWWWWCcWc.',
-      '.cWcCCCCCCCCcWc.',
-      '..cWWccccccWWc..',
-      '...ccWWWWWWcc...',
-      '.....cccccc.....',
-      '................',
-      '................',
-      '................'
-    ], { c:'#38bdf8', C:'#a855f7', p:'#c084fc', W:'#ffffff' }],
-
-    fireball: [16, [
-      '.......rr.......',
-      '......rRRr......',
-      '.....rROORr.....',
-      '....rROYYORr....',
-      '...rROYYYYORr...',
-      '..rROYYWWYYORr..',
-      '..rROYYWWYYORr..',
-      '..rROYYYYYYORr..',
-      '...rROYYYYORr...',
-      '...rROOOOOORr...',
-      '....rRRRRRRr....',
-      '.....rrrrrr.....',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { r:'#b91c1c', R:'#ef4444', O:'#f97316', Y:'#facc15', W:'#fef9c3' }],
-
-    superfire: [16, [
-      '......gggg......',
-      '....ggGGGGgg....',
-      '...gGGWWWWGGg...',
-      '..gGGWWccWWGGg..',
-      '..gGGWccccWGGg..',
-      '.gGGGWccccWGGGg.',
-      '..gGGWccccWGGg..',
-      '..gGGWWccWWGGg..',
-      '...gGGWWWWGGg...',
-      '....ggGGGGgg....',
-      '......gggg......',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { g:'#eab308', G:'#fef08a', c:'#f97316', W:'#ffffff' }],
-
-    heart_full: [16, [
-      '................',
-      '...rrr....rrr...',
-      '..rRRRr..rRRRr..',
-      '.rRWWWRrrRRRRRr.',
-      '.rRWWRRRRRRRRRr.',
-      '.rRRRRRRRRRRRRr.',
-      '.rRRRRRRRRRRRRr.',
-      '..rRRRRRRRRRRr..',
-      '...rRRRRRRRRr...',
-      '....rRRRRRRr....',
-      '.....rRRRRr.....',
-      '......rRRr......',
-      '.......rr.......',
-      '................',
-      '................',
-      '................'
-    ], { r:'#be123c', R:'#ff3b5c', W:'#ffc2cd' }],
-
-    heart_empty: [16, [
-      '................',
-      '...ddd....ddd...',
-      '..dDDDd..dDDDd..',
-      '.dDDDDDddDDDDDd.',
-      '.dDDDDDDDDDDDDd.',
-      '.dDDDDDDDDDDDDd.',
-      '..dDDDDDDDDDDd..',
-      '...dDDDDDDDDd...',
-      '....dDDDDDDd....',
-      '.....dDDDDd.....',
-      '......dDDd......',
-      '.......dd.......',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { d:'#1e293b', D:'#475569' }],
-
-    shield: [16, [
-      '..bbbbbbbbbbbb..',
-      '.bBBBBBBBBBBBBb.',
-      '.bBWWWWCCWWWWBb.',
-      '.bBWCCCCCCCCWBb.',
-      '.bBWCCCCCCCCWBb.',
-      '.bBWCCCCCCCCWBb.',
-      '..bBCCCCCCCCBb..',
-      '..bBCCCCCCCCBb..',
-      '...bBCCCCCCBb...',
-      '....bBCCCCBb....',
-      '.....bBCCBb.....',
-      '......bBBb......',
-      '.......bb.......',
-      '................',
-      '................',
-      '................'
-    ], { b:'#1d4ed8', B:'#60a5fa', C:'#38bdf8', W:'#e0f2fe' }],
-
-    coin: [16, [
-      '.....yyyyyy.....',
-      '...yyYYYYYYyy...',
-      '..yYYWWWWYYYYy..',
-      '.yYYWWyyyyYYYYy.',
-      '.yYYWyYYYYyYYYy.',
-      '.yYYWyYYYYyYYYy.',
-      '.yYYWyYYYYyYYYy.',
-      '.yYYWyyyyyyYYYy.',
-      '..yYYYYYYYYYYy..',
-      '...yyYYYYYYyy...',
-      '.....dddddd.....',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { y:'#d97706', Y:'#ffd83e', W:'#fff7cc', d:'#92400e' }],
-
-    gem: [16, [
-      '................',
-      '....cccccccc....',
-      '...cCCWWWWCCc...',
-      '..cCCWWWWWWCCc..',
-      '.cCCCCCCCCCCCCc.',
-      '.cCCddddddddCCc.',
-      '..cCddddddddCc..',
-      '...cCddddddCc...',
-      '....cCddddCc....',
-      '.....cCddCc.....',
-      '......cCCc......',
-      '.......cc.......',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { c:'#059669', C:'#46f88f', d:'#10b981', W:'#d1fae5' }],
-
-    trophy: [16, [
-      '..yyyyyyyyyyyy..',
-      '.yYYyyyyyyyyYYy.',
-      '.yYyYYYYYYYYyYy.',
-      '..yyYYWWWWYYyy..',
-      '....yYYYYYYy....',
-      '....yYYYYYYy....',
-      '.....yYYYYy.....',
-      '......yYYy......',
-      '......yYYy......',
-      '.....yYYYYy.....',
-      '....dddddddd....',
-      '...dddddddddd...',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { y:'#d97706', Y:'#ffd83e', W:'#fff7cc', d:'#78350f' }],
-
-    sword: [16, [
-      '............ss..',
-      '...........sWWs.',
-      '..........sWss..',
-      '.........sWss...',
-      '..ss....sWss....',
-      '.sWWs..sWss.....',
-      '..sWWssWss......',
-      '...sWWWWs.......',
-      '..ggWWWWgg......',
-      '.gGGsWWsGGg.....',
-      '..gdsWWsdg......',
-      '...sWsWs........',
-      '..sWs.sWs.......',
-      '.bb.....bb......',
-      '................',
-      '................'
-    ], { s:'#94a3b8', W:'#f1f5f9', g:'#d97706', G:'#ffd83e', d:'#78350f', b:'#475569' }],
-
-    shop: [16, [
-      '..rrrrrrrrrrrr..',
-      '.rRRWWrrRRWWrr..',
-      '.rRRRRRRRRRRRRr.',
-      '..bbbbbbbbbbbb..',
-      '..bYYYYYYbYYbb..',
-      '..bYCCCCYbYYbb..',
-      '..bYCCCCYbYYbb..',
-      '..bYYYYYYbYYbb..',
-      '..bbbbbbbbbbbb..',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { r:'#dc2626', R:'#f87171', W:'#ffffff', b:'#92400e', Y:'#d97706', C:'#38bdf8' }],
-
-    snake_ico: [16, [
-      '.....gggggg.....',
-      '...ggGGGGGGgg...',
-      '..gGGkkGGkkGGg..',
-      '..gGGGGGGGGGGg..',
-      '...ggGGGGGGgg...',
-      '.....ggGGgg..r..',
-      '....gGGGGGGgrr..',
-      '...gGGGggGGGg...',
-      '..gGGGg..gGGGg..',
-      '..gGGGg..gGGGg..',
-      '...ggGGggGGgg...',
-      '.....gggggg.....',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { g:'#16a34a', G:'#46f88f', k:'#052e16', r:'#ff5470' }],
-
-    gift: [16, [
-      '....yy....yy....',
-      '...yYYy..yYYy...',
-      '..rrrrrrrrrrrr..',
-      '..rRRyYYYYyRRr..',
-      '..rRRyYYYYyRRr..',
-      '...rryYYYYyrr...',
-      '...rRyYYYYyRr...',
-      '...rRyYYYYyRr...',
-      '...rRyYYYYyRr...',
-      '...rRyYYYYyRr...',
-      '...rryyyyyyrr...',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { r:'#be123c', R:'#fb7185', y:'#d97706', Y:'#ffd83e' }],
-
-    sound_on: [16, [
-      '......ss........',
-      '.....sSSs..cc...',
-      '....sSSSs....c..',
-      '..sssSSSs.cc..c.',
-      '.sSSSSSSs..c..c.',
-      '.sSSSSSSs..c..c.',
-      '..sssSSSs.cc..c.',
-      '....sSSSs....c..',
-      '.....sSSs..cc...',
-      '......ss........',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { s:'#16a34a', S:'#46f88f', c:'#7fe3ff' }],
-
-    sound_off: [16, [
-      '......ss........',
-      '.....sSSs.......',
-      '....sSSSs.r..r..',
-      '..sssSSSs..rr...',
-      '.sSSSSSSs..rr...',
-      '.sSSSSSSs.r..r..',
-      '..sssSSSs.......',
-      '....sSSSs.......',
-      '.....sSSs.......',
-      '......ss........',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { s:'#64748b', S:'#94a3b8', r:'#ff5470' }],
-
-    pause_ico: [16, [
-      '...gggg..gggg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gGGg..gGGg...',
-      '...gggg..gggg...',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { g:'#16a34a', G:'#46f88f' }],
-
-    /* صندوق‌های ۲۰×۲۰ */
-    chest_bronze: [20, [
+    /* سیب پیکسلی ۲۰×۲۰ شفاف و واضح */
+    apple: [20, 20, [
+      '..........ooo.......',
+      '.........oGGGo......',
+      '........oGgGGgo.....',
+      '.......ob..oo.......',
+      '........ob..........',
+      '....ooooobooooo.....',
+      '...oRRRRRoRRRRro....',
+      '..oRRWWWRRRRRRRro...',
+      '..oRRWWRRRRRRRRddo..',
+      '.oRRRRRRRRRRRRRRdo..',
+      '.oRRRRRRRRRRRRRRdo..',
+      '.oRRRRRRRRRRRRRddo..',
+      '.oRRRRRRRRRRRRdddo..',
+      '..orRRRRRRRRRdddo...',
+      '..orrrrrrrrrddddo...',
+      '...orrdddddddooo....',
+      '....ooorrrrooo......',
+      '.......oooo.........',
       '....................',
-      '....mmmmmmmmmmmm....',
-      '...mBBBBBBBBBBBBm...',
-      '..mBBmBBBBBBBBmBBm..',
-      '..mBBmBBBBBBBBmBBm..',
-      '..mmmmmmmmmmmmmmmm..',
-      '..mBBBBmYYYYmBBBBm..',
-      '..mDDDDmYYYYmDDDDm..',
-      '..mDDDDmmmmmmDDDDm..',
-      '..mDDDDDDDDDDDDDDm..',
-      '..mDDmDDDDDDDDmDDm..',
-      '..mDDmDDDDDDDDmDDm..',
-      '...mmmmmmmmmmmmmm...',
+      '....................'
+    ], { o:'#1a080c', R:'#f02843', r:'#c9162e', d:'#8c0b1d', W:'#ffd6dc', b:'#784421', G:'#68c962', g:'#368a32' }],
+
+    /* ستاره طلایی ۲۰×۲۰ */
+    gold: [20, 20, [
+      '.........oo.........',
+      '........oYYo........',
+      '.......oYYYYo.......',
+      '.......oYWWYo.......',
+      '..oooooooYYooooooo..',
+      '.oYYYYYYYYYYYYYYYo..',
+      '..oYWWYYYYYYYYYYdo..',
+      '...oYYYYYYYYYYYdo...',
+      '....oYYYYYYYYYdo....',
+      '....oYYYYYYYYddo....',
+      '...oYYYYYYYYYYdo....',
+      '...oYYYYYddYYYYo....',
+      '..oYYYYdd..ddYYYo...',
+      '..oYYdd......ddYo...',
+      '..ooo..........ooo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#422006', Y:'#ffd83e', d:'#d97706', W:'#fffbe6' }],
+
+    /* بمب پیکسلی ۲۰×۲۰ با فتیله جرقه‌دار */
+    bomb: [20, 20, [
+      '.............oRo....',
+      '............oYOYo...',
+      '...........o.oYo....',
+      '..........ob........',
+      '.........ob.........',
+      '.......oooooo.......',
+      '......oMMMMMMo......',
+      '....oooKKKKKKooo....',
+      '...oKKKWWKKKKKKdo...',
+      '..oKKWWKKKKKKKKKdo..',
+      '..oKKWKKKKKKKKKKdo..',
+      '..oKKKKKKKKKKKKKdo..',
+      '..oKKKKKKKKKKKKddo..',
+      '...oKKKKKKKKKKddo...',
+      '....oddddddddddo....',
+      '.....oooooooooo.....',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#090d14', K:'#2e3c4f', d:'#18222e', M:'#8fa3b8', W:'#e2e8f0', b:'#a16207', O:'#f97316', Y:'#fde047', R:'#ef4444' }],
+
+    /* روح پیکسلی ۲۰×۲۰ */
+    ghost: [20, 20, [
+      '......oooooooo......',
+      '....ooCCCCCCCCoo....',
+      '...oCCWWWWCCCCCCo...',
+      '..oCCWWCCCCCCCCCCo..',
+      '..oCCCCCCCCCCCCCCo..',
+      '.oCCCCoooCCCoooCCCo.',
+      '.oCCCooKCoCCooKCoCo.',
+      '.oCCCooKCoCCooKCoCo.',
+      '.oCCCCoooCCCoooCCCo.',
+      '.oCCCCCCCCCCCCCCCCo.',
+      '.oCCCCCCCCCCCCCCbCo.',
+      '.oCCCCCCCCCCCCCbbCo.',
+      '.oCCCCbbCCCCbbCCCbo.',
+      '.oCCCoCCoCCoCCoCCo..',
+      '..ooo..oo..oo..oo...',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#1e3a5f', C:'#93c5fd', W:'#ffffff', b:'#60a5fa', K:'#0f172a' }],
+
+    /* حلزون آهسته‌کننده ۲۰×۲۰ */
+    slow: [20, 20, [
+      '....................',
+      '.......ooooooo......',
+      '.....ooYYYYYYYoo....',
+      '....oYYdddddddYYo...',
+      '...oYYdooooooYYdYo..',
+      '...oYdoYYYYYdoYdYo..',
+      '..o.oYdYdoodYoYdYo..',
+      '..c.oYYdooooYYdYYo..',
+      '...coooYYYYYYYYoo...',
+      '..oCoooooooYYooo....',
+      '.oCCCoCCCCCCCCCCoo..',
+      '.oCWCCCCCCCCCCCCCbo.',
+      '.oCCCCCCCCCCCCCCCbo.',
+      '..ooooooooooooooo...',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#172536', Y:'#fbbf24', d:'#b45309', C:'#38bdf8', c:'#0284c7', b:'#0369a1', W:'#e0f2fe' }],
+
+    /* سکه دو برابر ۲۰×۲۰ */
+    double: [20, 20, [
+      '.......ooooooo......',
+      '.....ooYYYYYYYoo....',
+      '....oYYWWWWYYYYYo...',
+      '...oYYWyyyyyYYYYo...',
+      '..ooooooYYYYYYYYo...',
+      '.oYYYYYYoYYYYYYdo...',
+      'oYYWWWWYYoYYYYddo...',
+      'oYYWyyWYYoYYYddo....',
+      'oYYWyyWYYoYYYYo.....',
+      'oYYWyyWYYoYYdo......',
+      'oYYWyyWYYoooo.......',
+      'oYYYYYYYYdo.........',
+      '.oYYYYYYdo..........',
+      '..ooooooo...........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#451a03', Y:'#ffd43b', y:'#d97706', d:'#92400e', W:'#fff9db' }],
+
+    /* گوی انرژی آبی ۲۰×۲۰ */
+    orb: [20, 20, [
+      '......oooooooo......',
+      '....ooCCCCCCCCoo....',
+      '...oCCWWWWCCCCCCo...',
+      '..oCCWWWWCCCCCCCCo..',
+      '..oCCWWCCCCCCCCbCo..',
+      '.oCCCCCCCCCCCCCbbCo.',
+      '.oCCCCCCCCCCCCCbbCo.',
+      '.oCCCCCCCCCCCbbbbCo.',
+      '..oCCCCCCCCCbbbbCo..',
+      '..oCCCCCCCCbbbbCCo..',
+      '...oCCCCCCbbbbCCo...',
+      '....ooCCCCCCCCoo....',
+      '......oooooooo......',
       '....................',
       '....................',
       '....................',
@@ -1106,22 +792,23 @@ function initPixelIcons(){
       '....................',
       '....................',
       '....................'
-    ], { B:'#b45309', D:'#78350f', m:'#92400e', Y:'#fbbf24' }],
+    ], { o:'#0c2d48', C:'#38bdf8', b:'#0284c7', W:'#e0f2fe' }],
 
-    chest_silver: [20, [
-      '....................',
-      '....ssssssssssss....',
-      '...sCCCCCCCCCCCCs...',
-      '..sCCsCCCCCCCCsCCs..',
-      '..sCCsCCCCCCCCsCCs..',
-      '..ssssssssssssssss..',
-      '..sCCCCsWWWWsCCCCs..',
-      '..sDDDDsWWWWsDDDDs..',
-      '..sDDDDssssssDDDDs..',
-      '..sDDDDDDDDDDDDDDs..',
-      '..sDDsDDDDDDDDsDDs..',
-      '..sDDsDDDDDDDDsDDs..',
-      '...ssssssssssssss...',
+    /* اسید بنفش ۲۰×۲۰ */
+    acid: [20, 20, [
+      '.........oo.........',
+      '........oPPo........',
+      '......ooPPPPoo......',
+      '.....oPPWWWWPPo.....',
+      '....oPPPPPPPPPPo....',
+      '...oPPPYYPPYYPPPo...',
+      '...oPPPYYPPYYPPPo...',
+      '..oPPPPPPPPPPPPPPo..',
+      '..oPPPPddddddPPPPo..',
+      '..oPPPddddddddPPPo..',
+      '...ooPPPPPPPPPPoo...',
+      '....oPPPPPPPPPPo....',
+      '...oo..oooooo..oo...',
       '....................',
       '....................',
       '....................',
@@ -1129,22 +816,47 @@ function initPixelIcons(){
       '....................',
       '....................',
       '....................'
-    ], { C:'#60a5fa', D:'#1e3a8a', s:'#cbd5e1', W:'#f8fafc' }],
+    ], { o:'#2e0947', P:'#d946ef', d:'#86198f', W:'#fae8ff', Y:'#fde047' }],
 
-    chest_gold: [20, [
+    /* پورتال ۲۰×۲۰ */
+    portal: [20, 20, [
+      '......oooooooo......',
+      '....ooCCCCCCCCoo....',
+      '...oCCWWWWWWWWCCo...',
+      '..oCWCCPPPPPPCCWCo..',
+      '..oWCWPPPPPPPPWCWo..',
+      '.oWCWPWWWWWWWWPWCCo.',
+      '.oWCWPWCCCCCCWPWCCo.',
+      '.oWCWPWCWWWWCWPWCCo.',
+      '.oWCWPWCWWWWCWPWCCo.',
+      '.oWCWPWCCCCCCWPWCCo.',
+      '.oWCWPWWWWWWWWPWCCo.',
+      '..oWCWPPPPPPPPWCWo..',
+      '..oCWCCPPPPPPCCWCo..',
+      '...oCCWWWWWWWWCCo...',
+      '....ooCCCCCCCCoo....',
+      '......oooooooo......',
       '....................',
-      '....yyyyyyyyyyyy....',
-      '...yYYYYYYYYYYYYy...',
-      '..yYYyYYYYYYYYyYYy..',
-      '..yYYyYYYYYYYYyYYy..',
-      '..yyyyyyyyyyyyyyyy..',
-      '..yYYYYyRRRByYYYYy..',
-      '..yDDDDyRRRByDDDDy..',
-      '..yDDDDyyyyyyDDDDy..',
-      '..yDDDDDDDDDDDDDDy..',
-      '..yDDyDDDDDDDDyDDy..',
-      '..yDDyDDDDDDDDyDDy..',
-      '...yyyyyyyyyyyyyy...',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', C:'#38bdf8', P:'#a855f7', W:'#ffffff' }],
+
+    /* گلوله آتشین ۲۰×۲۰ */
+    fireball: [20, 20, [
+      '.........oo.........',
+      '........oRRo........',
+      '.......oRORRo.......',
+      '......oROYYORo......',
+      '.....oROYYYYORo.....',
+      '....oROYYWWYYORo....',
+      '...oROYYWWWWYYORo...',
+      '...oROYYWWWWYYORo...',
+      '...oROYYYYYYYYORo...',
+      '....oROYYYYYYORo....',
+      '....oROOOOOOOORo....',
+      '.....oRRRRRRRRo.....',
+      '......oooooooo......',
       '....................',
       '....................',
       '....................',
@@ -1152,22 +864,23 @@ function initPixelIcons(){
       '....................',
       '....................',
       '....................'
-    ], { Y:'#ffd83e', D:'#b45309', y:'#f59e0b', R:'#ff3b5c', B:'#fff3b0' }],
+    ], { o:'#3b0a0a', R:'#ef4444', O:'#f97316', Y:'#fde047', W:'#fefce8' }],
 
-    chest_dragon: [20, [
-      '..rr............rr..',
-      '...rr.kkkkkkkk.rr...',
-      '...kGGGGGGGGGGGGk...',
-      '..kGGkGGGGGGGGkGGk..',
-      '..kGGkGGGGGGGGkGGk..',
-      '..kkkkkkkkkkkkkkkk..',
-      '..kGGGGkYYYYkGGGGk..',
-      '..kDDDDkYYYYkDDDDk..',
-      '..kDDDDkkkkkkDDDDk..',
-      '..kDDDDDDDDDDDDDDk..',
-      '..kDDkDDDDDDDDkDDk..',
-      '..kDDkDDDDDDDDkDDk..',
-      '...kkkkkkkkkkkkkk...',
+    /* ابرگلوله ۲۰×۲۰ */
+    superfire: [20, 20, [
+      '.......oooooo.......',
+      '.....ooYYYYYYoo.....',
+      '....oYYWWWWWWYYo....',
+      '...oYWWOOOOOOWWYo...',
+      '..oYWOORRRRRROOWYo..',
+      '..oYWORWWWWWWROWYo..',
+      '..oYWORWWWWWWROWYo..',
+      '..oYWOORRRRRROOWYo..',
+      '...oYWWOOOOOOWWYo...',
+      '....oYYWWWWWWYYo....',
+      '.....ooYYYYYYoo.....',
+      '.......oooooo.......',
+      '....................',
       '....................',
       '....................',
       '....................',
@@ -1175,146 +888,589 @@ function initPixelIcons(){
       '....................',
       '....................',
       '....................'
-    ], { G:'#46f88f', D:'#064e3b', k:'#334155', r:'#ef4444', Y:'#ffd83e' }],
+    ], { o:'#451a03', Y:'#fde047', O:'#f97316', R:'#ef4444', W:'#ffffff' }],
 
-    /* اکسسوری‌های پیکسلی ۱۶×۱۶ */
-    acc_none: [16, [
-      '................',
-      '................',
-      '................',
-      '.....gggggg.....',
-      '...ggGGGGGGgg...',
-      '..gGGGGGGGGGGg..',
-      '..gGGGGGGGGGGg..',
-      '...ggGGGGGGgg...',
-      '.....gggggg.....',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { g:'#334155', G:'#64748b' }],
+    /* قلب پیکسلی پر و خالی ۲۰×۲۰ */
+    heart_full: [20, 20, [
+      '....................',
+      '...ooooo....ooooo...',
+      '..oRRRRRo..oRRRRRo..',
+      '.oRRWWWRRroRRRRRRro.',
+      '.oRRWWRRRRRRRRRRRdo.',
+      '.oRRRRRRRRRRRRRRRdo.',
+      '.oRRRRRRRRRRRRRRRdo.',
+      '..oRRRRRRRRRRRRRdo..',
+      '...oRRRRRRRRRRRdo...',
+      '....oRRRRRRRRRdo....',
+      '.....oRRRRRRRdo.....',
+      '......oRRRRRdo......',
+      '.......oRRRdo.......',
+      '........oRdo........',
+      '.........oo.........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#330610', R:'#ff3b5c', r:'#e11d48', d:'#9f1239', W:'#ffd1da' }],
 
-    acc_crown: [16, [
-      '................',
-      '..y..........y..',
-      '..yY...yy...Yy..',
-      '..yYy.yYYy.yYy..',
-      '..yYYyYYYYyYYy..',
-      '..yYYYYYYYYYYy..',
-      '..yYYrYYYYbYYy..',
-      '..yYYYYYYYYYYy..',
-      '..dddddddddddd..',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { y:'#d97706', Y:'#ffd83e', d:'#92400e', r:'#ff3b5c', b:'#38bdf8' }],
+    heart_empty: [20, 20, [
+      '....................',
+      '...ooooo....ooooo...',
+      '..oDDDDDo..oDDDDDo..',
+      '.oDDDDDDDdoDDDDDDdo.',
+      '.oDDDDDDDDDDDDDDDdo.',
+      '.oDDDDDDDDDDDDDDDdo.',
+      '.oDDDDDDDDDDDDDDDdo.',
+      '..oDDDDDDDDDDDDDdo..',
+      '...oDDDDDDDDDDDdo...',
+      '....oDDDDDDDDDdo....',
+      '.....oDDDDDDDdo.....',
+      '......oDDDDDdo......',
+      '.......oDDDdo.......',
+      '........oDdo........',
+      '.........oo.........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', D:'#475569', d:'#1e293b' }],
 
-    acc_shades: [16, [
-      '................',
-      '................',
-      '................',
-      '.gggggggggggggg.',
-      '.gKKKKKggKKKKKg.',
-      '.gKWWKKggKWWKKg.',
-      '.gKKKKKggKKKKKg.',
-      '..ggggg..ggggg..',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { g:'#46f88f', K:'#0f172a', W:'#bae6fd' }],
+    /* سپر پیکسلی ۲۰×۲۰ */
+    shield: [20, 20, [
+      '..oooooooooooooooo..',
+      '.oSSSSSSSSSSSSSSSSo.',
+      '.oSWWCCYYYYYYCCWSSo.',
+      '.oSWCCCYYYYYYCCCSSo.',
+      '.oSCCCCYYYYYYCCCCSo.',
+      '.oSYYYYYYYYYYYYYYSo.',
+      '.oSYYYYYYYYYYYYYYSo.',
+      '..oSCCCYYYYYYCCCSo..',
+      '..oSCCCYYYYYYCCCSo..',
+      '...oSCCYYYYYYCCSo...',
+      '....oSCYYYYYYCSo....',
+      '.....oSCYYYYCSo.....',
+      '......oSCCCCSo......',
+      '.......oSSSSo.......',
+      '........oooo........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', S:'#94a3b8', C:'#2563eb', Y:'#ffd43b', W:'#f8fafc' }],
 
-    acc_horns: [16, [
-      '.r............r.',
-      '.rr..........rr.',
-      '..rRr......rRr..',
-      '..rRRr....rRRr..',
-      '...rYYr..rYYr...',
-      '...rYYrrrrYYr...',
-      '....rrrrrrrr....',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { r:'#991b1b', R:'#ef4444', Y:'#fbbf24' }],
+    /* سکه طلا ۲۰×۲۰ */
+    coin: [20, 20, [
+      '......oooooooo......',
+      '....ooYYYYYYYYoo....',
+      '...oYYWWWWYYYYYYo...',
+      '..oYYWWyyyyyYYYYdo..',
+      '..oYYWyYYYYYyYYYdo..',
+      '.oYYWWyYYYYYyYYYddo.',
+      '.oYYWWyYYYYYyYYYddo.',
+      '.oYYWWyYYYYYyYYYddo.',
+      '.oYYWWyYYYYYyYYYddo.',
+      '..oYYWyyyyyyyYYYdo..',
+      '..oYYYYYYYYYYYYddo..',
+      '...oYYYYYYYYYYddo...',
+      '....ooddddddddoo....',
+      '......oooooooo......',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#422006', Y:'#ffd43b', y:'#f59e0b', d:'#b45309', W:'#fffbeb' }],
 
-    acc_wizard: [16, [
-      '.......pp.......',
-      '......pPPp......',
-      '.....pPPPPp.....',
-      '....pPPPPPPp....',
-      '...pPPPPPPPPp...',
-      '...pYYYYYYYYp...',
-      '.pppPPPPPPPPppp.',
-      'pPPPPPPPPPPPPPPp',
-      '.pppppppppppppp.',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { p:'#5b21b6', P:'#8b5cf6', Y:'#ffd83e' }],
+    /* الماس ۲۰×۲۰ */
+    gem: [20, 20, [
+      '.....oooooooooo.....',
+      '....oCCWWWWWWCCo....',
+      '...oCCWWWWWWWWCCo...',
+      '..oCCCCWWWWWWCCCCo..',
+      '.oCCCCCCCCCCCCCCCCo.',
+      '.oCCCddddddddddCCCo.',
+      '..oCCddddddddddCCo..',
+      '...oCCddddddddCCo...',
+      '....oCCddddddCCo....',
+      '.....oCCddddCCo.....',
+      '......oCCddCCo......',
+      '.......oCCCCo.......',
+      '........oCCo........',
+      '.........oo.........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#064e3b', C:'#46f88f', d:'#059669', W:'#d1fae5' }],
 
-    acc_halo: [16, [
-      '................',
-      '...yyyyyyyyyy...',
-      '..yYYYYYYYYYYy..',
-      '.yYYyyyyyyyyYYy.',
-      '..yYYYYYYYYYYy..',
-      '...yyyyyyyyyy...',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { y:'#f59e0b', Y:'#fef08a' }],
+    /* کاپ قهرمانی ۲۰×۲۰ */
+    trophy: [20, 20, [
+      '...oooooooooooooo...',
+      '..oYYYYYYYYYYYYYYo..',
+      '.oYYoYYYYWWYYYYoYYo.',
+      '.oYo.oYYYYYYYYo.oYo.',
+      '..oo.oYYYYYYYdo.oo..',
+      '......oYYYYYdo......',
+      '.......oYYYdo.......',
+      '........oYYo........',
+      '........oYYo........',
+      '.......oYYYYo.......',
+      '......oddddddo......',
+      '.....oddddddddo.....',
+      '.....oooooooooo.....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#422006', Y:'#ffd43b', d:'#b45309', W:'#fffbeb' }],
 
-    acc_ninja: [16, [
-      '................',
-      '................',
-      '..rrrrrrrrrrrr..',
-      '.rRRRRRRRRRRRRr.',
-      '.rRRRRWWWWrrrrr.',
-      '..rrrrrrrrrrrr..',
-      '...........rr...',
-      '..........rRr...',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................',
-      '................'
-    ], { r:'#991b1b', R:'#ef4444', W:'#f1f5f9' }]
+    /* شمشیر نبرد ۲۰×۲۰ */
+    sword: [20, 20, [
+      '..............oooo..',
+      '.............oWWSSo.',
+      '............oWWSSo..',
+      '..oooo.....oWWSSo...',
+      '.oSSWWo...oWWSSo....',
+      '..oSSWWo.oWWSSo.....',
+      '...oSSWWoWWSSo......',
+      '....oSSWWWWSo.......',
+      '..oooGWWWWWGooo.....',
+      '.oGGGoWWWWWoGGGo....',
+      '..ooobSSoSSbooo.....',
+      '....oSSo.oSSo.......',
+      '...obbo...obbo......',
+      '..oYYo.....oYYo.....',
+      '..ooo.......ooo.....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', S:'#94a3b8', W:'#f8fafc', G:'#ffd43b', Y:'#f59e0b', b:'#78350f' }],
+
+    shop: [20, 20, [
+      '..oooooooooooooooo..',
+      '.oRRRWWWRRRRWWWRRRo.',
+      '.oRRRWWWRRRRWWWRRRo.',
+      '.oRRRRRRRRRRRRRRRRo.',
+      '..oooooooooooooooo..',
+      '..obYYYYYYYYYYYYbo..',
+      '..obYCCCCbbYYYYYbo..',
+      '..obYCCCCbbYYYYYbo..',
+      '..obYCCCCbbYYYYYbo..',
+      '..obbbbbbbbbbbbbbo..',
+      '..oooooooooooooooo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#1e1b4b', R:'#ef4444', W:'#ffffff', b:'#78350f', Y:'#fbbf24', C:'#38bdf8' }],
+
+    /* آیکون مار پیکسلی الهام‌گرفته از عکس کاربر! */
+    snake_ico: [20, 20, [
+      '......oooooooo......',
+      '....ooGGGGGGGGoo....',
+      '...oGGddGGGGGGGGoo..',
+      '..oGGGGGGKWWGGGGGGoo',
+      '..oGGGGGGKKKGGGdGGGo',
+      '..oGGCCCCCCCCCCCCCCo',
+      '..oGCCCoooooooooooo.',
+      '..oGCCCo..r..r......',
+      '..oGCCCoo..rr.......',
+      '..ooGGGGGGoooo......',
+      '...oGGddGGGGGGoo....',
+      '..oGGGGGGGGddGGGo...',
+      '..oooooooooooooooo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#122016', G:'#68a862', d:'#2d5932', C:'#ede1b0', K:'#0c140e', W:'#ffffff', r:'#e62e4c' }],
+
+    gift: [20, 20, [
+      '.....oooo..oooo.....',
+      '....oYYYYooYYYYo....',
+      '..oooooooooooooooo..',
+      '.oRRRRRYYYYYYRRRRRo.',
+      '.oRRRRRYYYYYYRRRRRo.',
+      '..oooooooooooooooo..',
+      '..oRRRRYYYYYYRRRdo..',
+      '..oRRRRYYYYYYRRRdo..',
+      '..oRRRRYYYYYYRRRdo..',
+      '..oRRRRYYYYYYRRRdo..',
+      '..oRRRRYYYYYYRRRdo..',
+      '..oddddYYYYYYddddo..',
+      '..oooooooooooooooo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#2b0712', R:'#ff4757', d:'#9f1239', Y:'#ffd43b' }],
+
+    sound_on: [20, 20, [
+      '.......ooo..........',
+      '......oGGGo...oo....',
+      '.....oGGGGGo...oo...',
+      '..ooooGGGGGo.oo..o..',
+      '.oGGGGGGGGGo..oo..o.',
+      '.oGGGGGGGGGo..oo..o.',
+      '..ooooGGGGGo.oo..o..',
+      '.....oGGGGGo...oo...',
+      '......oGGGo...oo....',
+      '.......ooo..........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0c2414', G:'#68c962' }],
+
+    sound_off: [20, 20, [
+      '.......ooo..........',
+      '......oSSSo.........',
+      '.....oSSSSSo..oo..oo',
+      '..ooooSSSSSo...oooo.',
+      '.oSSSSSSSSSo....oo..',
+      '.oSSSSSSSSSo...oooo.',
+      '..ooooSSSSSo..oo..oo',
+      '.....oSSSSSo........',
+      '......oSSSo.........',
+      '.......ooo..........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', S:'#94a3b8' }],
+
+    pause_ico: [20, 20, [
+      '....................',
+      '....ooooo..ooooo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....oGGGo..oGGGo....',
+      '....ooooo..ooooo....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0c2414', G:'#85c278' }],
+
+    /* صندوق‌های ۲۴×۲۴ کلش رویالی واضح */
+    chest_bronze: [24, 24, [
+      '........................',
+      '....oooooooooooooooo....',
+      '...oMMBBBBBBBBBBBBMMo...',
+      '..oMMBWWWWBBBBBBBBMMBo..',
+      '..oMMBBBBBBBBBBBBBMddo..',
+      '..oMMBBBBBBBBBBBBBMddo..',
+      '..oMMMMMMMMMMMMMMMMMMo..',
+      '..oMMBBBBMMYYYYMMBBddo..',
+      '..oMMDDDDMMYKKYMMddMMo..',
+      '..oMMDDDDMMMMMMMMddMMo..',
+      '..oMMDDDDDDDDDDDDddMMo..',
+      '..oMMDDDDDDDDDDDDddMMo..',
+      '..oMMddddddddddddddMMo..',
+      '...oooooooooooooooooo...',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ], { o:'#1c0f06', B:'#c97128', D:'#8c4714', d:'#5e2c09', M:'#94a3b8', Y:'#ffd43b', K:'#1c0f06', W:'#f5b971' }],
+
+    chest_silver: [24, 24, [
+      '........................',
+      '....oooooooooooooooo....',
+      '...oSSCCCCCCCCCCCCSSo...',
+      '..oSSCWWWWCCCCCCCCSSCo..',
+      '..oSSCCCCCCCCCCCCCSddo..',
+      '..oSSCCCCCCCCCCCCCSddo..',
+      '..oSSSSSSSSSSSSSSSSSSo..',
+      '..oSSCCCCSSWWWWSSCCddo..',
+      '..oSSDDDDSSWKKWSSddSSo..',
+      '..oSSDDDDSSSSSSSSddSSo..',
+      '..oSSDDDDDDDDDDDDddSSo..',
+      '..oSSDDDDDDDDDDDDddSSo..',
+      '..oSSddddddddddddddSSo..',
+      '...oooooooooooooooooo...',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ], { o:'#0d1b2a', C:'#4ea8de', D:'#2563eb', d:'#1e3a8a', S:'#cbd5e1', W:'#ffffff', K:'#0d1b2a' }],
+
+    chest_gold: [24, 24, [
+      '........................',
+      '....oooooooooooooooo....',
+      '...oYYYYYYYYYYYYYYYYo...',
+      '..oYYWWWWYYYYYYYYYYYYo..',
+      '..oYYYYYYYYYYYYYYYYddo..',
+      '..oYYYYYYYYYYYYYYYYddo..',
+      '..oooooooooooooooooooo..',
+      '..oYYYYYYooRRRRooYYddo..',
+      '..oYYDDDDooRKKRooDDYYo..',
+      '..oYYDDDDooooooooDDYYo..',
+      '..oYYDDDDDDDDDDDDDDYYo..',
+      '..oYYDDDDDDDDDDDDDDYYo..',
+      '..oYYddddddddddddddYYo..',
+      '...oooooooooooooooooo...',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ], { o:'#422006', Y:'#ffd43b', D:'#f59e0b', d:'#b45309', W:'#fffbeb', R:'#ff3b5c', K:'#422006' }],
+
+    chest_dragon: [24, 24, [
+      '..oo................oo..',
+      '..oRRo............oRRo..',
+      '...oRRo.oooooooo.oRRo...',
+      '...oGGGGGGGGGGGGGGGGoo..',
+      '..oGGWWWWGGGGGGGGGGGGGo.',
+      '..oGGGGGGGGGGGGGGGGddGo.',
+      '..oooooooooooooooooooo..',
+      '..oGGGGGGooYYYYooGGddGo.',
+      '..oGGDDDDooYKKYooDDGGGo.',
+      '..oGGDDDDooooooooDDGGGo.',
+      '..oGGDDDDDDDDDDDDDDGGGo.',
+      '..oGGDDDDDDDDDDDDDDGGGo.',
+      '..oGGddddddddddddddGGGo.',
+      '...ooooooooooooooooooo..',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................',
+      '........................'
+    ], { o:'#09140e', G:'#46f88f', D:'#15803d', d:'#064e3b', R:'#ff4757', Y:'#ffd43b', K:'#09140e', W:'#dcfce7' }],
+
+    /* اکسسوری‌ها ۲۰×۲۰ واضح */
+    acc_none: [20, 20, [
+      '....................',
+      '....................',
+      '.......oooooo.......',
+      '.....ooSSSSSSoo.....',
+      '....oSSSSSSSSSSo....',
+      '....oSSooooooSSo....',
+      '....oSSSSSSSSSSo....',
+      '.....ooSSSSSSoo.....',
+      '.......oooooo.......',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#1e293b', S:'#64748b' }],
+
+    acc_crown: [20, 20, [
+      '....................',
+      '...oo....oo....oo...',
+      '...oYo..oYYo..oYo...',
+      '...oYYooYYYYooYYo...',
+      '...oYYYYYYYYYYYYo...',
+      '...oYYRYYYYYYBYYo...',
+      '...oYYYYYYYYYYYYo...',
+      '...oddddddddddddo...',
+      '...oooooooooooooo...',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#422006', Y:'#ffd43b', d:'#b45309', R:'#ff3b5c', B:'#38bdf8' }],
+
+    acc_shades: [20, 20, [
+      '....................',
+      '....................',
+      '..oooooooooooooooo..',
+      '.oKKKKKKKooKKKKKKKo.',
+      '.oKWWKKKKooKWWKKKKo.',
+      '.oKWKKKKKooKWKKKKKo.',
+      '.oKKKKKKKooKKKKKKKo.',
+      '..ooooooo..ooooooo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#68c962', K:'#090d14', W:'#e0f2fe' }],
+
+    acc_horns: [20, 20, [
+      '..oo............oo..',
+      '..oRo..........oRo..',
+      '...oRRo......oRRo...',
+      '...oRYRo....oRYRo...',
+      '....oYYRo..oRYYo....',
+      '....oYYRRRRRYYYo....',
+      '.....oooooooooo.....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#3b0a0a', R:'#ef4444', Y:'#fde047' }],
+
+    acc_wizard: [20, 20, [
+      '.........oo.........',
+      '........oPPo........',
+      '.......oPPPPo.......',
+      '......oPPPPPPo......',
+      '.....oPPPPPPPPo.....',
+      '.....oYYYYYYYYo.....',
+      '..ooooPPPPPPPPoooo..',
+      '.oPPPPPPPPPPPPPPPPo.',
+      '..oooooooooooooooo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#1e1b4b', P:'#7c3aed', Y:'#ffd43b' }],
+
+    acc_halo: [20, 20, [
+      '....................',
+      '....oooooooooooo....',
+      '..ooYYYYWWWWYYYYoo..',
+      '.oYYooooooooooooYYo.',
+      '..ooYYYYYYYYYYYYoo..',
+      '....oooooooooooo....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#78350f', Y:'#fde047', W:'#ffffff' }],
+
+    acc_ninja: [20, 20, [
+      '....................',
+      '...oooooooooooooo...',
+      '..oRRRRRRRRRRRRRRo..',
+      '..oRRRWWWWWWWWrrro..',
+      '...oooooooooooooo...',
+      '.............oRRo...',
+      '..............oRRo..',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#3b0a0a', R:'#ef4444', r:'#b91c1c', W:'#f8fafc' }]
   };
 
   for (var key in defs){
     var d = defs[key];
-    var cv = makePixelIcon(d[0], d[1], d[2]);
+    var cv = makeCleanSprite(d[0], d[1], d[2], d[3]);
     PX_ICONS[key] = cv;
     PX_URLS[key] = cv.toDataURL();
   }
@@ -1322,18 +1478,18 @@ function initPixelIcons(){
 initPixelIcons();
 
 function pxImgTag(name, sizePx){
-  var s = sizePx || 18;
+  var s = sizePx || 20;
   return '<img class="px-img" src="'+PX_URLS[name]+'" width="'+s+'" height="'+s+'" alt="">';
 }
 
-/* ═══════════════ دیتای اسکین، اکسسوری، صندوق (اقتصاد سخت + ۱ جایگاه صندوق) ═══════════════ */
+/* ═══════════════ اسکین‌ها، اکسسوری و اقتصاد سخت ═══════════════ */
 var SKINS = [
-  { id:'neon',   name:'مار نئونی',   rarity:'common', price:0,   head:'#a7f3d0', body:'#46f88f', dark:'#15803d', desc:'مار پیکسلی پایه با تعادل کامل', bonusScore:1.0, bonusGold:1.0, dmg:1 },
-  { id:'viper',  name:'افعی آتشین',  rarity:'rare',   price:120, head:'#fed7aa', body:'#ff6d2e', dark:'#9a3412', desc:'+۱۰٪ امتیاز بیشتر در مراحل', bonusScore:1.10, bonusGold:1.0, dmg:1 },
-  { id:'frost',  name:'مار یخی',     rarity:'rare',   price:170, head:'#e0f2fe', body:'#38bdf8', dark:'#0369a1', desc:'+۱۰٪ سکه طلا و بدنه یخی', bonusScore:1.05, bonusGold:1.10, dmg:1 },
-  { id:'shadow', name:'شبح سایه',    rarity:'epic',   price:240, head:'#f3e8ff', body:'#a855f7', dark:'#581c87', desc:'+۲ ثانیه مدت روح عبور از دیوار', bonusScore:1.10, bonusGold:1.10, dmg:1, ghostExtra:2000 },
-  { id:'royal',  name:'مار طلایی',   rarity:'epic',   price:340, head:'#fef9c3', body:'#fbbf24', dark:'#92400e', desc:'+۲۰٪ سکه طلا از هر بازی', bonusScore:1.15, bonusGold:1.20, dmg:1 },
-  { id:'cosmic', name:'مار کیهانی',  rarity:'legend', price:500, head:'#ffffff', body:'rainbow', dark:'#1e1b4b', desc:'آسیب دو برابر به اژدهای نهایی!', bonusScore:1.20, bonusGold:1.25, dmg:2 }
+  { id:'neon',   name:'مار جنگلی',   rarity:'common', price:0,   head:'#85c278', body:'#68a862', spot:'#2d5932', belly:'#ede1b0', dark:'#3f703b', desc:'مار پیکسلی اصیل با خال‌های جنگلی', bonusScore:1.0, bonusGold:1.0, dmg:1 },
+  { id:'viper',  name:'افعی آتشین',  rarity:'rare',   price:120, head:'#ff944d', body:'#e85d22', spot:'#7a1c0a', belly:'#ffe3b3', dark:'#a83210', desc:'+۱۰٪ امتیاز بیشتر در مراحل', bonusScore:1.10, bonusGold:1.0, dmg:1 },
+  { id:'frost',  name:'مار یخی',     rarity:'rare',   price:170, head:'#7dd3fc', body:'#38bdf8', spot:'#075985', belly:'#e0f2fe', dark:'#0284c7', desc:'+۱۰٪ سکه طلا و بدنه یخی', bonusScore:1.05, bonusGold:1.10, dmg:1 },
+  { id:'shadow', name:'شبح سایه',    rarity:'epic',   price:240, head:'#c084fc', body:'#9333ea', spot:'#3b0764', belly:'#f3e8ff', dark:'#6b21a8', desc:'+۲ ثانیه مدت روح عبور از دیوار', bonusScore:1.10, bonusGold:1.10, dmg:1, ghostExtra:2000 },
+  { id:'royal',  name:'مار طلایی',   rarity:'epic',   price:340, head:'#fde047', body:'#eab308', spot:'#713f12', belly:'#fef9c3', dark:'#a16207', desc:'+۲۰٪ سکه طلا از هر بازی', bonusScore:1.15, bonusGold:1.20, dmg:1 },
+  { id:'cosmic', name:'مار کیهانی',  rarity:'legend', price:500, head:'#ffffff', body:'rainbow', spot:'#1e1b4b', belly:'#fef08a', dark:'#312e81', desc:'آسیب دو برابر به اژدهای نهایی!', bonusScore:1.20, bonusGold:1.25, dmg:2 }
 ];
 
 var ACCESSORIES = [
@@ -1346,7 +1502,83 @@ var ACCESSORIES = [
   { id:'crown',  name:'تاج شاهانه',   rarity:'legend', price:320, ico:'acc_crown',  desc:'تاج طلایی پادشاه' }
 ];
 
-/* تایمر دقیق صندوق‌ها: برنز ۵ دقیقه، نقره ۱۰ دقیقه، طلا ۲۰ دقیقه */
+/* ساخت اسپرایت‌های پیکسلی سر و بدن مار دقیقاً با الهام از عکس مار کاربر */
+var snakeSpriteCache = {};
+function buildSnakeSprites(sk, overrideBody, overrideBelly){
+  var key = sk.id + (overrideBody||'') + (overrideBelly||'');
+  if (snakeSpriteCache[key]) return snakeSpriteCache[key];
+
+  var bodyC = overrideBody || (sk.body === 'rainbow' ? '#46f88f' : sk.body);
+  var headC = overrideBody || sk.head;
+  var bellyC = overrideBelly || sk.belly;
+  var spotC = sk.spot;
+  var darkC = sk.dark;
+  var outC = '#122016';
+
+  /* سر مار ۱۶×۱۶ به سمت راست (متمرکز عمودی برای چرخش دقیق) */
+  var headCv = makeCleanSprite(16, 16, [
+    '................',
+    '................',
+    '..oooooooooo....',
+    '.oHHHHHHHHHHoo..',
+    'oHHSSHHHHHHKKWo.',
+    'oHSSHHHHHHHKkKoo',
+    'oHHHHHHHHHHHHHno',
+    'oHHBBBBBBBBBBBBo',
+    'oHBBBBBBBBBBBooo',
+    'oHHBBBBBBBBBBoo.',
+    '.oHBBBBBBBBoo...',
+    '..oDDDDDDDDoo...',
+    '...oooooooo.....',
+    '................',
+    '................',
+    '................'
+  ], { o:outC, H:headC, S:spotC, B:bellyC, D:darkC, K:'#0b120e', k:'#0b120e', W:'#ffffff', n:'#0b120e' });
+
+  /* بدن مار ۱۶×۱۶ با خال‌های تیره و نوار شکم کرم */
+  var segCv = makeCleanSprite(16, 16, [
+    '................',
+    '................',
+    '..oooooooooooo..',
+    '.oGGGGGGGGGGGGo.',
+    'oGGGSSGGGGSSGGGo',
+    'oGGSSSSGGSSSSGGo',
+    'oGGGSSGGGGSSGGGo',
+    'oGGGGGGGGGGGGGGo',
+    'oGGGGGGGGGGGGGGo',
+    'oGGGGDDDDDDGGGGo',
+    'oGGBBBBBBBBBBGGo',
+    'oGGBBBBBBBBBBGGo',
+    '.oGDDDDDDDDDDGo.',
+    '..oooooooooooo..',
+    '................',
+    '................'
+  ], { o:outC, G:bodyC, S:spotC, D:darkC, B:bellyC });
+
+  /* دم مار ۱۶×۱۶ */
+  var tailCv = makeCleanSprite(16, 16, [
+    '................',
+    '................',
+    '................',
+    '................',
+    '.....ooooooooo..',
+    '...ooGGGGGGGGGo.',
+    '..oGGGSSGGGGGGGo',
+    '.oGGGGGGGGGGGGGo',
+    '.oGGBBBBBBBBBGGo',
+    '..oGDDDDDDDDDGo.',
+    '...ooGGGGGGGGo..',
+    '.....oooooooo...',
+    '................',
+    '................',
+    '................',
+    '................'
+  ], { o:outC, G:bodyC, S:spotC, D:darkC, B:bellyC });
+
+  snakeSpriteCache[key] = { head:headCv, seg:segCv, tail:tailCv };
+  return snakeSpriteCache[key];
+}
+
 var CHEST_TYPES = {
   bronze: { id:'bronze', name:'صندوق برنزی', ico:'chest_bronze', unlockSec:300,  gemSkip:3,  shopPrice:80,  shopGem:0,  gold:[12,22],  gems:[0,1],  xp:20 },
   silver: { id:'silver', name:'صندوق نقره‌ای', ico:'chest_silver', unlockSec:600,  gemSkip:6,  shopPrice:180, shopGem:0,  gold:[28,45],  gems:[1,3],  xp:40 },
@@ -1381,24 +1613,14 @@ var TROPHY_ROAD = [
 var SAVE_KEY = 'neon-snake-royale-v2';
 function defaultSave(){
   return {
-    gold: 25,
-    gems: 2,
-    trophies: 0,
-    xp: 0,
-    level: 1,
+    gold: 25, gems: 2, trophies: 0, xp: 0, level: 1,
     best: Number(lsGet('neon-snake-plus-best') || 0),
-    skin: 'neon',
-    acc: 'none',
-    ownedSkins: ['neon'],
-    ownedAcc: ['none'],
+    skin: 'neon', acc: 'none',
+    ownedSkins: ['neon'], ownedAcc: ['none'],
     slot: { type:'bronze', unlockAt:0, ready:false },
-    dailyDay: 1,
-    lastDailyTs: 0,
-    lastShopGiftTs: 0,
+    dailyDay: 1, lastDailyTs: 0, lastShopGiftTs: 0,
     stats: { gamesPlayed:0, totalApples:0, bellyVisits:0, bossWins:0, chestsOpened:0 },
-    claimedQuests: [],
-    claimedRoad: [],
-    soundOn: true
+    claimedQuests: [], claimedRoad: [], soundOn: true
   };
 }
 var save = (function(){
@@ -1491,7 +1713,7 @@ var sfx = {
   win:function(){ [523,659,784,1047,1319].forEach(function(f,i){ tone(f,.15,i*.12,.08); }); }
 };
 
-/* ═══════════════ منوی کلش رویالی بدون حتی یک استیکر ═══════════════ */
+/* ═══════════════ رابط منو ═══════════════ */
 var toastTimer = null;
 function showToast(msg){
   var el = $('#crToast');
@@ -1518,17 +1740,17 @@ function getArenaInfo(){
 }
 
 function initStaticPixelIcons(){
-  $('#icoTopCoin').innerHTML = pxImgTag('coin', 15);
-  $('#icoTopGem').innerHTML = pxImgTag('gem', 15);
-  $('#icoTopTrophy').innerHTML = pxImgTag('trophy', 15);
+  $('#icoTopCoin').innerHTML = pxImgTag('coin', 16);
+  $('#icoTopGem').innerHTML = pxImgTag('gem', 16);
+  $('#icoTopTrophy').innerHTML = pxImgTag('trophy', 16);
   $('#icoBattleSword').innerHTML = pxImgTag('sword', 24);
-  $('#navIcoShop').innerHTML = pxImgTag('shop', 20);
-  $('#navIcoDeck').innerHTML = pxImgTag('snake_ico', 20);
-  $('#navIcoBattle').innerHTML = pxImgTag('sword', 20);
-  $('#navIcoDaily').innerHTML = pxImgTag('gift', 20);
-  $('#navIcoTrophy').innerHTML = pxImgTag('trophy', 20);
+  $('#navIcoShop').innerHTML = pxImgTag('shop', 22);
+  $('#navIcoDeck').innerHTML = pxImgTag('snake_ico', 22);
+  $('#navIcoBattle').innerHTML = pxImgTag('sword', 22);
+  $('#navIcoDaily').innerHTML = pxImgTag('gift', 22);
+  $('#navIcoTrophy').innerHTML = pxImgTag('trophy', 22);
   $('#btnPause').innerHTML = pxImgTag('pause_ico', 18);
-  $('#ovCoinLbl').innerHTML = pxImgTag('coin', 13) + ' سکه';
+  $('#ovCoinLbl').innerHTML = pxImgTag('coin', 14) + ' سکه';
 }
 
 function renderTopBar(){
@@ -1555,9 +1777,9 @@ function renderSingleChest(){
   if (!sl){
     wrap.innerHTML =
       '<div class="single-chest-slot">'
-      + pxImgTag('chest_bronze', 44)
+      + pxImgTag('chest_bronze', 48)
       + '<div class="chest-slot-info">'
-      + '<div class="chest-slot-title" style="color:#8da4cc">جایگاه صندوق خالی است</div>'
+      + '<div class="chest-slot-title" style="color:#92b0c2">جایگاه صندوق خالی است</div>'
       + '<div class="chest-slot-desc">تا مرحله آخر پیش برو یا اژدها را شکست بده تا صندوق بگیری!</div>'
       + '</div></div>';
     return;
@@ -1569,15 +1791,15 @@ function renderSingleChest(){
   var pillTxt = isReady
     ? 'باز کردن!'
     : (sl.unlockAt > 0
-        ? fmtRemain(sl.unlockAt - now) + ' | ' + pxImgTag('gem', 13) + ' ' + faNum(ct.gemSkip)
+        ? fmtRemain(sl.unlockAt - now) + ' | ' + pxImgTag('gem', 14) + ' ' + faNum(ct.gemSkip)
         : 'شروع (' + faNum(Math.round(ct.unlockSec/60)) + ' دقیقه)');
   var subTxt = isReady
     ? 'صندوق آماده باز شدن است! لمس کن'
-    : (sl.unlockAt > 0 ? 'در حال باز شدن... برای تسریع با الماس لمس کن' : 'برای شروع تایمر لمس کن');
+    : (sl.unlockAt > 0 ? 'در حال باز شدن... برای باز کردن فوری با الماس لمس کن' : 'برای شروع تایمر لمس کن');
 
   wrap.innerHTML =
     '<div class="single-chest-slot filled '+(isReady?'ready':'')+'" id="activeChestCard">'
-    + pxImgTag(ct.ico, 48)
+    + pxImgTag(ct.ico, 52)
     + '<div class="chest-slot-info">'
     + '<div class="chest-slot-title">'+ct.name+'</div>'
     + '<div class="chest-slot-desc">'+subTxt+'</div>'
@@ -1642,15 +1864,15 @@ function openChest(type){
 
   persist();
   sfx.chest(); vibrate([60,40,100]);
-  $('#modalChestArt').innerHTML = pxImgTag(ct.ico, 80);
+  $('#modalChestArt').innerHTML = pxImgTag(ct.ico, 88);
   $('#modalChestTitle').textContent = ct.name + ' باز شد!';
-  var lootHtml = '<div class="loot-item">'+pxImgTag('coin', 28)+'<b>+'+faNum(g)+'</b><div style="font-size:10px;color:#ffd166">سکه</div></div>';
+  var lootHtml = '<div class="loot-item">'+pxImgTag('coin', 30)+'<b>+'+faNum(g)+'</b><div style="font-size:10px;color:#ffd43b">سکه</div></div>';
   if (gm > 0){
-    lootHtml += '<div class="loot-item">'+pxImgTag('gem', 28)+'<b>+'+faNum(gm)+'</b><div style="font-size:10px;color:#46f88f">الماس</div></div>';
+    lootHtml += '<div class="loot-item">'+pxImgTag('gem', 30)+'<b>+'+faNum(gm)+'</b><div style="font-size:10px;color:#68f29e">الماس</div></div>';
   }
-  lootHtml += '<div class="loot-item">'+pxImgTag('gold', 28)+'<b>+'+faNum(ct.xp)+'</b><div style="font-size:10px;color:#7fe3ff">تجربه</div></div>';
+  lootHtml += '<div class="loot-item">'+pxImgTag('gold', 30)+'<b>+'+faNum(ct.xp)+'</b><div style="font-size:10px;color:#7fe3ff">تجربه</div></div>';
   if (bonusItem){
-    lootHtml += '<div class="loot-item" style="border-color:#46f88f">'+pxImgTag(bonusItem.ico, 28)+'<b>'+bonusItem.label+'</b><div style="font-size:10px;color:#46f88f">آیتم جدید!</div></div>';
+    lootHtml += '<div class="loot-item" style="border-color:#68c962">'+pxImgTag(bonusItem.ico, 30)+'<b>'+bonusItem.label+'</b><div style="font-size:10px;color:#68c962">آیتم جدید!</div></div>';
   }
   $('#modalLootList').innerHTML = lootHtml;
   $('#chestModal').classList.add('show');
@@ -1662,21 +1884,13 @@ function openChest(type){
 };
 
 function makeSkinPreviewDataUrl(sk){
-  var c = document.createElement('canvas'); c.width = 40; c.height = 16;
+  var sp = buildSnakeSprites(sk);
+  var c = document.createElement('canvas'); c.width = 48; c.height = 18;
   var cc = c.getContext('2d');
-  for (var i=3; i>=0; i--){
-    var x = 4 + i*8, y = 2, w = 10, h = 12;
-    cc.fillStyle = '#000000';
-    cc.fillRect(x, y, w, h);
-    var col = i===0 ? sk.head : (sk.body==='rainbow' ? ['#ff5470','#ffd166','#46f88f','#38bdf8'][i] : sk.body);
-    cc.fillStyle = col;
-    cc.fillRect(x+1, y+1, w-2, h-2);
-    cc.fillStyle = sk.dark;
-    cc.fillRect(x+1, y+h-3, w-2, 2);
-  }
-  cc.fillStyle = '#000000';
-  cc.fillRect(6, 5, 2, 2);
-  cc.fillRect(6, 9, 2, 2);
+  cc.imageSmoothingEnabled = false;
+  cc.drawImage(sp.tail, 2, 1, 16, 16);
+  cc.drawImage(sp.seg, 15, 1, 16, 16);
+  cc.drawImage(sp.head, 29, 1, 16, 16);
   return c.toDataURL();
 }
 
@@ -1689,10 +1903,10 @@ function renderDeck(){
       ? '<button class="card-btn active-btn">انتخاب‌شده</button>'
       : (owned
           ? '<button class="card-btn equip" data-eqskin="'+sk.id+'">انتخاب</button>'
-          : '<button class="card-btn buy" data-buyskin="'+sk.id+'">'+pxImgTag('coin',14)+' '+faNum(sk.price)+'</button>');
+          : '<button class="card-btn buy" data-buyskin="'+sk.id+'">'+pxImgTag('coin',15)+' '+faNum(sk.price)+'</button>');
     sHtml += '<div class="cr-card rarity-'+sk.rarity+' '+(eq?'equipped':'')+'">'
           + (eq?'<span class="card-badge">فعال</span>':'')
-          + '<img class="px-img" src="'+makeSkinPreviewDataUrl(sk)+'" width="80" height="32" style="margin-top:8px;" alt="">'
+          + '<img class="px-img" src="'+makeSkinPreviewDataUrl(sk)+'" width="96" height="36" style="margin-top:8px;" alt="">'
           + '<div class="card-title">'+sk.name+'</div>'
           + '<div class="card-desc">'+sk.desc+'</div>'
           + btnHtml + '</div>';
@@ -1707,10 +1921,10 @@ function renderDeck(){
       ? '<button class="card-btn active-btn">پوشیده‌شده</button>'
       : (owned
           ? '<button class="card-btn equip" data-eqacc="'+ac.id+'">پوشیدن</button>'
-          : '<button class="card-btn buy" data-buyacc="'+ac.id+'">'+pxImgTag('coin',14)+' '+faNum(ac.price)+'</button>');
+          : '<button class="card-btn buy" data-buyacc="'+ac.id+'">'+pxImgTag('coin',15)+' '+faNum(ac.price)+'</button>');
     aHtml += '<div class="cr-card rarity-'+ac.rarity+' '+(eq?'equipped':'')+'">'
           + (eq?'<span class="card-badge">فعال</span>':'')
-          + '<div style="margin-top:6px;">'+pxImgTag(ac.ico, 36)+'</div>'
+          + '<div style="margin-top:6px;">'+pxImgTag(ac.ico, 40)+'</div>'
           + '<div class="card-title">'+ac.name+'</div>'
           + '<div class="card-desc">'+ac.desc+'</div>'
           + btnHtml + '</div>';
@@ -1756,10 +1970,10 @@ function renderShop(){
     var ct = CHEST_TYPES[k];
     var useGem = ct.shopGem > 0;
     var costHtml = useGem
-      ? pxImgTag('gem', 14)+' '+faNum(ct.shopGem)
-      : pxImgTag('coin', 14)+' '+faNum(ct.shopPrice);
+      ? pxImgTag('gem', 15)+' '+faNum(ct.shopGem)
+      : pxImgTag('coin', 15)+' '+faNum(ct.shopPrice);
     html += '<div class="cr-card rarity-'+(k==='dragon'?'legend':(k==='gold'?'epic':(k==='silver'?'rare':'common')))+'">'
-          + '<div style="margin-top:4px;">'+pxImgTag(ct.ico, 44)+'</div>'
+          + '<div style="margin-top:4px;">'+pxImgTag(ct.ico, 48)+'</div>'
           + '<div class="card-title">'+ct.name+'</div>'
           + '<div class="card-desc">'+faNum(ct.gold[0])+' تا '+faNum(ct.gold[1])+' سکه | '+faNum(ct.gems[0])+' تا '+faNum(ct.gems[1])+' الماس</div>'
           + '<button class="card-btn buy" data-shopchest="'+k+'">'+costHtml+'</button>'
@@ -1800,8 +2014,8 @@ function renderEvents(){
     var isToday = dr.day === save.dailyDay && canDaily;
     var icoName = dr.chest ? CHEST_TYPES[dr.chest].ico : 'coin';
     cHtml += '<div class="cal-day '+(claimed?'claimed':'')+' '+(isToday?'today':'')+'">'
-          + '<div style="font-weight:bold;color:#ffd166">روز '+faNum(dr.day)+'</div>'
-          + pxImgTag(icoName, 26)
+          + '<div style="font-weight:bold;color:#ffd43b">روز '+faNum(dr.day)+'</div>'
+          + pxImgTag(icoName, 28)
           + '<div style="font-size:9.5px">'+dr.label+'</div>'
           + '</div>';
   });
@@ -1814,11 +2028,11 @@ function renderEvents(){
     var claimed = save.claimedQuests.indexOf(q.id) !== -1;
     var pct = Math.min(100, Math.round(val/q.target*100));
     var btn = claimed
-      ? '<span style="font-size:11px;color:#46f88f">دریافت شد</span>'
+      ? '<span style="font-size:11px;color:#68c962">دریافت شد</span>'
       : '<button class="daily-btn" data-qclaim="'+q.id+'" '+(done?'':'disabled')+'>'+(done?'جایزه!':faNum(val)+'/'+faNum(q.target))+'</button>';
     qHtml += '<div class="quest-card">'
-          + '<div class="quest-info"><div class="quest-title">'+pxImgTag('sword',16)+' <span>'+q.title+'</span></div>'
-          + '<div style="font-size:10px;color:#ffd166;margin-top:2px;">جایزه: +'+faNum(q.gold)+' سکه  +'+faNum(q.gems)+' الماس</div>'
+          + '<div class="quest-info"><div class="quest-title">'+pxImgTag('sword',18)+' <span>'+q.title+'</span></div>'
+          + '<div style="font-size:10px;color:#ffd43b;margin-top:2px;">جایزه: +'+faNum(q.gold)+' سکه  +'+faNum(q.gems)+' الماس</div>'
           + '<div class="quest-bar"><div class="quest-fill" style="width:'+pct+'%"></div></div></div>'
           + btn + '</div>';
   });
@@ -1851,11 +2065,11 @@ function renderTrophyRoad(){
     var unlocked = save.trophies >= tr.trophies;
     var claimed = save.claimedRoad.indexOf(tr.trophies) !== -1;
     var btn = claimed
-      ? '<span style="font-size:11px;color:#46f88f">دریافت شد</span>'
-      : '<button class="daily-btn" data-road="'+tr.trophies+'" '+(unlocked?'':'disabled')+'>'+(unlocked?'دریافت '+pxImgTag(CHEST_TYPES[tr.chest].ico,15):'نیاز: '+faNum(tr.trophies)+' کاپ')+'</button>';
+      ? '<span style="font-size:11px;color:#68c962">دریافت شد</span>'
+      : '<button class="daily-btn" data-road="'+tr.trophies+'" '+(unlocked?'':'disabled')+'>'+(unlocked?'دریافت '+pxImgTag(CHEST_TYPES[tr.chest].ico,16):'نیاز: '+faNum(tr.trophies)+' کاپ')+'</button>';
     rHtml += '<div class="quest-card">'
-          + '<div class="quest-info"><div class="quest-title">'+pxImgTag('trophy',16)+' <span>'+tr.title+'</span></div>'
-          + '<div style="font-size:10px;color:#ffd166;margin-top:3px;">+'+faNum(tr.gold)+' سکه  +'+faNum(tr.gems)+' الماس + '+CHEST_TYPES[tr.chest].name+'</div></div>'
+          + '<div class="quest-info"><div class="quest-title">'+pxImgTag('trophy',18)+' <span>'+tr.title+'</span></div>'
+          + '<div style="font-size:10px;color:#ffd43b;margin-top:3px;">+'+faNum(tr.gold)+' سکه  +'+faNum(tr.gems)+' الماس + '+CHEST_TYPES[tr.chest].name+'</div></div>'
           + btn + '</div>';
   });
   $('#trophyRoadList').innerHTML = rHtml;
@@ -1904,29 +2118,110 @@ setInterval(function(){
   }
 }, 1000);
 
+/* ═══════════════ پیش‌نمایش پیکسلی دقیقاً مثل عکس مار چنبره‌زده زیر ماه ═══════════════ */
+var previewCv = $('#menuPreviewCanvas'), pCtx = previewCv.getContext('2d');
+pCtx.imageSmoothingEnabled = false;
+function pxBlock(cx, x, y, w, h, col){ cx.fillStyle=col; cx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function renderMenuPreview(t){
+  if ($('#menu-screen').classList.contains('active')){
+    var sk = getSkinObj(save.skin);
+    var bodyC = sk.body === 'rainbow' ? 'hsl('+((t/12)%360)+',85%,58%)' : sk.body;
+    var headC = sk.head;
+    var bellyC = sk.belly;
+    var spotC = sk.spot;
+    var outC = '#122016';
+
+    pCtx.clearRect(0,0,96,96);
+    /* آسمان شب سبز تیره + ماه پیکسلی */
+    pxBlock(pCtx, 0,0,96,96, '#122e2b');
+    pxBlock(pCtx, 70,10,16,16, '#f1f5f9');
+    pxBlock(pCtx, 68,13,20,10, '#f1f5f9');
+    pxBlock(pCtx, 73,8,10,20, '#ffffff');
+    pxBlock(pCtx, 72,14,3,3, '#dbe4ea');
+    pxBlock(pCtx, 80,18,4,3, '#dbe4ea');
+
+    /* صخره سنگی پیکسلی زیر مار */
+    pxBlock(pCtx, 12,72,72,24, '#8c8070');
+    pxBlock(pCtx, 16,66,64,8, '#c7b8a1');
+    pxBlock(pCtx, 22,63,52,6, '#dfd3be');
+    pxBlock(pCtx, 18,76,10,4, '#6e6355');
+    pxBlock(pCtx, 58,80,14,5, '#6e6355');
+    pxBlock(pCtx, 28,67,40,7, '#998e7e');
+
+    /* حلقه چنبره‌زده مار روی صخره */
+    pxBlock(pCtx, 18,54,60,16, outC);
+    pxBlock(pCtx, 20,56,56,12, bodyC);
+    pxBlock(pCtx, 24,58,6,4, spotC);
+    pxBlock(pCtx, 38,60,7,5, spotC);
+    pxBlock(pCtx, 54,58,6,4, spotC);
+    pxBlock(pCtx, 66,61,6,4, spotC);
+    /* دم بیرون‌آمده روی صخره */
+    pxBlock(pCtx, 20,70,22,7, outC);
+    pxBlock(pCtx, 22,71,18,5, bodyC);
+    pxBlock(pCtx, 24,72,5,3, spotC);
+    pxBlock(pCtx, 34,72,4,3, spotC);
+
+    /* گردن عمودی با شکم کرم‌رنگ شیاردار */
+    pxBlock(pCtx, 27,32,18,26, outC);
+    pxBlock(pCtx, 29,34,9,22, bodyC);
+    pxBlock(pCtx, 38,34,5,22, bellyC);
+    pxBlock(pCtx, 31,38,4,4, spotC);
+    pxBlock(pCtx, 31,48,4,4, spotC);
+    for (var sy=36; sy<54; sy+=4) pxBlock(pCtx, 38, sy, 5, 1, '#b8a672');
+
+    /* سر پیکسلی افقی با چشم سفیددار و زبان دوشاخه قرمز */
+    var bob = Math.round(Math.sin(t/260));
+    pxBlock(pCtx, 28,22+bob,30,13, outC);
+    pxBlock(pCtx, 30,24+bob,26,7, headC);
+    pxBlock(pCtx, 30,31+bob,24,3, bellyC);
+    pxBlock(pCtx, 33,25+bob,5,3, spotC);
+    /* چشم */
+    pxBlock(pCtx, 47,25+bob,4,4, '#09120c');
+    pxBlock(pCtx, 47,25+bob,1,1, '#ffffff');
+    /* سوراخ بینی */
+    pxBlock(pCtx, 54,28+bob,1,1, '#09120c');
+    /* زبان دوشاخه قرمز متحرک */
+    if (Math.sin(t/190) > -0.3){
+      pxBlock(pCtx, 58,29+bob,5,2, '#e62e4c');
+      pxBlock(pCtx, 63,27+bob,2,2, '#e62e4c');
+      pxBlock(pCtx, 63,31+bob,2,2, '#e62e4c');
+    }
+    /* اکسسوری روی سر مار در پیش‌نمایش */
+    if (save.acc && save.acc !== 'none'){
+      var acIco = PX_ICONS[getAccObj(save.acc).ico];
+      if (acIco){
+        var oy = (save.acc === 'shades' || save.acc === 'ninja') ? 21+bob : 10+bob;
+        pCtx.drawImage(acIco, 35, oy, 20, 20);
+      }
+    }
+  }
+  requestAnimationFrame(renderMenuPreview);
+}
+requestAnimationFrame(renderMenuPreview);
+
 /* ═══════════════ اژدهای پیکسلی (۴ لایه اصیل) ═══════════════ */
 var COLS = 19, ROWS = 19;
 var DIRS = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
 var OPPO = { up:'down', down:'up', left:'right', right:'left' };
 var TYPES = {
-  apple:     { ico:'apple',     color:'#ff5470' },
-  gold:      { ico:'gold',      color:'#ffd166' },
+  apple:     { ico:'apple',     color:'#ff4757' },
+  gold:      { ico:'gold',      color:'#ffd43b' },
   bomb:      { ico:'bomb',      color:'#94a3b8' },
-  ghost:     { ico:'ghost',     color:'#b8cfff' },
-  slow:      { ico:'slow',      color:'#7fe3ff' },
-  double:    { ico:'double',    color:'#ffe66d' },
+  ghost:     { ico:'ghost',     color:'#93c5fd' },
+  slow:      { ico:'slow',      color:'#38bdf8' },
+  double:    { ico:'double',    color:'#ffd43b' },
   orb:       { ico:'orb',       color:'#38bdf8' },
   acid:      { ico:'acid',      color:'#d946ef' },
   portal:    { ico:'portal',    color:'#ffffff' },
   fireball:  { ico:'fireball',  color:'#ff9800' },
-  superfire: { ico:'superfire', color:'#ffd166' },
-  heart:     { ico:'heart_full',color:'#ff5470' },
-  shield:    { ico:'shield',    color:'#7fe3ff' }
+  superfire: { ico:'superfire', color:'#ffd43b' },
+  heart:     { ico:'heart_full',color:'#ff4757' },
+  shield:    { ico:'shield',    color:'#60a5fa' }
 };
 var LEVELS = {
-  1: { bg:'#0b120e', grid:'rgba(90,255,160,.06)', name:'۱', goal:8,  wall:'rgba(70,248,143,.25)' },
-  2: { bg:'#1a1206', grid:'rgba(255,180,60,.07)', name:'۲', goal:10, wall:'rgba(255,180,60,.3)' },
-  3: { bg:'#1a0608', grid:'rgba(255,80,80,.08)',  name:'۳', goal:12, wall:'rgba(255,84,112,.35)' }
+  1: { bg:'#102420', bg2:'#142b26', name:'۱', goal:8,  wall:'#2f5e53' },
+  2: { bg:'#21180b', bg2:'#291f0f', name:'۲', goal:10, wall:'#8c621c' },
+  3: { bg:'#240b0e', bg2:'#2e1014', name:'۳', goal:12, wall:'#8c2633' }
 };
 var DRAGON_STYLE = { 1:{hue:222,size:1.7}, 2:{hue:285,size:2.05}, 3:{hue:0,size:2.4}, 4:{hue:135,size:2.65} };
 var PAL_ORIGINAL = ['#000000','#101024','#2b5ce6','#1c3fae','#142e85','#4a80ff','#7ea6ff',
@@ -2056,85 +2351,26 @@ function pixelMouthPoint(x, y, S, faceL){
   return { x:x+dx, y:y+dy };
 }
 
-/* رسم بخش پیکسلی مار و اکسسوری پیکسلی روی سر */
-function drawPixelSnakeSeg(cctx, cx, cy, half, fill, dark, isHead, dirVec, tongueOut){
-  var pxSize = Math.max(1, Math.round(half / 4));
-  var x0 = Math.round(cx - half), y0 = Math.round(cy - half);
-  var w = Math.round(half * 2);
-  cctx.fillStyle = '#000000';
-  cctx.fillRect(x0, y0, w, w);
-  cctx.fillStyle = fill;
-  cctx.fillRect(x0+pxSize, y0+pxSize, w-pxSize*2, w-pxSize*2);
-  cctx.fillStyle = dark;
-  cctx.fillRect(x0+pxSize, y0+w-pxSize*2, w-pxSize*2, pxSize);
-  cctx.fillStyle = 'rgba(255,255,255,0.28)';
-  cctx.fillRect(x0+pxSize, y0+pxSize, w-pxSize*3, pxSize);
-
-  if (isHead){
-    var exOff = Math.round(half*0.36);
-    var eyeS = Math.max(2, Math.round(half*0.28));
-    var e1x = Math.round(cx + dirVec.x*exOff - dirVec.y*exOff - eyeS/2);
-    var e1y = Math.round(cy + dirVec.y*exOff + dirVec.x*exOff - eyeS/2);
-    var e2x = Math.round(cx + dirVec.x*exOff + dirVec.y*exOff - eyeS/2);
-    var e2y = Math.round(cy + dirVec.y*exOff - dirVec.x*exOff - eyeS/2);
-    cctx.fillStyle = '#050807';
-    cctx.fillRect(e1x, e1y, eyeS, eyeS);
-    cctx.fillRect(e2x, e2y, eyeS, eyeS);
-    cctx.fillStyle = '#ffffff';
-    cctx.fillRect(e1x, e1y, Math.max(1,eyeS>>1), Math.max(1,eyeS>>1));
-    cctx.fillRect(e2x, e2y, Math.max(1,eyeS>>1), Math.max(1,eyeS>>1));
-    if (tongueOut){
-      cctx.fillStyle = '#ff3b5c';
-      var tx = Math.round(cx + dirVec.x*(half + pxSize));
-      var ty = Math.round(cy + dirVec.y*(half + pxSize));
-      cctx.fillRect(tx-1, ty-1, 3, 3);
-    }
-  }
-}
-
-function drawPixelAccOnHead(cctx, accId, hx, hy, headHalf){
+function drawPixelAccOnHead(cctx, accId, hx, hy, segSize){
   if (!accId || accId === 'none') return;
   var ico = PX_ICONS[getAccObj(accId).ico];
   if (!ico) return;
-  var sz = Math.round(headHalf * 2.25);
-  var oy = (accId === 'shades' || accId === 'ninja') ? 0 : -Math.round(headHalf * 1.15);
+  var sz = Math.round(segSize * 1.05);
+  var oy = (accId === 'shades' || accId === 'ninja') ? 0 : -Math.round(segSize * 0.56);
   cctx.save();
   cctx.imageSmoothingEnabled = false;
   cctx.drawImage(ico, Math.round(hx - sz/2), Math.round(hy + oy - sz/2), sz, sz);
   cctx.restore();
 }
 
-/* پیش‌نمایش تمام‌پیکسلی در منو */
-var previewCv = $('#menuPreviewCanvas'), pCtx = previewCv.getContext('2d');
-pCtx.imageSmoothingEnabled = false;
-function renderMenuPreview(t){
-  if ($('#menu-screen').classList.contains('active')){
-    pCtx.clearRect(0,0,160,160);
-    pCtx.fillStyle = 'rgba(70,248,143,0.06)';
-    for (var g=16; g<160; g+=16){
-      pCtx.fillRect(g, 0, 1, 160); pCtx.fillRect(0, g, 160, 1);
-    }
-    drawPixelDragonOn(pCtx, t, 108, 58, 42, 4, 'idle', true);
-    var sk = getSkinObj(save.skin);
-    for (var s=4; s>=0; s--){
-      var x = 28 + s*16, y = 118 + Math.round(Math.sin(t/240 + s*.7)*5);
-      var col = s===0 ? sk.head : (sk.body==='rainbow' ? 'hsl('+((s*38+t/8)%360)+',90%,60%)' : sk.body);
-      drawPixelSnakeSeg(pCtx, x, y, s===0?10:8, col, sk.dark, s===0, {x:-1,y:0}, Math.sin(t/180)>0.5);
-    }
-    drawPixelAccOnHead(pCtx, save.acc, 28, 118 + Math.round(Math.sin(t/240)*5), 10);
-  }
-  requestAnimationFrame(renderMenuPreview);
-}
-requestAnimationFrame(renderMenuPreview);
-
-/* ═══════════════ موتور اصلی بازی و افکت‌های تقویتی ═══════════════ */
+/* ═══════════════ موتور بازی (بدون بخار/حباب آزاردهنده + اسپاون تضمینی سیب) ═══════════════ */
 var canvas = $('#game'), ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 var cell = 20, state = 'menu';
 var world = 'out', level = 1, dragonVisits = 0;
 var snake = [], prevSnake = [], dir = 'right', dirQueue = [], items = [];
 var score = 0, tickMs = 165, tickAcc = 0, lastT = 0;
-var particles = [], floatTexts = [], fireParticles = [], shockwaves = [], ambientDots = [];
+var particles = [], floatTexts = [], fireParticles = [], shockwaves = [];
 var combo = 0, comboTimer = 0;
 var fx = { ghost:0, slow:0, double:0, shield:0 };
 var applesEaten = 0, orbsEaten = 0, ORB_GOAL = 6;
@@ -2152,7 +2388,7 @@ function addShockwave(gx, gy, color, maxR){
 function resize(){
   var r = $('#stage-wrap').getBoundingClientRect();
   if (r.width < 10 || r.height < 10) return;
-  var size = Math.max(120, Math.floor(Math.min(r.width, r.height)));
+  var size = Math.max(120, Math.floor(Math.min(r.width, r.height) - 8));
   var stage = $('#stage');
   stage.style.width = size+'px'; stage.style.height = size+'px';
   var dpr = Math.min(window.devicePixelRatio||1, 2);
@@ -2211,7 +2447,7 @@ function resetOutside(){
   spawnItem('apple');
 }
 function resetWorld(){
-  particles=[]; floatTexts=[]; fireParticles=[]; shockwaves=[]; ambientDots=[];
+  particles=[]; floatTexts=[]; fireParticles=[]; shockwaves=[];
   pShots=[]; bossShots=[]; boss=null; ds=null;
   shakeMag = 0; screenFlash.alpha = 0;
   $('#hpbar').style.display='none';
@@ -2223,9 +2459,7 @@ function resetWorld(){
   updateComboBadge(); updateGoalChip();
 }
 function randomSpawnOut(dt){
-  var apples=0, i;
-  for (i=0;i<items.length;i++) if (items[i].type==='apple') apples++;
-  if (apples === 0){ spawnItem('apple'); return; }
+  if (!hasType('apple')){ spawnItem('apple'); }
   if (items.length >= 3 || Math.random() > 0.12*dt/165) return;
   spawnItem(pick(['gold','bomb','ghost','slow','double']));
 }
@@ -2252,20 +2486,20 @@ function randomSpawnBoss(dt){
 function updateHeartsUI(){
   var html = '';
   for (var i=0;i<maxPlayerHp;i++){
-    html += pxImgTag(i < playerHp ? 'heart_full' : 'heart_empty', 16);
+    html += pxImgTag(i < playerHp ? 'heart_full' : 'heart_empty', 17);
   }
   $('#heartsRow').innerHTML = html;
 }
 function updateGoalChip(){
   var g = $('#goalChip');
   if (world === 'out'){
-    g.innerHTML = pxImgTag('apple',14)+' <span>مرحله '+faNum(LEVELS[level].name)+': '+faNum(applesEaten)+' / '+faNum(LEVELS[level].goal)+'</span>';
-    g.style.color = '#ffd166';
+    g.innerHTML = pxImgTag('apple',16)+' <span>مرحله '+faNum(LEVELS[level].name)+': '+faNum(applesEaten)+' / '+faNum(LEVELS[level].goal)+'</span>';
+    g.style.color = '#ffd43b';
   } else if (world === 'belly'){
-    g.innerHTML = pxImgTag('orb',14)+' <span>شکم اژدها: '+faNum(orbsEaten)+' / '+faNum(ORB_GOAL)+'</span>';
+    g.innerHTML = pxImgTag('orb',16)+' <span>شکم اژدها: '+faNum(orbsEaten)+' / '+faNum(ORB_GOAL)+'</span>';
     g.style.color = '#7fe3ff';
   } else {
-    g.innerHTML = pxImgTag('fireball',14)+' <span>نبرد نهایی — بخور و شلیک کن!</span>';
+    g.innerHTML = pxImgTag('fireball',16)+' <span>نبرد نهایی — بخور و شلیک کن!</span>';
     g.style.color = '#ff9800';
   }
 }
@@ -2304,17 +2538,6 @@ function step(){
   }
   snake.unshift({x:nx,y:ny});
 
-  /* افکت ذره ردپای مار در هر حرکت */
-  if (snake.length > 1){
-    var skCol = getSkinObj(save.skin).body;
-    var trailC = skCol === 'rainbow' ? '#46f88f' : skCol;
-    particles.push({
-      x: snake[snake.length-1].x + .5, y: snake[snake.length-1].y + .5,
-      vx:(Math.random()-.5)*.05, vy:(Math.random()-.5)*.05,
-      life:.55, size:2.5, color:trailC
-    });
-  }
-
   if (world === 'belly'){
     for (var a=0; a<items.length; a++){
       if (items[a].type !== 'acid') continue;
@@ -2347,29 +2570,29 @@ function step(){
 
     if (it.type === 'apple'){
       addScore(10,it,'+۱۰'); grow(); sfx.eat(); vibrate(28); bumpCombo();
-      addShockwave(nx,ny,'#ff5470',cell*1.8);
+      addShockwave(nx,ny,'#ff4757',cell*1.9);
       applesEaten++; save.stats.totalApples++; updateGoalChip();
       items.splice(k,1);
       if (applesEaten >= LEVELS[level].goal && world === 'out') triggerDragon = true;
       continue;
     } else if (it.type === 'gold'){
-      addScore(50,it,'+۵۰ ستاره'); grow(); sfx.gold(); vibrate([40,40,60]); bumpCombo();
-      addShockwave(nx,ny,'#ffd166',cell*2.6); addFlash('#ffd166', 0.16);
+      addScore(50,it,'+۵۰'); grow(); sfx.gold(); vibrate([40,40,60]); bumpCombo();
+      addShockwave(nx,ny,'#ffd43b',cell*2.6); addFlash('#ffd43b', 0.16);
     } else if (it.type === 'bomb'){
       items.splice(k,1); sfx.bomb(); vibrate([80,50,80]);
-      burst(nx,ny,'#ff5470', 22); addShake(10); addFlash('#ff5470', 0.35);
+      burst(nx,ny,'#ff4757', 22); addShake(10); addFlash('#ff4757', 0.35);
       snake.pop();
       gameOver('بمب منفجر شد!'); return;
     } else if (it.type === 'ghost'){
       var extraG = getSkinObj(save.skin).ghostExtra || 0;
-      fx.ghost = 8000 + extraG; floatText(nx,ny,'روح دیوار','#b8cfff');
-      burst(nx,ny,'#b8cfff',14); addShockwave(nx,ny,'#b8cfff',cell*2.2); sfx.power(); grow();
+      fx.ghost = 8000 + extraG; floatText(nx,ny,'روح دیوار','#93c5fd');
+      burst(nx,ny,'#93c5fd',14); addShockwave(nx,ny,'#93c5fd',cell*2.2); sfx.power(); grow();
     } else if (it.type === 'slow'){
-      fx.slow=7000; floatText(nx,ny,'آهسته','#7fe3ff');
-      burst(nx,ny,'#7fe3ff',14); addShockwave(nx,ny,'#7fe3ff',cell*2.2); sfx.power(); grow();
+      fx.slow=7000; floatText(nx,ny,'آهسته','#38bdf8');
+      burst(nx,ny,'#38bdf8',14); addShockwave(nx,ny,'#38bdf8',cell*2.2); sfx.power(); grow();
     } else if (it.type === 'double'){
-      fx.double=9000; floatText(nx,ny,'امتیاز ×۲','#ffe66d');
-      burst(nx,ny,'#ffe66d',14); addShockwave(nx,ny,'#ffe66d',cell*2.2); sfx.power(); grow();
+      fx.double=9000; floatText(nx,ny,'امتیاز ×۲','#ffd43b');
+      burst(nx,ny,'#ffd43b',14); addShockwave(nx,ny,'#ffd43b',cell*2.2); sfx.power(); grow();
     } else if (it.type === 'orb'){
       addScore(25,it,'+۲۵'); grow(); sfx.eat(); vibrate(28);
       addShockwave(nx,ny,'#38bdf8',cell*1.8);
@@ -2388,17 +2611,17 @@ function step(){
       var dmg = (isSup ? 3 : 1) * (getSkinObj(save.skin).dmg || 1);
       items.splice(k,1);
       sfx.shoot(); vibrate(25);
-      burst(nx,ny, isSup ? '#ffd166' : '#ff9800', isSup ? 18 : 12);
-      addShockwave(nx,ny, isSup ? '#ffd166' : '#ff9800', cell*2.2);
-      floatText(nx,ny, 'شلیک ×'+faNum(dmg), isSup ? '#ffd166' : '#ff9800');
+      burst(nx,ny, isSup ? '#ffd43b' : '#ff9800', isSup ? 18 : 12);
+      addShockwave(nx,ny, isSup ? '#ffd43b' : '#ff9800', cell*2.2);
+      floatText(nx,ny, 'شلیک ×'+faNum(dmg), isSup ? '#ffd43b' : '#ff9800');
       var m = { x:(nx+.5)*cell, y:(ny+.5)*cell };
       pShots.push({ sx:m.x, sy:m.y, x:m.x, y:m.y, tx:boss.x, ty:boss.y, t:0, dmg:dmg, sup:isSup });
       continue;
     } else if (it.type === 'heart' && world === 'boss'){
       if (playerHp < maxPlayerHp){ playerHp++; updateHeartsUI(); }
-      floatText(nx,ny,'+۱ قلب','#ff5470'); burst(nx,ny,'#ff5470',16); addShockwave(nx,ny,'#ff5470',cell*2.2); sfx.gold();
+      floatText(nx,ny,'+۱ قلب','#ff4757'); burst(nx,ny,'#ff4757',16); addShockwave(nx,ny,'#ff4757',cell*2.2); sfx.gold();
     } else if (it.type === 'shield' && world === 'boss'){
-      fx.shield = 5500; floatText(nx,ny,'سپر فعال','#7fe3ff'); burst(nx,ny,'#7fe3ff',16); addShockwave(nx,ny,'#7fe3ff',cell*2.4); sfx.power();
+      fx.shield = 5500; floatText(nx,ny,'سپر فعال','#60a5fa'); burst(nx,ny,'#60a5fa',16); addShockwave(nx,ny,'#60a5fa',cell*2.4); sfx.power();
     }
     items.splice(k,1);
   }
@@ -2411,7 +2634,7 @@ function step(){
   for (var c=1; c<snake.length; c++){
     if (snake[c].x===nx && snake[c].y===ny){
       if (world === 'boss') continue;
-      addShake(8); addFlash('#ff5470', 0.3);
+      addShake(8); addFlash('#ff4757', 0.3);
       gameOver('به خودت برخورد کردی!'); return;
     }
   }
@@ -2432,7 +2655,7 @@ function updateComboBadge(){
   if (combo>=2){
     b.style.display='inline-block';
     b.textContent='کمبو ×'+faNum(combo);
-    b.style.background = combo>=5?'#ffd166':'#ff5470';
+    b.style.background = combo>=5?'#ffd43b':'#ff4757';
     b.style.color = combo>=5?'#241300':'#ffffff';
   } else b.style.display='none';
 }
@@ -2464,7 +2687,7 @@ function updateDragonScene(dt){
     ds.x += (ds.targetX - ds.x)*dt*0.0024;
     ds.y = ds.targetY + Math.sin(ds.t/280)*cell*0.6;
     if (Math.abs(ds.x - ds.targetX) < cell*0.5){
-      ds.stage='roar'; ds.t=0; sfx.roar(); vibrate([200,80,200]); addShake(9); addFlash('#ff5470', 0.18);
+      ds.stage='roar'; ds.t=0; sfx.roar(); vibrate([200,80,200]); addShake(9); addFlash('#ff4757', 0.18);
       banner('اژدها مار را شکار کرد!', 1400);
     }
   } else if (ds.stage === 'roar'){
@@ -2487,7 +2710,7 @@ function updateDragonScene(dt){
     if (ds.chompT > 140){
       ds.chompT=0;
       if (snake.length > 0){
-        var seg = snake.pop(); burst(seg.x,seg.y,'#46f88f', 12); addShake(3); sfx.chomp(); vibrate(30);
+        var seg = snake.pop(); burst(seg.x,seg.y,'#68c962', 12); addShake(3); sfx.chomp(); vibrate(30);
       }
       if (snake.length === 0){ ds.stage='gulp'; ds.t=0; sfx.gulp(); vibrate([120,70,120]); }
     }
@@ -2503,7 +2726,7 @@ function enterBelly(){
   makeSnake();
   spawnItem('orb'); spawnItem('orb');
   state='playing'; tickAcc=0;
-  addFlash('#ff5470', 0.28);
+  addFlash('#ff4757', 0.28);
   updateComboBadge(); updateGoalChip();
   banner('داخل شکم اژدها هستی! '+faNum(ORB_GOAL)+' گوی انرژی جمع کن و فرار کن', 3000);
   sfx.warp();
@@ -2607,8 +2830,8 @@ function updateBoss(dt){
     var bs = bossShots[i];
     bs.x += bs.vx*dt*.06; bs.y += bs.vy*dt*.06;
     bs.life -= dt*.00035;
-    if (Math.random() < 0.45){
-      fireParticles.push({ x:bs.x, y:bs.y, vx:(Math.random()-.5)*.4, vy:(Math.random()-.5)*.4, life:0.5, size:cell*.12 });
+    if (Math.random() < 0.4){
+      fireParticles.push({ x:bs.x, y:bs.y, vx:(Math.random()-.5)*.4, vy:(Math.random()-.5)*.4, life:0.45, size:cell*.11 });
     }
     if (bs.life <= 0 || bs.x<0 || bs.y<0 || bs.x>size || bs.y>size){ bossShots.splice(i,1); continue; }
     if (invulnT > 0 || fx.shield > 0) continue;
@@ -2623,14 +2846,14 @@ function updateBoss(dt){
       playerHp--;
       updateHeartsUI();
       sfx.bosshit(); vibrate([140,60,140]);
-      addShake(9); addFlash('#ff5470', 0.3);
-      burst(snake[0].x, snake[0].y, '#ff5470', 18);
+      addShake(9); addFlash('#ff4757', 0.3);
+      burst(snake[0].x, snake[0].y, '#ff4757', 18);
       if (playerHp <= 0){
         gameOver('آتش اژدها تمام جانت را گرفت!');
         return;
       } else {
         invulnT = 1600;
-        floatText(snake[0].x, snake[0].y, '-۱ قلب', '#ff5470');
+        floatText(snake[0].x, snake[0].y, '-۱ قلب', '#ff4757');
       }
     }
   }
@@ -2642,8 +2865,8 @@ function updateBoss(dt){
     var prog = clamp01(ps.t/480);
     ps.x = ps.sx + (ps.tx-ps.sx)*prog;
     ps.y = ps.sy + (ps.ty-ps.sy)*prog - Math.sin(prog*Math.PI)*cell*1.8;
-    if (Math.random() < 0.7){
-      fireParticles.push({ x:ps.x, y:ps.y, vx:(Math.random()-.5)*.5, vy:(Math.random()-.5)*.5, life:0.65, size:cell*(ps.sup?.2:.14) });
+    if (Math.random() < 0.6){
+      fireParticles.push({ x:ps.x, y:ps.y, vx:(Math.random()-.5)*.5, vy:(Math.random()-.5)*.5, life:0.55, size:cell*(ps.sup?.18:.13) });
     }
     if (prog >= 1){
       pShots.splice(j,1);
@@ -2653,9 +2876,9 @@ function updateBoss(dt){
       $('#hpTxt').textContent = 'جان اژدها: '+faNum(boss.hp)+' / '+faNum(boss.maxHp);
       sfx.hit(); vibrate(40);
       addShake(ps.sup ? 8 : 5);
-      addShockwave(boss.x/cell-.5, boss.y/cell-.5, '#ffd166', cell*3.2);
-      burst(boss.x/cell-.5, boss.y/cell-.5, '#ffd166', 18);
-      floatText(boss.x/cell-.5, boss.y/cell-.5, '-'+faNum(ps.dmg||1), '#ffd166');
+      addShockwave(boss.x/cell-.5, boss.y/cell-.5, '#ffd43b', cell*3.2);
+      burst(boss.x/cell-.5, boss.y/cell-.5, '#ffd43b', 18);
+      floatText(boss.x/cell-.5, boss.y/cell-.5, '-'+faNum(ps.dmg||1), '#ffd43b');
       if (!boss.enraged && boss.hp > 0 && boss.hp <= 4){
         boss.enraged = true;
         addFlash('#ff9800', 0.25);
@@ -2663,29 +2886,27 @@ function updateBoss(dt){
       }
       if (boss.hp <= 0){
         bossShots = [];
-        addShake(14); addFlash('#ffd166', 0.45);
+        addShake(14); addFlash('#ffd43b', 0.45);
         for (var ex=0; ex<28; ex++)
           burst(boss.x/cell-.5+(Math.random()-.5)*3, boss.y/cell-.5+(Math.random()-.5)*3,
-                pick(['#ff5470','#ffd166','#ff9800','#46f88f']), 8);
+                pick(['#ff4757','#ffd43b','#ff9800','#68c962']), 8);
         winGame(); return;
       }
     }
   }
 }
 
-/* اقتصاد سخت و صندوق تکی (بیشتر برنز، طلا بسیار کمیاب) */
 function rollFinalStageChest(won){
   var r = Math.random();
   if (won){
-    if (r < 0.08) return 'gold';     /* فقط ۸٪ طلا! */
-    if (r < 0.32) return 'silver';   /* ۲۴٪ نقره */
-    return 'bronze';                 /* ۶۸٪ برنز */
+    if (r < 0.08) return 'gold';
+    if (r < 0.32) return 'silver';
+    return 'bronze';
   } else {
     if (r < 0.18) return 'silver';
     return 'bronze';
   }
 }
-
 function rewardAfterRun(won){
   var sk = getSkinObj(save.skin);
   var baseGold = won ? 60 : (reachedFinalThisRun ? 15 : Math.floor(score / 95));
@@ -2745,7 +2966,7 @@ function gameOver(reason){
   if (state !== 'playing') return;
   state = 'over';
   sfx.die(); vibrate([120,60,120]);
-  if (snake.length) burst(snake[0].x, snake[0].y, '#ff5470', 20);
+  if (snake.length) burst(snake[0].x, snake[0].y, '#ff4757', 20);
   $('#hpbar').style.display='none';
   $('#heartsRow').style.display='none';
   $('#overTitle').textContent = reason;
@@ -2758,14 +2979,14 @@ function gameOver(reason){
   if (rw.chest === 'full'){
     $('#ovChestNotice').textContent = 'جایگاه صندوق پر است — ابتدا صندوق فعلی را باز کن!';
   } else if (rw.chest){
-    $('#ovChestNotice').innerHTML = pxImgTag(CHEST_TYPES[rw.chest].ico, 20) + ' ' + CHEST_TYPES[rw.chest].name + ' به جایگاه اضافه شد!';
+    $('#ovChestNotice').innerHTML = pxImgTag(CHEST_TYPES[rw.chest].ico, 22) + ' ' + CHEST_TYPES[rw.chest].name + ' به جایگاه اضافه شد!';
   } else {
     $('#ovChestNotice').textContent = '';
   }
   setTimeout(function(){ if (state==='over') $('#ovOver').classList.add('show'); }, 420);
 }
 
-/* ═══ افکت‌ها و رسم تمام‌پیکسلی ═══ */
+/* ═══ افکت‌ها و رسم زمین پیکسلی شطرنجی + مار پیکسلی چرخان ═══ */
 function burst(gx,gy,color, count){
   var n = count || 12;
   for (var i=0;i<n;i++){
@@ -2776,6 +2997,14 @@ function burst(gx,gy,color, count){
 }
 function floatText(gx,gy,text,color){
   floatTexts.push({x:gx+.5,y:gy+.3,text:text,color:color,life:1});
+}
+
+function dirAngle(dx, dy){
+  if (dx > 0.2) return 0;
+  if (dx < -0.2) return Math.PI;
+  if (dy > 0.2) return Math.PI/2;
+  if (dy < -0.2) return -Math.PI/2;
+  return 0;
 }
 
 function draw(t, alpha){
@@ -2791,40 +3020,28 @@ function draw(t, alpha){
     ctx.translate(Math.round((Math.random()-.5)*shakeMag*2), Math.round((Math.random()-.5)*shakeMag*2));
   }
 
+  /* زمین بازی با کاشی شطرنجی پیکسلی */
   if (belly){
     var beat = .5 + .5*Math.sin(t/300);
-    ctx.fillStyle = 'rgb('+Math.round(30+beat*18)+','+Math.round(6+beat*4)+','+Math.round(14+beat*6)+')';
+    ctx.fillStyle = 'rgb('+Math.round(32+beat*16)+','+Math.round(7+beat*4)+','+Math.round(15+beat*6)+')';
     ctx.fillRect(0,0,size,size);
-    ctx.strokeStyle = 'rgba(255,80,120,'+(0.12+beat*0.1)+')'; ctx.lineWidth = 3;
-    for (var v=0; v<5; v++){
-      ctx.beginPath();
-      ctx.moveTo(0, size*v/4 + Math.sin(t/500+v)*8);
-      ctx.quadraticCurveTo(size/2, size*v/4 + Math.cos(t/400+v)*16, size, size*v/4 + Math.sin(t/450+v)*8);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = 'rgba(255,84,112,'+(0.35+beat*0.3)+')'; ctx.lineWidth = 4;
+    ctx.fillStyle = 'rgba(255,80,120,0.06)';
+    for (var gy=0; gy<ROWS; gy++) for (var gx=0; gx<COLS; gx++)
+      if ((gx+gy)%2 === 0) ctx.fillRect(gx*cell, gy*cell, cell, cell);
+    ctx.strokeStyle = 'rgba(255,84,112,'+(0.4+beat*0.3)+')'; ctx.lineWidth = 4;
     ctx.strokeRect(2,2,size-4,size-4);
   } else {
-    ctx.fillStyle = world==='boss' ? '#1a0a02' : L.bg;
+    var c1 = world==='boss' ? '#1c0b04' : L.bg;
+    var c2 = world==='boss' ? '#240f06' : L.bg2;
+    ctx.fillStyle = c1;
     ctx.fillRect(0,0,size,size);
-    ctx.strokeStyle = world==='boss' ? 'rgba(255,150,40,.08)' : L.grid; ctx.lineWidth = 1;
-    for (var g=1; g<COLS; g++){
-      ctx.beginPath(); ctx.moveTo(g*cell,0); ctx.lineTo(g*cell,size); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0,g*cell); ctx.lineTo(size,g*cell); ctx.stroke();
-    }
-    ctx.strokeStyle = (world==='boss' || fx.ghost>0) ? 'rgba(184,207,255,'+(.35+.2*Math.sin(t/150))+')' : L.wall;
+    ctx.fillStyle = c2;
+    for (var ty=0; ty<ROWS; ty++) for (var tx=0; tx<COLS; tx++)
+      if ((tx+ty)%2 === 0) ctx.fillRect(tx*cell, ty*cell, cell, cell);
+    ctx.strokeStyle = (world==='boss' || fx.ghost>0) ? 'rgba(147,197,253,'+(.4+.2*Math.sin(t/150))+')' : L.wall;
     ctx.lineWidth = 3;
     ctx.strokeRect(1.5,1.5,size-3,size-3);
   }
-
-  /* ذرات محیطی شناور */
-  for (var ad=0; ad<ambientDots.length; ad++){
-    var d0 = ambientDots[ad];
-    ctx.globalAlpha = d0.alpha;
-    ctx.fillStyle = d0.color;
-    ctx.fillRect(Math.round(d0.x*size), Math.round(d0.y*size), d0.sz, d0.sz);
-  }
-  ctx.globalAlpha = 1;
 
   /* موج‌های شوک */
   for (var sw=0; sw<shockwaves.length; sw++){
@@ -2839,20 +3056,20 @@ function draw(t, alpha){
   for (var f=0; f<fireParticles.length; f++){
     var fp = fireParticles[f];
     ctx.globalAlpha = Math.max(0, fp.life);
-    ctx.fillStyle = fp.life > .5 ? '#ffd166' : '#ff5470';
+    ctx.fillStyle = fp.life > .5 ? '#ffd43b' : '#ff4757';
     var fsz = Math.max(2, Math.round(fp.size*1.6));
     ctx.fillRect(Math.round(fp.x - fsz/2), Math.round(fp.y - fsz/2), fsz, fsz);
   }
   ctx.globalAlpha = 1;
 
-  /* آیتم‌ها با اسپرایت تمام‌پیکسلی بدون حتی یک استیکر! */
+  /* آیتم‌های ۲۰×۲۰ شفاف و پرنور */
   for (var i=0;i<items.length;i++){
     var it = items[i];
     var px=(it.x+.5)*cell, py=(it.y+.5)*cell;
-    var pulse = 1 + Math.sin((t+i*400)/180)*.1;
+    var pulse = 1 + Math.sin((t+i*400)/180)*.09;
     var ic = PX_ICONS[TYPES[it.type].ico];
     if (!ic) continue;
-    var drawSz = Math.round(cell * 0.88 * pulse);
+    var drawSz = Math.round(cell * 1.04 * pulse);
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.round(px), Math.round(py));
@@ -2861,9 +3078,13 @@ function draw(t, alpha){
     ctx.restore();
   }
 
-  /* مار تمام‌پیکسلی + اکسسوری پیکسلی */
+  /* مار پیکسلی با خال‌ها، شکم کرم، چشم سفیددار، زبان دوشاخه و اکسسوری */
   var sk = getSkinObj(save.skin);
   var rainbow = combo >= 5 || sk.body === 'rainbow';
+  var spSet = null;
+  if (!rainbow && !belly && fx.double<=0 && fx.slow<=0 && fx.ghost<=0){
+    spSet = buildSnakeSprites(sk);
+  }
   var headX = 0, headY = 0;
   var blinkHide = invulnT > 0 && Math.floor(t/90)%2 === 0;
   if (!blinkHide){
@@ -2874,20 +3095,54 @@ function draw(t, alpha){
       var ix, iy;
       if (Math.abs(dxg) > 1 || Math.abs(dyg) > 1){ ix = cur.x; iy = cur.y; }
       else { ix = prv.x + dxg*alpha; iy = prv.y + dyg*alpha; }
-      var sx=(ix+.5)*cell, sy=(iy+.5)*cell, r=cell*.41;
-      var fillC = sk.body;
-      if (s===0){ headX = sx; headY = sy; fillC = belly ? '#ffd6de' : sk.head; r = cell*.46; }
-      else if (rainbow) fillC = 'hsl('+((s*22+t/6)%360)+',90%,60%)';
-      else if (belly) fillC = '#ff8fa8';
-      else if (fx.double>0) fillC = '#ffe66d';
-      else if (fx.slow>0) fillC = '#7fd8e8';
-      else if (fx.ghost>0) fillC = '#9fb8e8';
-      drawPixelSnakeSeg(ctx, sx, sy, r, fillC, sk.dark, s===0, DIRS[dir], Math.sin(t/160)>0.55);
+      var sx=(ix+.5)*cell, sy=(iy+.5)*cell;
+
+      var segSet = spSet;
+      if (!segSet){
+        var rHue = Math.floor(((s*24 + t/6) % 360) / 15) * 15;
+        var cBody = rainbow ? 'hsl('+rHue+',85%,56%)' : (belly ? '#ff6b81' : (fx.double>0 ? '#ffd43b' : (fx.slow>0 ? '#38bdf8' : '#93c5fd')));
+        segSet = buildSnakeSprites(sk, cBody, sk.belly);
+      }
+
+      var ang = 0;
+      if (s === 0){
+        headX = sx; headY = sy;
+        var dv = DIRS[dir];
+        ang = dirAngle(dv.x, dv.y);
+      } else {
+        var ahead = snake[s-1];
+        var adx = ahead.x - cur.x, ady = ahead.y - cur.y;
+        if (Math.abs(adx) > 1) adx = -Math.sign(adx);
+        if (Math.abs(ady) > 1) ady = -Math.sign(ady);
+        ang = dirAngle(adx, ady);
+      }
+
+      var img = s === 0 ? segSet.head : (s === snake.length-1 ? segSet.tail : segSet.seg);
+      var drawS = Math.round(cell * (s === 0 ? 1.18 : 1.06));
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(Math.round(sx), Math.round(sy));
+      if (Math.abs(ang - Math.PI) < 0.1){
+        ctx.scale(-1, 1);
+      } else if (ang !== 0){
+        ctx.rotate(ang);
+      }
+      ctx.drawImage(img, -Math.round(drawS/2), -Math.round(drawS/2), drawS, drawS);
+
+      /* زبان دوشاخه قرمز روی سر مار */
+      if (s === 0 && Math.sin(t/170) > 0.15){
+        var tl = Math.max(3, Math.round(cell*0.26));
+        ctx.fillStyle = '#e62e4c';
+        ctx.fillRect(Math.round(drawS/2 - 1), -1, tl, 2);
+        ctx.fillRect(Math.round(drawS/2 + tl - 2), -3, 2, 2);
+        ctx.fillRect(Math.round(drawS/2 + tl - 2), 1, 2, 2);
+      }
+      ctx.restore();
     }
     if (snake.length){
-      drawPixelAccOnHead(ctx, save.acc, headX, headY, cell*.46);
+      drawPixelAccOnHead(ctx, save.acc, headX, headY, cell);
       if (fx.shield > 0){
-        ctx.strokeStyle = 'rgba(127,227,255,'+(.55+.3*Math.sin(t/100))+')';
+        ctx.strokeStyle = 'rgba(96,165,250,'+(.6+.3*Math.sin(t/100))+')';
         ctx.lineWidth = 2.5;
         ctx.strokeRect(Math.round(headX-cell*.62), Math.round(headY-cell*.62), Math.round(cell*1.24), Math.round(cell*1.24));
       }
@@ -2905,19 +3160,17 @@ function draw(t, alpha){
     ctx.restore();
   }
 
-  /* گلوله‌های پیکسلی بازیکن */
   for (var pj=0; pj<pShots.length; pj++){
     var ps2 = pShots[pj];
     var pIco = PX_ICONS[ps2.sup ? 'superfire' : 'fireball'];
-    var psz = Math.round(cell * (ps2.sup ? 0.85 : 0.65));
+    var psz = Math.round(cell * (ps2.sup ? 0.95 : 0.75));
     ctx.drawImage(pIco, Math.round(ps2.x - psz/2), Math.round(ps2.y - psz/2), psz, psz);
   }
 
-  /* گلوله‌های پیکسلی اژدها */
   for (var pk=0; pk<bossShots.length; pk++){
     var bs2 = bossShots[pk];
     ctx.globalAlpha = Math.max(0, Math.min(1, bs2.life));
-    var bsz = Math.round(cell * 0.44);
+    var bsz = Math.round(cell * 0.46);
     ctx.fillStyle = '#000000';
     ctx.fillRect(Math.round(bs2.x - bsz/2 - 1), Math.round(bs2.y - bsz/2 - 1), bsz+2, bsz+2);
     ctx.fillStyle = bs2.col || '#ff5722';
@@ -2927,7 +3180,6 @@ function draw(t, alpha){
   }
   ctx.globalAlpha = 1;
 
-  /* ذرات پیکسلی مربع */
   for (var p=0;p<particles.length;p++){
     var pt=particles[p];
     ctx.globalAlpha=Math.max(0,pt.life); ctx.fillStyle=pt.color;
@@ -2956,7 +3208,7 @@ function draw(t, alpha){
     var bx = Math.max(cell*2.5, Math.min(size-cell*2.5, (snake[0].x+.5)*cell));
     var by = Math.max(cell*.9, (snake[0].y-.7)*cell);
     ctx.font='bold '+Math.round(cell*.44)+'px Tahoma';
-    ctx.fillStyle='rgba(0,0,0,.8)'; ctx.fillText(btxt, bx+1, by+1);
+    ctx.fillStyle='rgba(0,0,0,.85)'; ctx.fillText(btxt, bx+1, by+1);
     ctx.fillStyle='#ffffff'; ctx.fillText(btxt, bx, by);
   }
 
@@ -2997,15 +3249,6 @@ function loop(t){
       if (world === 'out') randomSpawnOut(dt);
       else if (world === 'belly') randomSpawnBelly(dt);
       else if (world === 'boss'){ randomSpawnBoss(dt); updateBoss(dt); }
-
-      /* ذرات محیطی زنده */
-      if (ambientDots.length < 18 && Math.random() < 0.25){
-        var ac = world==='belly' ? '#ff5470' : (world==='boss' ? '#ff9800' : (level===2 ? '#ffd166' : '#46f88f'));
-        ambientDots.push({
-          x:Math.random(), y:1.02, vy:0.04+Math.random()*0.07,
-          alpha:0.25+Math.random()*0.35, sz:Math.random()<0.5?2:3, color:ac
-        });
-      }
     }
     else if (state === 'cutscene') updateDragonScene(dt);
     else tickAcc = 0;
@@ -3014,10 +3257,6 @@ function loop(t){
     if (screenFlash.alpha > 0){ screenFlash.alpha -= dt*0.0012; if (screenFlash.alpha < 0) screenFlash.alpha = 0; }
 
     var i, fr = Math.pow(.93, dt/16.7), frF = Math.pow(.97, dt/16.7);
-    for (i=ambientDots.length-1; i>=0; i--){
-      ambientDots[i].y -= ambientDots[i].vy * dt * 0.001;
-      if (ambientDots[i].y < -0.05) ambientDots.splice(i,1);
-    }
     for (i=shockwaves.length-1; i>=0; i--){
       var sw = shockwaves[i];
       sw.r += (sw.maxR - sw.r) * dt * 0.012;
