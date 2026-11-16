@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">مار نئونی</string>
+    <string name="exit_dialog_title">خروج از بازی؟</string>
+    <string name="exit_dialog_message">آیا می‌خواهید از بازی مار نئونی خارج شوید؟</string>
+    <string name="exit_dialog_confirm">خروج</string>
+    <string name="exit_dialog_cancel">ادامه بازی</string>
+</resources>

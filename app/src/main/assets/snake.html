@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>مار نئونی رویال — نبرد با اژدها</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg-deep: #0b1120;
+  --bg-panel: #15213b;
+  --bg-card: #1b2a4a;
+  --border-royale: #324a7a;
+  --gold: #ffcc33;
+  --gold-dark: #d98200;
+  --blue-royale: #3b82f6;
+  --neon: #46f88f;
+  --crimson: #ff5470;
+  --elixir: #c054ff;
+  --text-main: #f1f7ff;
+  --text-dim: #8da4cc;
+}
+html, body {
+  height:100%; overflow:hidden; background:var(--bg-deep); color:var(--text-main);
+  font-family:Tahoma,sans-serif; overscroll-behavior:none; touch-action:manipulation;
+  user-select:none; -webkit-user-select:none;
+}
+.screen { position:fixed; inset:0; display:none; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ═══════════ منوی کلش رویالی ═══════════ */
+#menu-screen {
+  background: radial-gradient(circle at 50% 25%, #1d3261 0%, #0d1528 65%, #070b14 100%);
+}
+.cr-topbar {
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:10px 12px 8px;
+  background:linear-gradient(180deg, rgba(10,16,32,.95), rgba(15,24,46,.85));
+  border-bottom:2px solid rgba(255,204,51,.25);
+  flex-shrink:0;
+}
+.cr-level-badge {
+  display:flex; align-items:center; gap:6px;
+  background:linear-gradient(180deg,#2d7dff,#1749a8);
+  border:2px solid #78b4ff; border-radius:12px;
+  padding:4px 9px; box-shadow:0 3px 0 #0d2b6b;
+}
+.cr-level-num { font-weight:bold; font-size:14px; color:#fff; }
+.cr-xp-wrap { display:flex; flex-direction:column; min-width:46px; }
+.cr-xp-lbl { font-size:9px; color:#cfe4ff; }
+.cr-xp-bar { height:5px; border-radius:99px; background:rgba(0,0,0,.45); overflow:hidden; margin-top:2px; }
+.cr-xp-fill { height:100%; background:#46f88f; width:0%; transition:width .3s; }
+
+.cr-currencies { display:flex; align-items:center; gap:6px; }
+.cr-pill {
+  display:flex; align-items:center; gap:4px;
+  background:rgba(7,11,22,.85); border:1.5px solid var(--border-royale);
+  border-radius:999px; padding:4px 9px; font-size:12px; font-weight:bold;
+}
+.cr-pill.gold { border-color:rgba(255,204,51,.55); color:var(--gold); }
+.cr-pill.gems { border-color:rgba(70,248,143,.55); color:var(--neon); }
+.cr-pill.trophies { border-color:rgba(255,140,66,.55); color:#ffb347; }
+.cr-icon-btn {
+  width:34px; height:34px; border-radius:10px; cursor:pointer;
+  border:1.5px solid var(--border-royale); background:var(--bg-card); color:#fff;
+  font-size:15px; display:flex; align-items:center; justify-content:center;
+}
+
+.cr-body {
+  flex:1; min-height:0; overflow-y:auto; padding:10px 12px 12px;
+  touch-action:pan-y;
+}
+.tab-pane { display:none; flex-direction:column; gap:12px; height:100%; }
+.tab-pane.active { display:flex; }
+
+/* تب نبرد (مرکز) */
+.arena-banner {
+  position:relative; border-radius:18px; padding:12px 14px;
+  background:linear-gradient(135deg, #1b2e59 0%, #101d3b 100%);
+  border:2px solid #4162a3;
+  box-shadow:0 6px 0 #091124, inset 0 1px 0 rgba(255,255,255,.15);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.arena-tag {
+  background:linear-gradient(90deg, #ff9900, #ffcc33); color:#241300;
+  font-size:11px; font-weight:bold; padding:3px 12px; border-radius:999px;
+  box-shadow:0 2px 0 #9e5c00;
+}
+.arena-title { font-size:19px; font-weight:bold; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6); }
+.arena-preview-row {
+  display:flex; align-items:center; justify-content:space-around; width:100%; gap:10px;
+}
+#menuPreviewCanvas {
+  width:118px; height:118px; border-radius:14px;
+  background:#09111f; border:1.5px solid rgba(70,248,143,.35);
+}
+.arena-stats-col { flex:1; display:flex; flex-direction:column; gap:6px; font-size:12px; }
+.stat-row {
+  display:flex; justify-content:space-between; align-items:center;
+  background:rgba(0,0,0,.3); padding:6px 10px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.07);
+}
+.stat-row b { color:var(--gold); }
+
+.mode-switch {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;
+}
+.mode-chip {
+  padding:8px 6px; border-radius:12px; text-align:center; font-size:11.5px; font-weight:bold;
+  border:1.5px solid var(--border-royale); background:rgba(10,16,32,.6); color:var(--text-dim);
+  cursor:pointer;
+}
+.mode-chip.active {
+  border-color:var(--neon); background:rgba(70,248,143,.14); color:var(--neon);
+}
+
+.cr-battle-btn {
+  width:100%; padding:15px 16px; border:none; border-radius:16px; cursor:pointer;
+  background:linear-gradient(180deg, #ffe047 0%, #ffb700 55%, #e68a00 100%);
+  color:#2b1600; font-family:inherit; font-size:20px; font-weight:bold;
+  box-shadow:0 6px 0 #995400, 0 10px 24px rgba(255,183,0,.32);
+  transition:transform .08s;
+}
+.cr-battle-btn:active { transform:translateY(4px); box-shadow:0 2px 0 #995400; }
+
+/* جایگاه‌های ۴ صندوق کلش رویال */
+.section-head {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:13px; font-weight:bold; color:#dbeafe;
+}
+.section-sub { font-size:10.5px; color:var(--text-dim); font-weight:normal; }
+.chest-slots {
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
+}
+.chest-slot {
+  border-radius:14px; min-height:94px; padding:6px 4px;
+  background:rgba(11,18,35,.85); border:2px dashed #2e4573;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; gap:4px; cursor:pointer; position:relative;
+}
+.chest-slot.filled {
+  border-style:solid; border-color:#4b6cb0;
+  background:linear-gradient(180deg,#1f325c,#121f3d);
+  box-shadow:0 4px 0 #091022;
+}
+.chest-slot.ready {
+  border-color:var(--neon);
+  background:linear-gradient(180deg,#154533,#0c261d);
+  animation:chestPulse 1.1s infinite;
+}
+@keyframes chestPulse { 50% { box-shadow:0 0 16px rgba(70,248,143,.55); } }
+.chest-emoji { font-size:28px; line-height:1.1; }
+.chest-name { font-size:10px; font-weight:bold; color:#fff; }
+.chest-status {
+  font-size:9.5px; padding:2px 6px; border-radius:999px;
+  background:rgba(0,0,0,.45); color:var(--gold);
+}
+.chest-slot.ready .chest-status { background:var(--neon); color:#042412; font-weight:bold; }
+
+/* تب کلکسیون (اسکین و اکسسوری) */
+.card-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:9px; }
+.cr-card {
+  border-radius:14px; padding:10px; background:var(--bg-card);
+  border:2px solid var(--border-royale); box-shadow:0 4px 0 #0b1224;
+  display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
+  position:relative;
+}
+.cr-card.rarity-common { border-color:#64748b; }
+.cr-card.rarity-rare { border-color:#f59e0b; }
+.cr-card.rarity-epic { border-color:#c054ff; }
+.cr-card.rarity-legend { border-color:#46f88f; box-shadow:0 0 12px rgba(70,248,143,.22), 0 4px 0 #0b1224; }
+.cr-card.equipped { outline:2.5px solid #ffd166; outline-offset:1px; }
+.card-badge {
+  position:absolute; top:6px; left:6px; font-size:9px; padding:2px 6px; border-radius:999px;
+  background:rgba(0,0,0,.55); color:#fff;
+}
+.cr-card.equipped .card-badge { background:#ffd166; color:#211200; font-weight:bold; }
+.card-art { font-size:30px; margin-top:4px; }
+.card-swatch {
+  width:42px; height:16px; border-radius:999px; border:1.5px solid rgba(255,255,255,.4);
+}
+.card-title { font-size:12.5px; font-weight:bold; color:#fff; }
+.card-desc { font-size:10px; color:var(--text-dim); line-height:1.4; min-height:28px; }
+.card-btn {
+  width:100%; border:none; border-radius:10px; padding:7px 8px;
+  font-family:inherit; font-size:11.5px; font-weight:bold; cursor:pointer;
+}
+.card-btn.buy { background:linear-gradient(180deg,#ffd166,#e09600); color:#241300; }
+.card-btn.equip { background:linear-gradient(180deg,#3b82f6,#1d4ed8); color:#fff; }
+.card-btn.active-btn { background:#1c4d35; color:var(--neon); border:1px solid var(--neon); }
+
+/* تب فروشگاه و جوایز روزانه */
+.daily-banner {
+  border-radius:16px; padding:12px;
+  background:linear-gradient(135deg,#3b1d66,#1c1238);
+  border:2px solid #a855f7;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.daily-btn {
+  border:none; border-radius:12px; padding:9px 14px; font-family:inherit;
+  font-size:12px; font-weight:bold; cursor:pointer; flex-shrink:0;
+  background:linear-gradient(180deg,#46f88f,#10b981); color:#022614;
+  box-shadow:0 3px 0 #076344;
+}
+.daily-btn:disabled { background:#2a354d; color:#7f90b0; box-shadow:none; cursor:default; }
+.calendar-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+.cal-day {
+  border-radius:12px; padding:8px 4px; text-align:center;
+  background:var(--bg-card); border:1.5px solid var(--border-royale);
+  display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10.5px;
+}
+.cal-day.claimed { opacity:.55; border-color:#10b981; }
+.cal-day.today { border-color:var(--gold); background:#2b2310; box-shadow:0 0 12px rgba(255,204,51,.3); }
+.quest-card {
+  border-radius:14px; padding:10px 12px; background:var(--bg-card);
+  border:1.5px solid var(--border-royale); display:flex; align-items:center;
+  justify-content:space-between; gap:10px;
+}
+.quest-info { flex:1; }
+.quest-title { font-size:12px; font-weight:bold; }
+.quest-bar { height:7px; border-radius:99px; background:rgba(0,0,0,.5); margin-top:5px; overflow:hidden; }
+.quest-fill { height:100%; background:linear-gradient(90deg,#3b82f6,#46f88f); }
+
+/* نوار ناوبری پایین کلش رویال */
+.cr-bottom-nav {
+  display:grid; grid-template-columns:repeat(5, 1fr); gap:4px;
+  padding:6px 6px 8px;
+  background:linear-gradient(180deg, #16223d, #0b1222);
+  border-top:2px solid #2d4473;
+  flex-shrink:0;
+}
+.nav-tab {
+  border:none; background:transparent; color:var(--text-dim);
+  border-radius:12px; padding:6px 2px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  font-family:inherit; font-size:10px; font-weight:bold;
+}
+.nav-tab .ni { font-size:18px; line-height:1.1; }
+.nav-tab.active {
+  background:linear-gradient(180deg,#2b4985,#1a2f5c);
+  color:var(--gold); border:1.5px solid rgba(255,204,51,.45);
+}
+
+/* مودال باز کردن صندوق کلش رویالی */
+.cr-toast {
+  position:fixed; top:66px; left:50%; transform:translateX(-50%); z-index:40;
+  background:rgba(12,19,36,.95); border:1.5px solid var(--gold); color:#fff;
+  padding:8px 16px; border-radius:999px; font-size:12px; font-weight:bold;
+  pointer-events:none; opacity:0; transition:opacity .22s; white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);
+}
+.cr-toast.show { opacity:1; }
+.modal-backdrop {
+  position:fixed; inset:0; z-index:30; background:rgba(4,7,15,.9);
+  display:none; align-items:center; justify-content:center; padding:18px;
+}
+.modal-backdrop.show { display:flex; }
+.chest-modal {
+  width:100%; max-width:340px; border-radius:22px; padding:22px 18px;
+  background:radial-gradient(circle at 50% 20%, #2a3f75, #101a33);
+  border:2.5px solid var(--gold); text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  box-shadow:0 0 40px rgba(255,204,51,.35);
+}
+.chest-big { font-size:74px; animation:bounceChest .7s infinite alternate; }
+@keyframes bounceChest { from{transform:scale(1) rotate(-3deg)} to{transform:scale(1.1) rotate(3deg)} }
+.loot-list { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; }
+.loot-item {
+  background:rgba(0,0,0,.45); border:1.5px solid var(--gold);
+  border-radius:14px; padding:10px 14px; min-width:90px;
+  animation:popIn .35s ease;
+}
+@keyframes popIn { from{transform:scale(.4); opacity:0} to{transform:scale(1); opacity:1} }
+
+/* ═══════════ صفحه بازی ═══════════ */
+#game-screen { background:#050807; }
+#hud { display:flex; align-items:center; justify-content:space-between; padding:6px 14px 2px; }
+.hud-cell { display:flex; flex-direction:column; align-items:center; min-width:68px; }
+.hud-label { font-size:10px; color:#5f8a72; }
+.hud-value { font-weight:bold; font-size:19px; color:#46f88f; line-height:1.25; }
+.hud-cell.best .hud-value { color:#ff5470; font-size:15px; }
+#hud-title { text-align:center; font-weight:bold; font-size:13px; }
+.combo-badge {
+  background:#ff5470; color:#fff; font-size:10.5px; padding:2px 9px;
+  border-radius:999px; display:none; font-weight:normal;
+}
+.goal-chip { display:inline-block; font-size:11px; color:#ffd166; margin-top:2px; font-weight:normal; }
+#heartsRow { display:none; font-size:13px; margin-top:2px; letter-spacing:2px; }
+#stage-wrap { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:4px 10px; }
+#stage {
+  position:relative; border-radius:16px; background:#0b120e;
+  box-shadow:0 0 0 1px rgba(70,248,143,.25), inset 0 0 60px rgba(0,0,0,.5); overflow:hidden;
+}
+#game { position:absolute; top:0; left:0; }
+#banner {
+  position:absolute; top:34%; left:0; right:0; z-index:4; text-align:center;
+  pointer-events:none; opacity:0; transition:opacity .35s; padding:0 10px;
+}
+#banner span {
+  display:inline-block; background:rgba(5,8,7,.9); border:1px solid rgba(80,170,255,.65);
+  color:#bfe0ff; font-size:15px; font-weight:bold; padding:10px 18px; border-radius:16px; line-height:1.9;
+}
+#banner.show { opacity:1; }
+.overlay {
+  position:absolute; inset:0; z-index:5; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:11px; text-align:center; padding:18px;
+  background:rgba(5,8,7,.93); opacity:0; pointer-events:none; transition:opacity .22s;
+}
+.overlay.show { opacity:1; pointer-events:auto; }
+.ov-title { font-size:26px; font-weight:bold; color:#46f88f; }
+.ov-sub { color:#8da4cc; font-size:12px; max-width:300px; line-height:1.8; }
+.new-record { color:#ffd166; font-weight:bold; animation:pulse .9s infinite; }
+@keyframes pulse { 50%{opacity:.35} }
+.ov-stats { display:flex; gap:18px; flex-wrap:wrap; justify-content:center; }
+.ov-stat b { display:block; font-size:21px; color:#46f88f; }
+.ov-stat span { font-size:10.5px; color:#8da4cc; }
+.btn {
+  border:1px solid rgba(70,248,143,.55); background:rgba(70,248,143,.14); color:#46f88f;
+  font-family:inherit; font-weight:bold; font-size:15px; padding:11px 28px; border-radius:999px;
+  cursor:pointer; touch-action:manipulation;
+}
+.btn.gold { border-color:#ffd166; background:rgba(255,209,102,.18); color:#ffd166; }
+.btn.sec { border-color:#64748b; background:rgba(100,116,139,.15); color:#cbd5e1; font-size:13.5px; padding:9px 22px; }
+.btn:active { transform:scale(.94); }
+#controls {
+  direction:ltr !important; display:grid; grid-template-columns:repeat(3,68px);
+  grid-template-rows:repeat(2,54px); gap:7px; justify-content:center; align-content:center;
+  margin:4px auto 10px; flex-shrink:0;
+}
+.dpad-btn {
+  border:1.5px solid rgba(70,248,143,.38); background:rgba(70,248,143,.08);
+  border-radius:14px; display:flex; align-items:center; justify-content:center;
+  color:#46f88f; font-size:18px; cursor:pointer; touch-action:none;
+}
+.dpad-btn.pressed { background:rgba(70,248,143,.38); transform:scale(.92); }
+.dp-up{grid-column:2;grid-row:1} .dp-left{grid-column:1;grid-row:2}
+.dp-down{grid-column:2;grid-row:2} .dp-right{grid-column:3;grid-row:2}
+#float-actions { position:absolute; bottom:8px; left:10px; display:flex; gap:8px; z-index:4; }
+.icon-btn {
+  width:34px; height:34px; border-radius:10px; cursor:pointer;
+  border:1px solid rgba(70,248,143,.35); background:rgba(5,8,7,.78); color:#46f88f;
+  font-size:14px; display:flex; align-items:center; justify-content:center;
+}
+#hpbar { position:absolute; top:6px; left:50%; transform:translateX(-50%); z-index:4; width:74%; display:none; }
+#hpbar .hptxt { font-size:10.5px; color:#ffb3c0; text-align:center; margin-bottom:2px; font-weight:bold; }
+#hpbar .hptrack {
+  height:11px; border-radius:999px; background:rgba(0,0,0,.6);
+  border:1px solid rgba(255,84,112,.6); overflow:hidden;
+}
+#hpbar .hpfill { height:100%; width:100%; background:linear-gradient(90deg,#ff5470,#ffd166); transition:width .2s; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ صفحه منوی کلش رویال ═══════════════ -->
+<div id="menu-screen" class="screen active">
+  <header class="cr-topbar">
+    <div class="cr-level-badge">
+      <span class="cr-level-num" id="uiLevel">۱</span>
+      <div class="cr-xp-wrap">
+        <span class="cr-xp-lbl" id="uiXpText">۰/۱۰۰</span>
+        <div class="cr-xp-bar"><div class="cr-xp-fill" id="uiXpFill"></div></div>
+      </div>
+    </div>
+    <div class="cr-currencies">
+      <div class="cr-pill gold">🪙 <span id="uiGold">۰</span></div>
+      <div class="cr-pill gems">💎 <span id="uiGems">۰</span></div>
+      <div class="cr-pill trophies">🏆 <span id="uiTrophies">۰</span></div>
+      <button class="cr-icon-btn" id="btnMenuSound">🔊</button>
+    </div>
+  </header>
+
+  <main class="cr-body">
+    <!-- تب ۳: نبرد (اصلی) -->
+    <section id="tab-battle" class="tab-pane active">
+      <div class="arena-banner">
+        <span class="arena-tag" id="uiArenaTag">آرنا ۱ • جنگل نئونی</span>
+        <div class="arena-title">🐍 مار نئونی رویال</div>
+        <div class="arena-preview-row">
+          <canvas id="menuPreviewCanvas" width="160" height="160"></canvas>
+          <div class="arena-stats-col">
+            <div class="stat-row"><span>🏆 رکورد امتیاز</span><b id="uiBest">۰</b></div>
+            <div class="stat-row"><span>🐉 اژدهای شکست‌خورده</span><b id="uiBossWins">۰</b></div>
+            <div class="stat-row"><span>🐍 شخصیت فعال</span><b id="uiActiveSkinName">مار نئونی</b></div>
+          </div>
+        </div>
+        <div class="mode-switch">
+          <div class="mode-chip active" data-mode="story" id="modeStory">🗺️ ماجراجویی کامل (۴ مرحله)</div>
+          <div class="mode-chip" data-mode="boss" id="modeBoss">⚔️ نبرد مستقیم اژدها</div>
+        </div>
+      </div>
+
+      <button class="cr-battle-btn" id="btnBattle">⚔️ شروع نبرد!</button>
+
+      <div class="section-head">
+        <span>📦 جایگاه صندوق‌ها</span>
+        <span class="section-sub">با رسیدن به مرحله آخر صندوق بگیر!</span>
+      </div>
+      <div class="chest-slots" id="chestSlots"></div>
+    </section>
+
+    <!-- تب ۲: کلکسیون اسکین و اکسسوری -->
+    <section id="tab-deck" class="tab-pane">
+      <div class="section-head">
+        <span>🐍 شخصیت‌ها و اسکین‌های مار</span>
+        <span class="section-sub">هر اسکین قدرت ویژه دارد!</span>
+      </div>
+      <div class="card-grid" id="skinsGrid"></div>
+
+      <div class="section-head" style="margin-top:6px;">
+        <span>👑 اکسسوری‌های سر مار</span>
+        <span class="section-sub">مستقیم روی سر مار نمایش داده می‌شود</span>
+      </div>
+      <div class="card-grid" id="accGrid"></div>
+    </section>
+
+    <!-- تب ۱: فروشگاه -->
+    <section id="tab-shop" class="tab-pane">
+      <div class="daily-banner">
+        <div>
+          <div style="font-weight:bold;font-size:14px;color:#fff;">🎁 هدیه روزانه فروشگاه</div>
+          <div style="font-size:11px;color:#d8b4fe;margin-top:3px;" id="shopGiftDesc">۱۰۰ 🪙 سکه + ۵ 💎 الماس رایگان</div>
+        </div>
+        <button class="daily-btn" id="btnShopGift">دریافت</button>
+      </div>
+
+      <div class="section-head">
+        <span>🧰 فروشگاه صندوق‌ها</span>
+        <span class="section-sub">باز کردن فوری و دریافت جایزه!</span>
+      </div>
+      <div class="card-grid" id="shopChestsGrid"></div>
+    </section>
+
+    <!-- تب ۴: جایزه روزانه و ماموریت‌ها -->
+    <section id="tab-events" class="tab-pane">
+      <div class="section-head">
+        <span>📅 تقویم جایزه روزانه (۷ روزه)</span>
+        <button class="daily-btn" id="btnClaimDaily" style="padding:6px 12px;font-size:11px;">دریافت جایزه امروز</button>
+      </div>
+      <div class="calendar-grid" id="dailyCalendar"></div>
+
+      <div class="section-head" style="margin-top:6px;">
+        <span>🎯 ماموریت‌ها و جوایز نبرد</span>
+        <span class="section-sub">ماموریت‌ها را کامل کن!</span>
+      </div>
+      <div id="questsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </section>
+
+    <!-- تب ۵: مسیر کاپ و آمار -->
+    <section id="tab-social" class="tab-pane">
+      <div class="section-head">
+        <span>🏆 مسیر کاپ (Trophy Road)</span>
+        <span class="section-sub">با جمع کاپ جایزه بگیر</span>
+      </div>
+      <div id="trophyRoadList" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <div class="section-head" style="margin-top:6px;">
+        <span>📊 آمار قهرمان</span>
+      </div>
+      <div class="arena-stats-col" id="statsSummary"></div>
+    </section>
+  </main>
+
+  <nav class="cr-bottom-nav">
+    <button class="nav-tab" data-tab="tab-shop"><span class="ni">🛒</span><span>فروشگاه</span></button>
+    <button class="nav-tab" data-tab="tab-deck"><span class="ni">🐍</span><span>اسکین‌ها</span></button>
+    <button class="nav-tab active" data-tab="tab-battle"><span class="ni">⚔️</span><span>نبرد</span></button>
+    <button class="nav-tab" data-tab="tab-events"><span class="ni">🎁</span><span>روزانه</span></button>
+    <button class="nav-tab" data-tab="tab-social"><span class="ni">🏆</span><span>کاپ‌ها</span></button>
+  </nav>
+</div>
+
+<!-- ═══════════════ صفحه بازی ═══════════════ -->
+<div id="game-screen" class="screen">
+  <header id="hud">
+    <div class="hud-cell"><span class="hud-label">امتیاز</span><span class="hud-value" id="hScore">۰</span></div>
+    <div id="hud-title">🐍 مار نئونی<br>
+      <span class="combo-badge" id="comboBadge"></span>
+      <span class="goal-chip" id="goalChip"></span>
+      <div id="heartsRow">❤️❤️❤️</div>
+    </div>
+    <div class="hud-cell best"><span class="hud-label">رکورد</span><span class="hud-value" id="hBest">۰</span></div>
+  </header>
+  <main id="stage-wrap">
+    <div id="stage">
+      <canvas id="game"></canvas>
+      <div id="hpbar"><div class="hptxt" id="hpTxt">🐉 جان اژدها</div><div class="hptrack"><div class="hpfill" id="hpfill"></div></div></div>
+      <div id="banner"><span id="bannerText"></span></div>
+      <div id="float-actions">
+        <button class="icon-btn" id="btnSound">🔊</button>
+        <button class="icon-btn" id="btnPause">⏸</button>
+      </div>
+
+      <div class="overlay" id="ovOver">
+        <div class="ov-title" style="color:#ff5470" id="overTitle">بازی تمام شد!</div>
+        <div class="new-record" id="ovRec" style="display:none">✦ رکورد جدید ✦</div>
+        <div class="ov-stats">
+          <div class="ov-stat"><b id="ovS">۰</b><span>امتیاز</span></div>
+          <div class="ov-stat"><b id="ovL">۳</b><span>طول مار</span></div>
+          <div class="ov-stat"><b id="ovGoldEarned" style="color:#ffd166">+۰</b><span>🪙 سکه جایزه</span></div>
+        </div>
+        <div class="ov-sub" id="ovChestNotice" style="color:#46f88f;font-weight:bold;"></div>
+        <button class="btn" id="btnRetry">🔄 نبرد دوباره</button>
+        <button class="btn sec" id="btnBackMenuOver">🏰 بازگشت به منو</button>
+      </div>
+
+      <div class="overlay" id="ovWin">
+        <div class="ov-title" style="color:#ffd166">🏆 اژدها شکست خورد!</div>
+        <p class="ov-sub">پیروزی باشکوه! سکه، کاپ و صندوق جایزه گرفتی!</p>
+        <div class="ov-stats">
+          <div class="ov-stat"><b id="ovWS">۰</b><span>امتیاز نهایی</span></div>
+          <div class="ov-stat"><b id="ovWinGold" style="color:#ffd166">+۲۵۰</b><span>🪙 سکه</span></div>
+          <div class="ov-stat"><b id="ovWinGems" style="color:#7fe3ff">+۱۵</b><span>💎 الماس</span></div>
+        </div>
+        <button class="btn gold" id="btnAgain">🔄 نبرد مجدد</button>
+        <button class="btn sec" id="btnBackMenuWin">🏰 بازگشت به منو و باز کردن صندوق</button>
+      </div>
+
+      <div class="overlay" id="ovPause">
+        <div class="ov-title" style="font-size:26px">⏸ متوقف شد</div>
+        <button class="btn" id="btnResume">▶️ ادامه</button>
+        <button class="btn sec" id="btnQuitMenu">🏰 خروج به منو</button>
+      </div>
+    </div>
+  </main>
+  <nav id="controls">
+    <div class="dpad-btn dp-up" data-dir="up">▲</div>
+    <div class="dpad-btn dp-left" data-dir="left">◀</div>
+    <div class="dpad-btn dp-down" data-dir="down">▼</div>
+    <div class="dpad-btn dp-right" data-dir="right">▶</div>
+  </nav>
+</div>
+
+<!-- توست اطلاع‌رسانی منو -->
+<div class="cr-toast" id="crToast"></div>
+
+<!-- مودال باز کردن صندوق -->
+<div class="modal-backdrop" id="chestModal">
+  <div class="chest-modal">
+    <div class="chest-big" id="modalChestEmoji">🧰</div>
+    <div style="font-size:19px;font-weight:bold;color:#ffd166;" id="modalChestTitle">صندوق طلایی!</div>
+    <div class="loot-list" id="modalLootList"></div>
+    <button class="cr-battle-btn" id="btnCloseChestModal" style="font-size:15px;padding:11px;">عالیه! جمع‌آوری</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+var $ = function(s){ return document.querySelector(s); };
+function faNum(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+function vibrate(ms){
+  if (window.AndroidBridge && window.AndroidBridge.vibrate) {
+    try { window.AndroidBridge.vibrate(JSON.stringify(ms)); return; } catch(e){}
+  }
+  if (navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){}
+}
+function lsGet(k){
+  if (window.AndroidBridge && window.AndroidBridge.getPref) {
+    try { var v = window.AndroidBridge.getPref(k); if (v !== null && v !== undefined && v !== '') return v; } catch(e){}
+  }
+  try{ return window.localStorage.getItem(k); }catch(e){ return null; }
+}
+function lsSet(k,v){
+  if (window.AndroidBridge && window.AndroidBridge.setPref) {
+    try { window.AndroidBridge.setPref(k, String(v)); } catch(e){}
+  }
+  try{ window.localStorage.setItem(k,v); }catch(e){}
+}
+
+/* ═══════════════ دیتای اسکین، اکسسوری، صندوق و پیشرفت ═══════════════ */
+var SKINS = [
+  { id:'neon',   name:'مار نئونی',   rarity:'common', price:0,   head:'#c8ffe0', body:'#46f88f', glow:'rgba(70,248,143,.45)', desc:'مار کلاسیک با تعادل کامل', bonusScore:1.0, bonusGold:1.0, dmg:1 },
+  { id:'viper',  name:'افعی آتشین',  rarity:'rare',   price:180, head:'#ffe0b2', body:'#ff6d2e', glow:'rgba(255,109,46,.45)', desc:'+۱۵٪ امتیاز بیشتر در مراحل', bonusScore:1.15, bonusGold:1.0, dmg:1 },
+  { id:'frost',  name:'مار یخی',     rarity:'rare',   price:260, head:'#e0f7ff', body:'#38bdf8', glow:'rgba(56,189,248,.45)', desc:'شروع با سپر یا سرعت متعادل', bonusScore:1.05, bonusGold:1.1, dmg:1 },
+  { id:'shadow', name:'شبح سایه',    rarity:'epic',   price:420, head:'#f3d1ff', body:'#a855f7', glow:'rgba(168,85,247,.5)',  desc:'+۲.۵ ثانیه مدت زمان روح 👻', bonusScore:1.1, bonusGold:1.15, dmg:1, ghostExtra:2500 },
+  { id:'royal',  name:'اژدهای طلایی',rarity:'epic',   price:650, head:'#fff6c8', body:'#fbbf24', glow:'rgba(251,191,36,.55)', desc:'+۲۵٪ سکه طلا از هر بازی', bonusScore:1.15, bonusGold:1.25, dmg:1 },
+  { id:'cosmic', name:'مار کیهانی',  rarity:'legend', price:950, head:'#ffffff', body:'rainbow', glow:'rgba(70,248,143,.65)', desc:'قدرتمندترین! آسیب مضاعف در نبرد نهایی', bonusScore:1.25, bonusGold:1.3, dmg:2 }
+];
+
+var ACCESSORIES = [
+  { id:'none',    name:'بدون تاج',     rarity:'common', price:0,   emoji:'➖', desc:'ظاهر ساده و کلاسیک' },
+  { id:'crown',   name:'تاج شاهانه',   rarity:'legend', price:350, emoji:'👑', desc:'تاج طلایی کلش رویالی!' },
+  { id:'shades',  name:'عینک نئونی',   rarity:'rare',   price:150, emoji:'😎', desc:'عینک دودی خفن' },
+  { id:'horns',   name:'شاخ اژدها',   rarity:'epic',   price:280, emoji:'😈', desc:'شاخ‌های آتشین اژدها' },
+  { id:'wizard',  name:'کلاه جادوگر',  rarity:'epic',   price:300, emoji:'🎩', desc:'کلاه جادویی نبرد' },
+  { id:'halo',    name:'هاله طلایی',   rarity:'rare',   price:220, emoji:'😇', desc:'هاله نورانی محافظ' },
+  { id:'ninja',   name:'هدبند نینجا',  rarity:'common', price:110, emoji:'🎀', desc:'هدبند سرخ جنگجو' }
+];
+
+var CHEST_TYPES = {
+  bronze: { id:'bronze', name:'صندوق برنزی', emoji:'🥉', unlockSec:10, gemSkip:2, shopPrice:120, shopGem:0, gold:[40,80],  gems:[1,3],  xp:20 },
+  silver: { id:'silver', name:'صندوق نقره‌ای', emoji:'🥈', unlockSec:20, gemSkip:4, shopPrice:260, shopGem:0, gold:[90,160], gems:[3,6],  xp:40 },
+  gold:   { id:'gold',   name:'صندوق طلایی', emoji:'🥇', unlockSec:35, gemSkip:7, shopPrice:0,   shopGem:12, gold:[180,320],gems:[7,14], xp:80 },
+  dragon: { id:'dragon', name:'صندوق اژدها', emoji:'🐉', unlockSec:45, gemSkip:10,shopPrice:0,   shopGem:25, gold:[350,550],gems:[15,28],xp:150 }
+};
+
+var DAILY_REWARDS = [
+  { day:1, gold:80,  gems:2,  chest:null,     label:'۸۰ 🪙 + ۲ 💎' },
+  { day:2, gold:120, gems:3,  chest:null,     label:'۱۲۰ 🪙 + ۳ 💎' },
+  { day:3, gold:100, gems:4,  chest:'bronze', label:'صندوق برنزی' },
+  { day:4, gold:180, gems:5,  chest:null,     label:'۱۸۰ 🪙 + ۵ 💎' },
+  { day:5, gold:220, gems:7,  chest:'silver', label:'صندوق نقره‌ای' },
+  { day:6, gold:300, gems:10, chest:null,     label:'۳۰۰ 🪙 + ۱۰ 💎' },
+  { day:7, gold:450, gems:20, chest:'gold',   label:'صندوق طلایی!' }
+];
+
+var QUEST_DEFS = [
+  { id:'q_apples', title:'🍎 ۳۰ سیب در ماجراجویی بخور', stat:'totalApples', target:30, gold:120, gems:5 },
+  { id:'q_belly',  title:'🫀 ۳ بار وارد شکم اژدها شو',    stat:'bellyVisits', target:3,  gold:180, gems:8 },
+  { id:'q_boss',   title:'🐉 اژدهای نهایی را شکست بده!', stat:'bossWins',    target:1,  gold:350, gems:18 },
+  { id:'q_chests', title:'📦 ۵ صندوق باز کن',            stat:'chestsOpened',target:5,  gold:220, gems:10 }
+];
+
+var TROPHY_ROAD = [
+  { trophies:30,  gold:100, gems:4,  chest:'bronze', title:'۳۰ کاپ — آرنا جنگل' },
+  { trophies:80,  gold:180, gems:7,  chest:'silver', title:'۸۰ کاپ — آرنا غار مذاب' },
+  { trophies:150, gold:280, gems:12, chest:'gold',   title:'۱۵۰ کاپ — آرنا قلعه سرخ' },
+  { trophies:250, gold:500, gems:25, chest:'dragon', title:'۲۵۰ کاپ — پادشاه اژدها!' }
+];
+
+var SAVE_KEY = 'neon-snake-royale-v1';
+function defaultSave(){
+  return {
+    gold: 150,
+    gems: 10,
+    trophies: 0,
+    xp: 0,
+    level: 1,
+    best: Number(lsGet('neon-snake-plus-best') || 0),
+    skin: 'neon',
+    acc: 'none',
+    ownedSkins: ['neon'],
+    ownedAcc: ['none'],
+    slots: [
+      { type:'bronze', unlockAt:0, ready:true },
+      null, null, null
+    ],
+    dailyDay: 1,
+    lastDailyTs: 0,
+    lastShopGiftTs: 0,
+    stats: { gamesPlayed:0, totalApples:0, bellyVisits:0, bossWins:0, chestsOpened:0 },
+    claimedQuests: [],
+    claimedRoad: [],
+    soundOn: true
+  };
+}
+var save = (function(){
+  try {
+    var raw = lsGet(SAVE_KEY);
+    if (raw){
+      var parsed = JSON.parse(raw);
+      var def = defaultSave();
+      for (var k in def) if (parsed[k] === undefined) parsed[k] = def[k];
+      if (!parsed.stats) parsed.stats = def.stats;
+      if (!parsed.slots || parsed.slots.length !== 4) parsed.slots = def.slots;
+      return parsed;
+    }
+  } catch(e){}
+  return defaultSave();
+})();
+function persist(){
+  lsSet('neon-snake-plus-best', save.best);
+  lsSet(SAVE_KEY, JSON.stringify(save));
+}
+
+function getSkinObj(id){
+  for (var i=0;i<SKINS.length;i++) if (SKINS[i].id===id) return SKINS[i];
+  return SKINS[0];
+}
+function getAccObj(id){
+  for (var i=0;i<ACCESSORIES.length;i++) if (ACCESSORIES[i].id===id) return ACCESSORIES[i];
+  return ACCESSORIES[0];
+}
+function addXP(amt){
+  save.xp += amt;
+  while (save.xp >= save.level * 100){
+    save.xp -= save.level * 100;
+    save.level++;
+  }
+}
+function addChestToSlot(type){
+  for (var i=0; i<4; i++){
+    if (!save.slots[i]){
+      save.slots[i] = { type:type, unlockAt:0, ready:false };
+      return true;
+    }
+  }
+  return false;
+}
+
+/* ═══════════════ صدا ═══════════════ */
+var soundOn = save.soundOn !== false;
+var audioCtx = null;
+function tone(f, dur, delay, vol){
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var t0 = audioCtx.currentTime + (delay||0);
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type='square'; o.frequency.value=f;
+    g.gain.setValueAtTime(vol||.06,t0);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t0); o.stop(t0+dur+.02);
+  } catch(e){}
+}
+function noiseBurst(dur, vol){
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var len = Math.floor(audioCtx.sampleRate * dur);
+    var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i=0;i<len;i++) data[i] = (Math.random()*2-1)*(1-i/len);
+    var src = audioCtx.createBufferSource(); src.buffer = buf;
+    var g = audioCtx.createGain(); g.gain.value = vol||.1;
+    src.connect(g); g.connect(audioCtx.destination); src.start();
+  } catch(e){}
+}
+var sfx = {
+  eat:function(){ tone(660,.06); tone(990,.08,.05,.05); },
+  gold:function(){ tone(784,.09); tone(988,.09,.07); tone(1175,.09,.14); },
+  power:function(){ tone(523,.08); tone(659,.08,.08); },
+  bomb:function(){ tone(110,.25,0,.1); },
+  die:function(){ tone(392,.15); tone(330,.15,.12); tone(262,.15,.24); },
+  click:function(){ tone(520,.04,0,.03); },
+  start:function(){ tone(523,.09); tone(659,.09,.09); tone(784,.12,.18); },
+  roar:function(){ noiseBurst(.7,.14); tone(60,.8,0,.14); tone(48,.9,.2,.14); tone(720,.3,.1,.04); },
+  fire:function(){ noiseBurst(.5,.12); },
+  chomp:function(){ tone(180,.08,0,.1); tone(120,.1,.05,.08); },
+  gulp:function(){ tone(300,.15,0,.09); tone(150,.25,.12,.09); },
+  warp:function(){ [400,600,900,1300].forEach(function(f,i){ tone(f,.08,i*.07,.07); }); },
+  shoot:function(){ tone(880,.07,0,.07); tone(1200,.05,.04,.05); },
+  hit:function(){ tone(200,.12,0,.1); noiseBurst(.15,.08); },
+  bosshit:function(){ tone(150,.2,0,.12); tone(90,.25,.08,.1); },
+  chest:function(){ [523,659,784,1047].forEach(function(f,i){ tone(f,.11,i*.09,.07); }); },
+  win:function(){ [523,659,784,1047,1319].forEach(function(f,i){ tone(f,.15,i*.12,.08); }); }
+};
+
+/* ═══════════════ رابط کاربری منوی کلش رویال ═══════════════ */
+var selectedMode = 'story';
+function fmtRemain(ms){
+  if (ms <= 0) return 'آماده!';
+  var s = Math.ceil(ms/1000);
+  var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h > 0) return faNum(h)+':'+faNum(m<10?'0'+m:m)+':'+faNum(sec<10?'0'+sec:sec);
+  return faNum(m)+':'+faNum(sec<10?'0'+sec:sec);
+}
+function getArenaInfo(){
+  var t = save.trophies;
+  if (t >= 200) return 'آرنا ۴ • لانه اژدهای افسانه‌ای';
+  if (t >= 100) return 'آرنا ۳ • قلعه سرخ';
+  if (t >= 40)  return 'آرنا ۲ • غار مذاب';
+  return 'آرنا ۱ • جنگل نئونی';
+}
+
+function renderTopBar(){
+  $('#uiLevel').textContent = faNum(save.level);
+  var maxXp = save.level * 100;
+  $('#uiXpText').textContent = faNum(save.xp)+'/'+faNum(maxXp);
+  $('#uiXpFill').style.width = Math.min(100, Math.round(save.xp/maxXp*100))+'%';
+  $('#uiGold').textContent = faNum(save.gold);
+  $('#uiGems').textContent = faNum(save.gems);
+  $('#uiTrophies').textContent = faNum(save.trophies);
+  $('#uiBest').textContent = faNum(save.best);
+  $('#uiBossWins').textContent = faNum(save.stats.bossWins);
+  $('#uiActiveSkinName').textContent = getSkinObj(save.skin).name;
+  $('#uiArenaTag').textContent = getArenaInfo();
+  $('#hBest').textContent = faNum(save.best);
+  var sIcon = soundOn ? '🔊' : '🔇';
+  $('#btnMenuSound').textContent = sIcon;
+  $('#btnSound').textContent = sIcon;
+}
+
+function renderChestSlots(){
+  var now = Date.now();
+  var html = '';
+  for (var i=0; i<4; i++){
+    var sl = save.slots[i];
+    if (!sl){
+      html += '<div class="chest-slot" data-slot="'+i+'"><div class="chest-emoji" style="opacity:.25">📦</div><div class="chest-name" style="color:#64748b">خالی</div></div>';
+      continue;
+    }
+    var ct = CHEST_TYPES[sl.type];
+    var isReady = sl.ready || (sl.unlockAt > 0 && now >= sl.unlockAt);
+    if (isReady) sl.ready = true;
+    var statusTxt = isReady ? 'باز کن!' : (sl.unlockAt > 0 ? '⏳ '+fmtRemain(sl.unlockAt - now) : 'باز کردن ('+faNum(ct.unlockSec)+'ث)');
+    html += '<div class="chest-slot filled '+(isReady?'ready':'')+'" data-slot="'+i+'">'
+         + '<div class="chest-emoji">'+ct.emoji+'</div>'
+         + '<div class="chest-name">'+ct.name+'</div>'
+         + '<div class="chest-status">'+statusTxt+'</div>'
+         + '</div>';
+  }
+  $('#chestSlots').innerHTML = html;
+  document.querySelectorAll('.chest-slot.filled').forEach(function(el){
+    el.onclick = function(){ onChestSlotClick(Number(el.dataset.slot)); };
+  });
+}
+
+function onChestSlotClick(idx){
+  var sl = save.slots[idx];
+  if (!sl) return;
+  var now = Date.now();
+  if (sl.ready || (sl.unlockAt > 0 && now >= sl.unlockAt)){
+    openChest(sl.type);
+    save.slots[idx] = null;
+    persist();
+    renderAllMenu();
+  } else if (sl.unlockAt === 0){
+    sl.unlockAt = now + CHEST_TYPES[sl.type].unlockSec * 1000;
+    sfx.click();
+    persist();
+    renderChestSlots();
+  } else {
+    var skipCost = CHEST_TYPES[sl.type].gemSkip;
+    if (save.gems >= skipCost){
+      save.gems -= skipCost;
+      openChest(sl.type);
+      save.slots[idx] = null;
+      persist();
+      renderAllMenu();
+    } else {
+      sfx.bomb();
+      showToast('💎 الماس کافی نیست! ('+faNum(skipCost)+' الماس نیاز است)');
+    }
+  }
+}
+var toastTimer = null;
+function showToast(msg){
+  var el = $('#crToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2000);
+}
+
+function openChest(type){
+  var ct = CHEST_TYPES[type];
+  var g = ct.gold[0] + Math.floor(Math.random()*(ct.gold[1]-ct.gold[0]+1));
+  var gm = ct.gems[0] + Math.floor(Math.random()*(ct.gems[1]-ct.gems[0]+1));
+  save.gold += g;
+  save.gems += gm;
+  addXP(ct.xp);
+  save.stats.chestsOpened++;
+
+  /* شانس باز شدن تصادفی اسکین یا اکسسوری از صندوق‌های نقره/طلا/اژدها! */
+  var bonusItem = null;
+  if (type === 'gold' || type === 'dragon' || (type === 'silver' && Math.random() < 0.35)){
+    var lockedAcc = ACCESSORIES.filter(function(a){ return save.ownedAcc.indexOf(a.id) === -1; });
+    var lockedSkins = SKINS.filter(function(s){ return save.ownedSkins.indexOf(s.id) === -1 && s.price <= 650; });
+    if (lockedAcc.length && (Math.random() < 0.6 || !lockedSkins.length)){
+      var a = pick(lockedAcc);
+      save.ownedAcc.push(a.id);
+      bonusItem = { emoji:a.emoji, label:a.name };
+    } else if (lockedSkins.length){
+      var s = pick(lockedSkins);
+      save.ownedSkins.push(s.id);
+      bonusItem = { emoji:'🐍', label:s.name };
+    }
+  }
+
+  persist();
+  sfx.chest(); vibrate([60,40,100]);
+  $('#modalChestEmoji').textContent = ct.emoji;
+  $('#modalChestTitle').textContent = ct.name + ' باز شد!';
+  var lootHtml = '<div class="loot-item"><div style="font-size:24px">🪙</div><b>+'+faNum(g)+'</b><div style="font-size:10px;color:#ffd166">سکه</div></div>'
+               + '<div class="loot-item"><div style="font-size:24px">💎</div><b>+'+faNum(gm)+'</b><div style="font-size:10px;color:#46f88f">الماس</div></div>'
+               + '<div class="loot-item"><div style="font-size:24px">⭐</div><b>+'+faNum(ct.xp)+'</b><div style="font-size:10px;color:#7fe3ff">تجربه</div></div>';
+  if (bonusItem){
+    lootHtml += '<div class="loot-item" style="border-color:#46f88f"><div style="font-size:24px">'+bonusItem.emoji+'</div><b>'+bonusItem.label+'</b><div style="font-size:10px;color:#46f88f">هدیه ویژه!</div></div>';
+  }
+  $('#modalLootList').innerHTML = lootHtml;
+  $('#chestModal').classList.add('show');
+}
+ $('#btnCloseChestModal').onclick = function(){
+  sfx.click();
+  $('#chestModal').classList.remove('show');
+  renderAllMenu();
+};
+
+function renderDeck(){
+  var sHtml = '';
+  SKINS.forEach(function(sk){
+    var owned = save.ownedSkins.indexOf(sk.id) !== -1;
+    var eq = save.skin === sk.id;
+    var swStyle = sk.body === 'rainbow'
+      ? 'background:linear-gradient(90deg,#ff5470,#ffd166,#46f88f,#38bdf8,#c054ff)'
+      : 'background:linear-gradient(90deg,'+sk.head+','+sk.body+')';
+    var btnHtml = eq
+      ? '<button class="card-btn active-btn">✓ انتخاب‌شده</button>'
+      : (owned
+          ? '<button class="card-btn equip" data-eqskin="'+sk.id+'">انتخاب</button>'
+          : '<button class="card-btn buy" data-buyskin="'+sk.id+'">🪙 '+faNum(sk.price)+'</button>');
+    sHtml += '<div class="cr-card rarity-'+sk.rarity+' '+(eq?'equipped':'')+'">'
+          + (eq?'<span class="card-badge">فعال</span>':'')
+          + '<div class="card-swatch" style="'+swStyle+';margin-top:8px;"></div>'
+          + '<div class="card-title">'+sk.name+'</div>'
+          + '<div class="card-desc">'+sk.desc+'</div>'
+          + btnHtml + '</div>';
+  });
+  $('#skinsGrid').innerHTML = sHtml;
+
+  var aHtml = '';
+  ACCESSORIES.forEach(function(ac){
+    var owned = save.ownedAcc.indexOf(ac.id) !== -1;
+    var eq = save.acc === ac.id;
+    var btnHtml = eq
+      ? '<button class="card-btn active-btn">✓ پوشیده</button>'
+      : (owned
+          ? '<button class="card-btn equip" data-eqacc="'+ac.id+'">پوشیدن</button>'
+          : '<button class="card-btn buy" data-buyacc="'+ac.id+'">🪙 '+faNum(ac.price)+'</button>');
+    aHtml += '<div class="cr-card rarity-'+ac.rarity+' '+(eq?'equipped':'')+'">'
+          + (eq?'<span class="card-badge">فعال</span>':'')
+          + '<div class="card-art">'+ac.emoji+'</div>'
+          + '<div class="card-title">'+ac.name+'</div>'
+          + '<div class="card-desc">'+ac.desc+'</div>'
+          + btnHtml + '</div>';
+  });
+  $('#accGrid').innerHTML = aHtml;
+
+  document.querySelectorAll('[data-eqskin]').forEach(function(b){
+    b.onclick = function(){ save.skin = b.dataset.eqskin; sfx.click(); persist(); renderAllMenu(); };
+  });
+  document.querySelectorAll('[data-buyskin]').forEach(function(b){
+    b.onclick = function(){
+      var sk = getSkinObj(b.dataset.buyskin);
+      if (save.gold >= sk.price){
+        save.gold -= sk.price; save.ownedSkins.push(sk.id); save.skin = sk.id;
+        sfx.gold(); vibrate(40); persist(); renderAllMenu();
+        showToast('🐍 '+sk.name+' خریداری و فعال شد!');
+      } else { sfx.bomb(); showToast('🪙 سکه کافی نیست!'); }
+    };
+  });
+  document.querySelectorAll('[data-eqacc]').forEach(function(b){
+    b.onclick = function(){ save.acc = b.dataset.eqacc; sfx.click(); persist(); renderAllMenu(); };
+  });
+  document.querySelectorAll('[data-buyacc]').forEach(function(b){
+    b.onclick = function(){
+      var ac = getAccObj(b.dataset.buyacc);
+      if (save.gold >= ac.price){
+        save.gold -= ac.price; save.ownedAcc.push(ac.id); save.acc = ac.id;
+        sfx.gold(); vibrate(40); persist(); renderAllMenu();
+        showToast(ac.emoji+' '+ac.name+' خریداری و پوشیده شد!');
+      } else { sfx.bomb(); showToast('🪙 سکه کافی نیست!'); }
+    };
+  });
+}
+
+function renderShop(){
+  var now = Date.now();
+  var dayMs = 24*3600*1000;
+  var giftReady = (now - save.lastShopGiftTs) >= dayMs;
+  $('#btnShopGift').disabled = !giftReady;
+  $('#btnShopGift').textContent = giftReady ? 'دریافت رایگان!' : fmtRemain(dayMs - (now - save.lastShopGiftTs));
+
+  var html = '';
+  ['bronze','silver','gold','dragon'].forEach(function(k){
+    var ct = CHEST_TYPES[k];
+    var useGem = ct.shopGem > 0;
+    var costTxt = useGem ? '💎 '+faNum(ct.shopGem) : '🪙 '+faNum(ct.shopPrice);
+    html += '<div class="cr-card rarity-'+(k==='dragon'?'legend':(k==='gold'?'epic':(k==='silver'?'rare':'common')))+'">'
+          + '<div class="card-art">'+ct.emoji+'</div>'
+          + '<div class="card-title">'+ct.name+'</div>'
+          + '<div class="card-desc">🪙 '+faNum(ct.gold[0])+'-'+faNum(ct.gold[1])+' | 💎 '+faNum(ct.gems[0])+'-'+faNum(ct.gems[1])+'</div>'
+          + '<button class="card-btn buy" data-shopchest="'+k+'">خرید '+costTxt+'</button>'
+          + '</div>';
+  });
+  $('#shopChestsGrid').innerHTML = html;
+  document.querySelectorAll('[data-shopchest]').forEach(function(b){
+    b.onclick = function(){
+      var ct = CHEST_TYPES[b.dataset.shopchest];
+      if (ct.shopGem > 0){
+        if (save.gems >= ct.shopGem){ save.gems -= ct.shopGem; openChest(ct.id); }
+        else { sfx.bomb(); showToast('💎 الماس کافی نیست!'); }
+      } else {
+        if (save.gold >= ct.shopPrice){ save.gold -= ct.shopPrice; openChest(ct.id); }
+        else { sfx.bomb(); showToast('🪙 سکه کافی نیست!'); }
+      }
+    };
+  });
+}
+ $('#btnShopGift').onclick = function(){
+  var now = Date.now();
+  if (now - save.lastShopGiftTs < 24*3600*1000) return;
+  save.lastShopGiftTs = now;
+  save.gold += 100; save.gems += 5; addXP(15);
+  sfx.gold(); vibrate(50); persist(); renderAllMenu();
+};
+
+function renderEvents(){
+  var now = Date.now();
+  var dayMs = 24*3600*1000;
+  var canDaily = (now - save.lastDailyTs) >= dayMs;
+  $('#btnClaimDaily').disabled = !canDaily;
+  $('#btnClaimDaily').textContent = canDaily ? '🎁 دریافت روز '+faNum(save.dailyDay) : '⏳ '+fmtRemain(dayMs - (now - save.lastDailyTs));
+
+  var cHtml = '';
+  DAILY_REWARDS.forEach(function(dr){
+    var claimed = dr.day < save.dailyDay || (!canDaily && dr.day === save.dailyDay && save.lastDailyTs > 0);
+    var isToday = dr.day === save.dailyDay && canDaily;
+    cHtml += '<div class="cal-day '+(claimed?'claimed':'')+' '+(isToday?'today':'')+'">'
+          + '<div style="font-weight:bold;color:#ffd166">روز '+faNum(dr.day)+'</div>'
+          + '<div style="font-size:22px">'+(dr.chest ? CHEST_TYPES[dr.chest].emoji : '🪙')+'</div>'
+          + '<div style="font-size:9.5px">'+dr.label+'</div>'
+          + '</div>';
+  });
+  $('#dailyCalendar').innerHTML = cHtml;
+
+  var qHtml = '';
+  QUEST_DEFS.forEach(function(q){
+    var val = save.stats[q.stat] || 0;
+    var done = val >= q.target;
+    var claimed = save.claimedQuests.indexOf(q.id) !== -1;
+    var pct = Math.min(100, Math.round(val/q.target*100));
+    var btn = claimed
+      ? '<span style="font-size:11px;color:#46f88f">✓ دریافت شد</span>'
+      : '<button class="daily-btn" data-qclaim="'+q.id+'" '+(done?'':'disabled')+'>'+(done?'جایزه!':faNum(val)+'/'+faNum(q.target))+'</button>';
+    qHtml += '<div class="quest-card">'
+          + '<div class="quest-info"><div class="quest-title">'+q.title+'</div>'
+          + '<div style="font-size:10px;color:#ffd166;margin-top:2px;">جایزه: +'+faNum(q.gold)+' 🪙  +'+faNum(q.gems)+' 💎</div>'
+          + '<div class="quest-bar"><div class="quest-fill" style="width:'+pct+'%"></div></div></div>'
+          + btn + '</div>';
+  });
+  $('#questsList').innerHTML = qHtml;
+  document.querySelectorAll('[data-qclaim]').forEach(function(b){
+    b.onclick = function(){
+      var q = QUEST_DEFS.filter(function(x){ return x.id===b.dataset.qclaim; })[0];
+      if (!q || save.claimedQuests.indexOf(q.id)!==-1) return;
+      if ((save.stats[q.stat]||0) < q.target) return;
+      save.claimedQuests.push(q.id);
+      save.gold += q.gold; save.gems += q.gems; addXP(35);
+      sfx.gold(); vibrate(50); persist(); renderAllMenu();
+    };
+  });
+}
+ $('#btnClaimDaily').onclick = function(){
+  var now = Date.now();
+  if (now - save.lastDailyTs < 24*3600*1000) return;
+  var dr = DAILY_REWARDS[save.dailyDay - 1] || DAILY_REWARDS[0];
+  save.lastDailyTs = now;
+  save.gold += dr.gold; save.gems += dr.gems; addXP(25);
+  save.dailyDay = save.dailyDay >= 7 ? 1 : save.dailyDay + 1;
+  if (dr.chest){ openChest(dr.chest); } else { sfx.gold(); vibrate(50); }
+  persist(); renderAllMenu();
+};
+
+function renderTrophyRoad(){
+  var rHtml = '';
+  TROPHY_ROAD.forEach(function(tr){
+    var unlocked = save.trophies >= tr.trophies;
+    var claimed = save.claimedRoad.indexOf(tr.trophies) !== -1;
+    var btn = claimed
+      ? '<span style="font-size:11px;color:#46f88f">✓ دریافت شد</span>'
+      : '<button class="daily-btn" data-road="'+tr.trophies+'" '+(unlocked?'':'disabled')+'>'+(unlocked?'دریافت '+CHEST_TYPES[tr.chest].emoji:'🔒 '+faNum(tr.trophies)+' 🏆')+'</button>';
+    rHtml += '<div class="quest-card">'
+          + '<div class="quest-info"><div class="quest-title">'+tr.title+'</div>'
+          + '<div style="font-size:10px;color:#ffd166;margin-top:3px;">+'+faNum(tr.gold)+' 🪙  +'+faNum(tr.gems)+' 💎 + '+CHEST_TYPES[tr.chest].name+'</div></div>'
+          + btn + '</div>';
+  });
+  $('#trophyRoadList').innerHTML = rHtml;
+  document.querySelectorAll('[data-road]').forEach(function(b){
+    b.onclick = function(){
+      var tVal = Number(b.dataset.road);
+      var tr = TROPHY_ROAD.filter(function(x){ return x.trophies===tVal; })[0];
+      if (!tr || save.trophies < tr.trophies || save.claimedRoad.indexOf(tVal)!==-1) return;
+      save.claimedRoad.push(tVal);
+      save.gold += tr.gold; save.gems += tr.gems;
+      openChest(tr.chest);
+      persist(); renderAllMenu();
+    };
+  });
+  $('#statsSummary').innerHTML =
+    '<div class="stat-row"><span>🎮 کل بازی‌ها</span><b>'+faNum(save.stats.gamesPlayed)+'</b></div>'
+  + '<div class="stat-row"><span>🍎 کل سیب‌های خورده‌شده</span><b>'+faNum(save.stats.totalApples)+'</b></div>'
+  + '<div class="stat-row"><span>🫀 ورود به شکم اژدها</span><b>'+faNum(save.stats.bellyVisits)+'</b></div>'
+  + '<div class="stat-row"><span>📦 صندوق‌های بازشده</span><b>'+faNum(save.stats.chestsOpened)+'</b></div>';
+}
+
+function renderAllMenu(){
+  renderTopBar();
+  renderChestSlots();
+  renderDeck();
+  renderShop();
+  renderEvents();
+  renderTrophyRoad();
+}
+
+/* ناوبری تب‌ها */
+document.querySelectorAll('.nav-tab').forEach(function(tab){
+  tab.onclick = function(){
+    sfx.click();
+    document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
+    tab.classList.add('active');
+    $('#'+tab.dataset.tab).classList.add('active');
+  };
+});
+document.querySelectorAll('.mode-chip').forEach(function(ch){
+  ch.onclick = function(){
+    sfx.click();
+    selectedMode = ch.dataset.mode;
+    document.querySelectorAll('.mode-chip').forEach(function(m){ m.classList.remove('active'); });
+    ch.classList.add('active');
+  };
+});
+
+setInterval(function(){
+  if ($('#menu-screen').classList.contains('active')){
+    renderChestSlots();
+    renderShop();
+    renderEvents();
+  }
+}, 1000);
+
+/* ═══════════════ اژدهای پیکسلی (۴ لایه اصیل) ═══════════════ */
+var COLS = 19, ROWS = 19;
+var DIRS = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
+var OPPO = { up:'down', down:'up', left:'right', right:'left' };
+var TYPES = {
+  apple:{emoji:'🍎',color:'#ff5470'}, gold:{emoji:'⭐',color:'#ffd166'},
+  bomb:{emoji:'💣',color:'#aaa'}, ghost:{emoji:'👻',color:'#b8cfff'},
+  slow:{emoji:'🐌',color:'#7fe3ff'}, double:{emoji:'💰',color:'#ffe66d'},
+  orb:{emoji:'💠',color:'#7fe3ff'}, acid:{emoji:'🟣',color:'#c44dff'},
+  portal:{emoji:'🌀',color:'#fff'}, fireball:{emoji:'🔥',color:'#ff9800'},
+  superfire:{emoji:'☄️',color:'#ffd166'}, heart:{emoji:'❤️',color:'#ff5470'},
+  shield:{emoji:'🛡️',color:'#7fe3ff'}
+};
+var LEVELS = {
+  1: { bg:'#0b120e', grid:'rgba(90,255,160,.06)', name:'۱', goal:8,  wall:'rgba(70,248,143,.25)' },
+  2: { bg:'#1a1206', grid:'rgba(255,180,60,.07)', name:'۲', goal:10, wall:'rgba(255,180,60,.3)' },
+  3: { bg:'#1a0608', grid:'rgba(255,80,80,.08)',  name:'۳', goal:12, wall:'rgba(255,84,112,.35)' }
+};
+var DRAGON_STYLE = { 1:{hue:222,size:1.7}, 2:{hue:285,size:2.05}, 3:{hue:0,size:2.4}, 4:{hue:135,size:2.65} };
+var PAL_ORIGINAL = ['#000000','#101024','#2b5ce6','#1c3fae','#142e85','#4a80ff','#7ea6ff',
+  '#ffd83e','#dfa21c','#fff3b0','#ffffff','#7a0e0e','#e63214','#ff7d1a','#ffc31f','#fff6c8'];
+function hslHex(h,s,l){
+  s/=100; l/=100;
+  var k=function(n){ return (n+h/30)%12; };
+  var a=s*Math.min(l,1-l);
+  var f=function(n){ return l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1))); };
+  var to=function(v){ var c=Math.round(v*255).toString(16); return c.length<2?'0'+c:c; };
+  return '#'+to(f(0))+to(f(8))+to(f(4));
+}
+function dragonPalette(hue){
+  if (hue === 222) return PAL_ORIGINAL;
+  var p = PAL_ORIGINAL.slice();
+  p[2]=hslHex(hue,75,54); p[3]=hslHex(hue,73,40); p[4]=hslHex(hue,73,30);
+  p[5]=hslHex(hue,100,65); p[6]=hslHex(hue,100,75);
+  return p;
+}
+var SP_W=200, SP_H=150, SP_OX=32, SP_OY=36, SP_AX=50, SP_AY=52;
+function newBuf(){ return { b:new Uint8Array(SP_W*SP_H) }; }
+function bpx(g,x,y,i){ x=Math.round(x)+SP_OX; y=Math.round(y)+SP_OY;
+  if(x>=0&&x<SP_W&&y>=0&&y<SP_H) g.b[y*SP_W+x]=i; }
+function brect(g,x,y,w,h,i){ for(var j=0;j<h;j++)for(var k=0;k<w;k++)bpx(g,x+k,y+j,i); }
+function bell(g,cx,cy,rx,ry,i){ if(rx<.5)rx=.5;if(ry<.5)ry=.5;
+  for(var y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)
+  for(var x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){
+    var dx=(x-cx)/rx,dy=(y-cy)/ry;if(dx*dx+dy*dy<=1.05)bpx(g,x,y,i);} }
+function bpoly(g,p,i){ var y0=1e9,y1=-1e9,k;
+  for(k=0;k<p.length;k++){if(p[k][1]<y0)y0=p[k][1];if(p[k][1]>y1)y1=p[k][1];}
+  for(var y=Math.ceil(y0);y<=Math.floor(y1);y++){var xs=[];
+    for(k=0;k<p.length;k++){var a=p[k],q=p[(k+1)%p.length];
+      if((a[1]<=y&&q[1]>y)||(q[1]<=y&&a[1]>y))xs.push(a[0]+(y-a[1])/(q[1]-a[1])*(q[0]-a[0]));}
+    xs.sort(function(m,n){return m-n;});
+    for(k=0;k+1<xs.length;k+=2)for(var x=Math.ceil(xs[k]);x<=Math.floor(xs[k+1]);x++)bpx(g,x,y,i);} }
+function bline(g,x0,y0,x1,y1,i,t){ t=t||1; var r=t>>1,n=0;
+  var dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx-dy;
+  while(n++<900){for(var j=-r;j<=r;j++)for(var k=-r;k<=r;k++)bpx(g,x0+k,y0+j,i);
+    if(x0==x1&&y0==y1)break;var e2=2*e;
+    if(e2>-dy){e-=dy;x0+=sx;}if(e2<dx){e+=dx;y0+=sy;}}}
+function outlineBuf(g){
+  var s=new Uint8Array(g.b);
+  for(var y=0;y<SP_H;y++)for(var x=0;x<SP_W;x++){
+    if(s[y*SP_W+x])continue;
+    var l=x>0?s[y*SP_W+x-1]:0, r=x<SP_W-1?s[y*SP_W+x+1]:0,
+        u=y>0?s[(y-1)*SP_W+x]:0, d=y<SP_H-1?s[(y+1)*SP_W+x]:0;
+    if((l&&l!=1)||(r&&r!=1)||(u&&u!=1)||(d&&d!=1)) g.b[y*SP_W+x]=1; }
+}
+function bakeBuf(g,pal){
+  var c=document.createElement('canvas'); c.width=SP_W; c.height=SP_H;
+  var cc=c.getContext('2d');
+  for(var y=0;y<SP_H;y++)for(var x=0;x<SP_W;x++){
+    var v=g.b[y*SP_W+x];
+    if(v){ cc.fillStyle=pal[v]; cc.fillRect(x,y,1,1); } }
+  return c;
+}
+function buildDragonSet(pal){
+  var fw=newBuf();
+  bpoly(fw,[[60,44],[66,30],[74,19],[84,11],[92,7],[95,10],[91,14],[96,18],[89,22],[93,27],[85,29],[88,34],[79,35],[81,40],[72,42],[66,46]],3);
+  bline(fw,63,43,92,7,4); bline(fw,63,43,96,18,4); bline(fw,63,43,93,27,4); bline(fw,63,43,88,34,4);
+  bpx(fw,76,24,8); bpx(fw,82,18,8); bpx(fw,78,30,8); bpx(fw,86,26,8); bpx(fw,72,34,8); bpx(fw,84,33,8);
+  outlineBuf(fw);
+
+  var bd=newBuf();
+  bell(bd,28,63,4.5,4,2); bell(bd,21,66,4,3.6,2); bell(bd,15,63,3.5,3.2,2); bell(bd,12,57,3,2.8,2);
+  bell(bd,13,51,2.7,2.5,2); bell(bd,17,47,2.4,2.2,2); bell(bd,21,45,2,1.9,2);
+  bpx(bd,27,60,5); bpx(bd,20,63,5); bpx(bd,13,61,5); bpx(bd,11,55,5); bpx(bd,13,49,5); bpx(bd,17,45,5);
+  bpoly(bd,[[24,67],[20,72],[27,69]],7); bpoly(bd,[[15,66],[10,70],[17,68]],7);
+  bpoly(bd,[[9,60],[5,64],[11,63]],7); bpoly(bd,[[10,52],[7,48],[13,54]],7);
+  bpoly(bd,[[15,45],[13,39],[20,44]],7);
+  bell(bd,30,66,5,5,3); bline(bd,29,70,27,76,3,5);
+  bpoly(bd,[[22,76],[31,76],[32,79],[22,79]],4); brect(bd,22,78,10,1,8);
+  bell(bd,60,66,5,5,3); bline(bd,62,70,64,75,3,5);
+  bpoly(bd,[[62,76],[70,76],[71,79],[62,79]],4); brect(bd,62,78,9,1,8);
+  bpoly(bd,[[40,48],[37,42],[43,49]],7); bpoly(bd,[[47,46],[44,40],[50,47]],7);
+  bell(bd,44,57,14,11,2); bell(bd,46,64,12,5,3); bell(bd,38,50,7,4,5); bell(bd,50,60,6,8.5,7);
+  bline(bd,46,54,54,54,8); bline(bd,45,57,55,57,8); bline(bd,45,60,55,60,8);
+  bline(bd,45,63,55,63,8); bline(bd,46,66,54,66,8); bline(bd,48,68,52,68,8);
+  bell(bd,36,63,7,6,2); bell(bd,33,60,3,2,5); bline(bd,35,68,33,75,2,6);
+  bpoly(bd,[[27,76],[38,76],[40,78],[39,80],[27,80]],2);
+  bline(bd,31,77,31,79,3); bline(bd,35,77,35,79,3); brect(bd,27,79,12,1,9);
+  bpoly(bd,[[39,76],[42,77],[39,78]],9);
+  bpoly(bd,[[50,50],[60,30],[68,32],[62,52]],2); bline(bd,54,48,61,34,3);
+  bpoly(bd,[[58,36],[53,31],[60,38]],7); bpoly(bd,[[54,44],[49,40],[56,46]],7);
+  bpoly(bd,[[66,26],[61,11],[62,10],[63,14],[70,25]],7); bline(bd,64,20,63,15,8); bline(bd,67,23,65,18,8);
+  bpoly(bd,[[70,25],[67,10],[68,9],[69,13],[75,24]],7); bline(bd,70,20,68,15,8); bline(bd,72,22,70,17,8);
+  bell(bd,72,28,7,6,2); bell(bd,72,32,5,2.5,3); bell(bd,73,25,3.5,1.8,5);
+  bpoly(bd,[[74,23],[86,26],[88,31],[86,35],[74,34]],2); bline(bd,75,24,86,27,5); bpx(bd,85,30,3);
+  brect(bd,67,26,5,4,7); bline(bd,69,26,69,29,1); bpx(bd,70,27,10); bline(bd,65,25,74,26,4,2);
+  bpoly(bd,[[66,31],[59,36],[67,35]],7); bell(bd,71,37,3,2,3);
+  bpoly(bd,[[75,33],[88,31],[88,36],[85,42],[74,41]],11);
+  bpoly(bd,[[77,37],[83,37],[80,41]],14);
+  bpoly(bd,[[77,33],[79,33],[78,38]],10); bpoly(bd,[[81,32],[83,33],[82,37]],10); bpoly(bd,[[85,32],[87,33],[86,36]],10);
+  bpoly(bd,[[74,41],[85,42],[83,47],[72,44]],2); bline(bd,74,43,82,44,3);
+  bpoly(bd,[[76,41],[78,41],[77,39]],10); bpoly(bd,[[82,42],[84,42],[83,40]],10);
+  bell(bd,52,64,6,5.5,2); bline(bd,54,68,56,75,2,5);
+  bpoly(bd,[[50,76],[60,76],[62,78],[61,80],[50,80]],2);
+  bline(bd,54,77,54,79,3); bline(bd,58,77,58,79,3); brect(bd,50,79,11,1,9);
+  bpoly(bd,[[61,76],[64,77],[61,78]],9);
+  outlineBuf(bd);
+
+  var nw=newBuf();
+  bpoly(nw,[[46,50],[40,34],[31,20],[19,10],[10,5],[5,9],[8,15],[3,21],[10,26],[6,33],[14,37],[10,44],[20,47],[16,54],[28,55],[25,62],[40,58],[44,54]],2);
+  bline(nw,43,52,10,5,5); bline(nw,43,52,3,21,5); bline(nw,43,52,6,33,5); bline(nw,43,52,10,44,5); bline(nw,43,52,16,54,5);
+  bpx(nw,28,24,7); bpx(nw,34,30,7); bpx(nw,22,30,7); bpx(nw,30,38,7); bpx(nw,18,24,7); bpx(nw,26,46,7); bpx(nw,36,42,7); bpx(nw,20,40,7); bpx(nw,32,50,7); bpx(nw,24,20,7);
+  bell(nw,42,50,3,2.5,5);
+  outlineBuf(nw);
+
+  var fr=newBuf();
+  bpoly(fr,[[86,30],[92,24],[97,29],[103,21],[108,28],[114,22],[118,29],[125,24],[127,31],[133,29],[134,35],[128,37],[134,42],[127,43],[130,50],[123,46],[124,53],[117,48],[118,55],[111,49],[112,44],[105,45],[107,39],[99,41],[100,35],[93,38],[90,34],[86,36]],12);
+  bpoly(fr,[[87,31],[92,26],[97,30],[103,24],[108,30],[114,25],[118,31],[124,27],[126,33],[131,32],[131,36],[126,38],[130,43],[124,42],[126,47],[120,44],[121,49],[115,45],[116,42],[108,43],[110,38],[102,39],[103,34],[95,36],[92,33],[88,34]],13);
+  bpoly(fr,[[88,32],[93,29],[98,32],[104,28],[109,32],[114,29],[118,33],[123,31],[124,35],[128,35],[127,38],[122,39],[124,43],[118,41],[119,44],[112,41],[110,38],[103,38],[104,34],[96,35],[93,33],[89,33]],14);
+  bell(fr,90,33,4,2.5,15); bpx(fr,94,33,15); bpx(fr,133,18,12); bpx(fr,129,54,13); bpx(fr,135,40,14);
+  outlineBuf(fr);
+
+  return { body:bakeBuf(bd,pal), wingFar:bakeBuf(fw,pal), wingNear:bakeBuf(nw,pal), fire:bakeBuf(fr,pal) };
+}
+var dragonCache = {};
+function dragonSet(key){
+  if (!dragonCache[key]) dragonCache[key] = buildDragonSet(dragonPalette(DRAGON_STYLE[key].hue));
+  return dragonCache[key];
+}
+function drawLayerCv(cctx, cv, u0, v0, ang, sc){
+  cctx.save();
+  cctx.translate((u0-SP_AX)*sc, (v0-SP_AY)*sc);
+  if (ang) cctx.rotate(ang);
+  cctx.drawImage(cv, -(SP_OX+u0)*sc, -(SP_OY+v0)*sc, cv.width*sc, cv.height*sc);
+  cctx.restore();
+}
+function drawFireCv(cctx, cv, u0, v0, sc, len, alpha, t){
+  var sx = len*(0.88 + 0.1*Math.sin(t/37) + Math.random()*0.1);
+  var sy = 0.92 + 0.08*Math.sin(t/29+2) + Math.random()*0.08;
+  cctx.save();
+  cctx.translate((u0-SP_AX)*sc, (v0-SP_AY)*sc);
+  cctx.rotate((Math.random()-.5)*0.07);
+  cctx.scale(sx, sy);
+  cctx.globalAlpha = alpha*(0.8+Math.random()*0.2);
+  cctx.drawImage(cv, -(SP_OX+u0)*sc, -(SP_OY+v0)*sc, cv.width*sc, cv.height*sc);
+  cctx.restore();
+  cctx.globalAlpha = 1;
+}
+function drawPixelDragonOn(cctx, t, x, y, S, key, stage, faceL){
+  var set = dragonSet(key);
+  var sc = S/50;
+  var spd = (stage==='fire') ? 85 : 125;
+  var flap = Math.sin(t/spd);
+  cctx.save();
+  cctx.imageSmoothingEnabled = false;
+  cctx.translate(x, y + Math.sin(t/300)*S*0.06);
+  if (faceL) cctx.scale(-1,1);
+  drawLayerCv(cctx, set.wingFar, 63,43, Math.sin(t/spd-0.8)*0.13, sc);
+  drawLayerCv(cctx, set.body, 0,0, 0, sc);
+  drawLayerCv(cctx, set.wingNear, 43,52, flap*0.16, sc);
+  if (stage === 'fire'){
+    drawFireCv(cctx, set.fire, 86,33, sc, 1.0, 0.95, t);
+    drawFireCv(cctx, set.fire, 86,33, sc, 0.62, 1.0, t);
+  }
+  cctx.restore();
+}
+function pixelMouthPoint(x, y, S, faceL){
+  var sc = S/50;
+  var dx = (87-SP_AX)*sc, dy = (34-SP_AY)*sc;
+  if (faceL) dx = -dx;
+  return { x:x+dx, y:y+dy };
+}
+
+/* رسم اکسسوری سر مار روی هر کانواس */
+function drawAccessoryOnHead(cctx, accId, hx, hy, r){
+  if (!accId || accId === 'none') return;
+  cctx.save();
+  cctx.translate(hx, hy - r*1.05);
+  if (accId === 'crown'){
+    cctx.fillStyle = '#ffd83e';
+    cctx.strokeStyle = '#995400'; cctx.lineWidth = 1.5;
+    cctx.beginPath();
+    cctx.moveTo(-r*.75, r*.35);
+    cctx.lineTo(-r*.85, -r*.45);
+    cctx.lineTo(-r*.35, r*.0);
+    cctx.lineTo(0, -r*.65);
+    cctx.lineTo(r*.35, r*.0);
+    cctx.lineTo(r*.85, -r*.45);
+    cctx.lineTo(r*.75, r*.35);
+    cctx.closePath(); cctx.fill(); cctx.stroke();
+  } else if (accId === 'halo'){
+    cctx.strokeStyle = '#ffe066'; cctx.lineWidth = Math.max(2, r*.24);
+    cctx.beginPath(); cctx.ellipse(0, -r*.15, r*.85, r*.3, 0, 0, Math.PI*2); cctx.stroke();
+  } else if (accId === 'horns'){
+    cctx.fillStyle = '#ff4444';
+    cctx.beginPath(); cctx.moveTo(-r*.6, r*.4); cctx.lineTo(-r*.95, -r*.6); cctx.lineTo(-r*.2, r*.2); cctx.closePath(); cctx.fill();
+    cctx.beginPath(); cctx.moveTo(r*.6, r*.4); cctx.lineTo(r*.95, -r*.6); cctx.lineTo(r*.2, r*.2); cctx.closePath(); cctx.fill();
+  } else if (accId === 'wizard'){
+    cctx.fillStyle = '#6d28d9';
+    cctx.beginPath(); cctx.ellipse(0, r*.25, r*1.1, r*.25, 0, 0, Math.PI*2); cctx.fill();
+    cctx.beginPath(); cctx.moveTo(-r*.65, r*.22); cctx.lineTo(0, -r*1.05); cctx.lineTo(r*.65, r*.22); cctx.closePath(); cctx.fill();
+    cctx.fillStyle = '#ffd166'; cctx.fillRect(-r*.45, r*.05, r*.9, r*.18);
+  } else if (accId === 'shades'){
+    cctx.translate(0, r*1.0);
+    cctx.fillStyle = '#090d16'; cctx.strokeStyle = '#46f88f'; cctx.lineWidth = 1.4;
+    cctx.fillRect(-r*.82, -r*.25, r*.7, r*.45); cctx.strokeRect(-r*.82, -r*.25, r*.7, r*.45);
+    cctx.fillRect(r*.12, -r*.25, r*.7, r*.45); cctx.strokeRect(r*.12, -r*.25, r*.7, r*.45);
+    cctx.fillRect(-r*.12, -r*.1, r*.24, r*.14);
+  } else if (accId === 'ninja'){
+    cctx.translate(0, r*.55);
+    cctx.fillStyle = '#ef4444';
+    cctx.fillRect(-r*.95, -r*.18, r*1.9, r*.36);
+  }
+  cctx.restore();
+}
+
+/* پیش‌نمایش زنده در منو */
+var previewCv = $('#menuPreviewCanvas'), pCtx = previewCv.getContext('2d');
+function renderMenuPreview(t){
+  if ($('#menu-screen').classList.contains('active')){
+    pCtx.clearRect(0,0,160,160);
+    drawPixelDragonOn(pCtx, t, 108, 60, 42, 4, 'idle', true);
+    var sk = getSkinObj(save.skin);
+    for (var s=4; s>=0; s--){
+      var x = 26 + s*16, y = 118 + Math.sin(t/240 + s*.7)*6, r = s===0 ? 11 : 9;
+      pCtx.fillStyle = s===0 ? sk.head : (sk.body==='rainbow' ? 'hsl('+((s*38+t/8)%360)+',90%,60%)' : sk.body);
+      pCtx.beginPath(); pCtx.arc(x, y, r, 0, Math.PI*2); pCtx.fill();
+    }
+    drawAccessoryOnHead(pCtx, save.acc, 26, 118 + Math.sin(t/240)*6, 11);
+  }
+  requestAnimationFrame(renderMenuPreview);
+}
+requestAnimationFrame(renderMenuPreview);
+
+/* ═══════════════ موتور اصلی بازی (با باگ‌های برطرف‌شده) ═══════════════ */
+var canvas = $('#game'), ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+var cell = 20, state = 'menu';
+var world = 'out', level = 1, dragonVisits = 0;
+var snake = [], prevSnake = [], dir = 'right', dirQueue = [], items = [];
+var score = 0, tickMs = 165, tickAcc = 0, lastT = 0;
+var particles = [], floatTexts = [], fireParticles = [];
+var combo = 0, comboTimer = 0;
+var fx = { ghost:0, slow:0, double:0, shield:0 };
+var applesEaten = 0, orbsEaten = 0, ORB_GOAL = 6;
+var ds = null, boss = null, pShots = [], bossShots = [];
+var playerHp = 3, maxPlayerHp = 3, invulnT = 0;
+var reachedFinalThisRun = false;
+
+function resize(){
+  var r = $('#stage-wrap').getBoundingClientRect();
+  if (r.width < 10 || r.height < 10) return;
+  var size = Math.max(120, Math.floor(Math.min(r.width, r.height)));
+  var stage = $('#stage');
+  stage.style.width = size+'px'; stage.style.height = size+'px';
+  var dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = size*dpr; canvas.height = size*dpr;
+  canvas.style.width = size+'px'; canvas.style.height = size+'px';
+  var oldCell = cell;
+  cell = size / COLS;
+  if (oldCell > 0 && Math.abs(cell-oldCell) > 0.001){
+    var k = cell/oldCell, ri;
+    if (ds){ ds.x*=k; ds.y*=k; ds.targetX*=k; ds.targetY*=k; ds.S*=k; }
+    if (boss){ boss.x*=k; boss.y*=k; boss.vx*=k; boss.vy*=k; boss.S*=k; }
+    for (ri=0; ri<pShots.length; ri++){ var q1=pShots[ri]; q1.sx*=k; q1.sy*=k; q1.tx*=k; q1.ty*=k; q1.x*=k; q1.y*=k; }
+    for (ri=0; ri<bossShots.length; ri++){ var q2=bossShots[ri]; q2.x*=k; q2.y*=k; q2.vx*=k; q2.vy*=k; }
+    for (ri=0; ri<fireParticles.length; ri++){ var q3=fireParticles[ri]; q3.x*=k; q3.y*=k; q3.vx*=k; q3.vy*=k; q3.size*=k; }
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', function(){ setTimeout(resize, 250); });
+
+function makeSnake(){
+  var cx = Math.floor(COLS/2), cy = Math.floor(ROWS/2);
+  snake = [{x:cx,y:cy},{x:cx-1,y:cy},{x:cx-2,y:cy}];
+  prevSnake = snake.map(function(s){ return {x:s.x,y:s.y}; });
+  dir = 'right'; dirQueue = [];
+}
+function occupied(x,y){
+  var i;
+  for (i=0;i<snake.length;i++) if (snake[i].x===x&&snake[i].y===y) return true;
+  for (i=0;i<items.length;i++) if (items[i].x===x&&items[i].y===y) return true;
+  /* در نبرد با اژدها، آیتم‌ها زیر بدن اژدها اسپاون نشوند */
+  if (world === 'boss' && boss){
+    var bx = (x+.5)*cell, by = (y+.5)*cell;
+    if (Math.abs(bx - boss.x) < cell*2.6 && Math.abs(by - boss.y) < cell*2.2) return true;
+  }
+  return false;
+}
+function spawnItem(type){
+  var t, x, y;
+  for (t=0; t<350; t++){
+    x = Math.floor(Math.random()*COLS); y = Math.floor(Math.random()*ROWS);
+    if (!occupied(x,y)){ items.push({x:x,y:y,type:type}); return true; }
+  }
+  for (y=0; y<ROWS; y++) for (x=0; x<COLS; x++)
+    if (!occupied(x,y)){ items.push({x:x,y:y,type:type}); return true; }
+  return false;
+}
+function hasType(tp){
+  for (var i=0;i<items.length;i++) if (items[i].type===tp) return true;
+  return false;
+}
+function resetOutside(){
+  world = 'out'; items = []; makeSnake();
+  fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0;
+  applesEaten = 0;
+  spawnItem('apple');
+}
+function resetWorld(){
+  particles=[]; floatTexts=[]; fireParticles=[];
+  pShots=[]; bossShots=[]; boss=null; ds=null;
+  $('#hpbar').style.display='none';
+  $('#heartsRow').style.display='none';
+  combo=0; comboTimer=0;
+  level = 1; dragonVisits = 0; orbsEaten = 0;
+  reachedFinalThisRun = false;
+  resetOutside();
+  updateComboBadge(); updateGoalChip();
+}
+function randomSpawnOut(dt){
+  var apples=0, i;
+  for (i=0;i<items.length;i++) if (items[i].type==='apple') apples++;
+  if (apples === 0){ spawnItem('apple'); return; }
+  if (items.length >= 3 || Math.random() > 0.12*dt/165) return;
+  spawnItem(pick(['gold','bomb','ghost','slow','double']));
+}
+function randomSpawnBelly(dt){
+  var orbs=0, acids=0, i;
+  for (i=0;i<items.length;i++){
+    if (items[i].type==='orb') orbs++;
+    if (items[i].type==='acid') acids++;
+  }
+  if (orbs < 2) spawnItem('orb');
+  if (acids < 2 && Math.random() < 0.22*dt/165) spawnItem('acid');
+}
+function randomSpawnBoss(dt){
+  var fb=0, sup=0, i;
+  for (i=0;i<items.length;i++){
+    if (items[i].type==='fireball' || items[i].type==='superfire') fb++;
+    if (items[i].type==='heart' || items[i].type==='shield') sup++;
+  }
+  if (fb < 2) spawnItem(Math.random() < 0.28 ? 'superfire' : 'fireball');
+  if (sup === 0 && Math.random() < 0.035*dt/165){
+    spawnItem(playerHp < maxPlayerHp ? 'heart' : 'shield');
+  }
+}
+function updateHeartsUI(){
+  var h = '';
+  for (var i=0;i<maxPlayerHp;i++) h += (i < playerHp ? '❤️' : '🖤');
+  $('#heartsRow').textContent = h;
+}
+function updateGoalChip(){
+  var g = $('#goalChip');
+  if (world === 'out'){
+    g.textContent = '🟡 مرحله '+faNum(LEVELS[level].name)+' — 🍎 '+faNum(applesEaten)+' / '+faNum(LEVELS[level].goal);
+    g.style.color = '#ffd166';
+  } else if (world === 'belly'){
+    g.textContent = '🫀 داخل شکم — 💠 '+faNum(orbsEaten)+' / '+faNum(ORB_GOAL);
+    g.style.color = '#7fe3ff';
+  } else {
+    g.textContent = '⚔️ نبرد نهایی — 🔥 بخور و شلیک کن!';
+    g.style.color = '#ff9800';
+  }
+}
+
+/* باگ حرکت مار برطرف شد: جلوگیری کامل از چرخش ۱۸۰ درجه در یک تیک */
+function queueDir(d){
+  if (state !== 'playing') return;
+  var last = dirQueue.length ? dirQueue[dirQueue.length-1] : dir;
+  if (d === last || d === OPPO[last]) return;
+  if (dirQueue.length >= 2) return;
+  dirQueue.push(d);
+}
+function getTickMs(){ return fx.slow > 0 ? tickMs * 1.75 : tickMs; }
+function grow(){ snake.push({x:snake[snake.length-1].x, y:snake[snake.length-1].y}); }
+
+function step(){
+  if (dirQueue.length){
+    var nextD = dirQueue.shift();
+    if (nextD !== OPPO[dir]) dir = nextD;
+  }
+  prevSnake = snake.map(function(s){ return {x:s.x,y:s.y}; });
+  var h = snake[0], d = DIRS[dir];
+  var nx = h.x + d.x, ny = h.y + d.y;
+
+  /* محافظت اضافه در برابر چرخش به گردن مار */
+  if (snake.length > 1 && nx === snake[1].x && ny === snake[1].y){
+    dir = OPPO[dir]; d = DIRS[dir];
+    nx = h.x + d.x; ny = h.y + d.y;
+  }
+
+  if (nx<0 || ny<0 || nx>=COLS || ny>=ROWS){
+    if (fx.ghost > 0 || world === 'boss'){
+      /* در نبرد با اژدها دیوارها رد می‌شوند تا تمرکز روی جاخالی دادن از آتش باشد! */
+      nx = (nx+COLS)%COLS; ny = (ny+ROWS)%ROWS;
+      if (fx.ghost > 0) floatText(nx,ny,'👻','#b8cfff');
+    } else {
+      gameOver('به دیوار خوردی!'); return;
+    }
+  }
+  snake.unshift({x:nx,y:ny});
+
+  if (world === 'belly'){
+    for (var a=0; a<items.length; a++){
+      if (items[a].type !== 'acid') continue;
+      if (Math.random() < 0.7){
+        var ad = DIRS[pick(['up','down','left','right'])];
+        var ax = items[a].x+ad.x, ay = items[a].y+ad.y;
+        if (ax>=0&&ay>=0&&ax<COLS&&ay<ROWS&&!(ax===nx&&ay===ny)){
+          var block=false,b;
+          for (b=0;b<items.length;b++) if (b!==a&&items[b].x===ax&&items[b].y===ay){block=true;break;}
+          if (!block){
+            var onSnake=false, si;
+            for (si=1; si<snake.length; si++) if (snake[si].x===ax && snake[si].y===ay){ onSnake=true; break; }
+            if (!onSnake){ items[a].x=ax; items[a].y=ay; }
+          }
+        }
+      }
+      if (items[a].x===nx && items[a].y===ny){
+        items.splice(a,1);
+        sfx.bomb(); vibrate([100,60,100]); burst(nx,ny,'#c44dff');
+        snake.pop();
+        gameOver('🟣 توسط اسید هضم شدی!'); return;
+      }
+    }
+  }
+
+  var triggerDragon = false, triggerEscape = false;
+  for (var k = items.length-1; k >= 0; k--){
+    var it = items[k];
+    if (it.x!==nx || it.y!==ny) continue;
+
+    if (it.type === 'apple'){
+      addScore(10,it,'+۱۰'); grow(); sfx.eat(); vibrate(28); bumpCombo();
+      applesEaten++;
+      save.stats.totalApples++;
+      updateGoalChip();
+      items.splice(k,1);
+      if (applesEaten >= LEVELS[level].goal && world === 'out') triggerDragon = true;
+      continue;
+    } else if (it.type === 'gold'){
+      addScore(50,it,'+۵۰⭐'); grow(); sfx.gold(); vibrate([40,40,60]); bumpCombo();
+    } else if (it.type === 'bomb'){
+      items.splice(k,1); sfx.bomb(); vibrate([80,50,80]); snake.pop();
+      gameOver('💥 منفجر شدی!'); return;
+    } else if (it.type === 'ghost'){
+      var extraG = getSkinObj(save.skin).ghostExtra || 0;
+      fx.ghost = 8000 + extraG; floatText(nx,ny,'👻','#b8cfff'); sfx.power(); grow();
+    } else if (it.type === 'slow'){
+      fx.slow=7000; floatText(nx,ny,'🐌','#7fe3ff'); sfx.power(); grow();
+    } else if (it.type === 'double'){
+      fx.double=9000; floatText(nx,ny,'💰','#ffe66d'); sfx.power(); grow();
+    } else if (it.type === 'orb'){
+      addScore(25,it,'+۲۵'); grow(); sfx.eat(); vibrate(28);
+      orbsEaten++; updateGoalChip();
+      if (orbsEaten >= ORB_GOAL && !hasType('portal')){
+        spawnItem('portal'); banner('🌀 پورتال فرار باز شد!',2200); sfx.warp();
+      }
+    } else if (it.type === 'portal'){
+      items.splice(k,1);
+      triggerEscape = true;
+      continue;
+    } else if ((it.type === 'fireball' || it.type === 'superfire') && boss){
+      var isSup = it.type === 'superfire';
+      var dmg = (isSup ? 3 : 1) * (getSkinObj(save.skin).dmg || 1);
+      items.splice(k,1);
+      sfx.shoot(); vibrate(25);
+      burst(nx,ny, isSup ? '#ffd166' : '#ff9800');
+      floatText(nx,ny, isSup ? '☄️×'+faNum(dmg) : '🔥', isSup ? '#ffd166' : '#ff9800');
+      var m = { x:(nx+.5)*cell, y:(ny+.5)*cell };
+      pShots.push({ sx:m.x, sy:m.y, x:m.x, y:m.y, tx:boss.x, ty:boss.y, t:0, dmg:dmg, sup:isSup });
+      continue;
+    } else if (it.type === 'heart' && world === 'boss'){
+      if (playerHp < maxPlayerHp){ playerHp++; updateHeartsUI(); }
+      floatText(nx,ny,'❤️+۱','#ff5470'); sfx.gold();
+    } else if (it.type === 'shield' && world === 'boss'){
+      fx.shield = 5500; floatText(nx,ny,'🛡️','#7fe3ff'); sfx.power();
+    }
+    items.splice(k,1);
+  }
+
+  snake.pop();
+
+  if (triggerDragon){ startDragonScene(); return; }
+  if (triggerEscape){ escapeBelly(); return; }
+
+  for (var c=1; c<snake.length; c++){
+    if (snake[c].x===nx && snake[c].y===ny){
+      if (world === 'boss') continue; /* در نبرد با اژدها برخورد تصادفی به دم باعث باخت نشود */
+      gameOver('به خودت برخورد کردی!'); return;
+    }
+  }
+
+  if (world === 'out' && !hasType('apple')) spawnItem('apple');
+}
+
+function addScore(base, item, label){
+  var mult = (fx.double>0?2:1) * (1+combo*0.25) * (getSkinObj(save.skin).bonusScore || 1);
+  score += Math.round(base*mult);
+  $('#hScore').textContent = faNum(score);
+  burst(item.x,item.y,TYPES[item.type].color);
+  floatText(item.x,item.y,label,TYPES[item.type].color);
+}
+function bumpCombo(){ combo++; comboTimer=3000; updateComboBadge(); }
+function updateComboBadge(){
+  var b=$('#comboBadge');
+  if (combo>=2){
+    b.style.display='inline-block';
+    b.textContent='🔥 کمبو ×'+faNum(combo);
+    b.style.background = combo>=5?'#ffd166':'#ff5470';
+  } else b.style.display='none';
+}
+var bannerTimer = null;
+function banner(text, ms){
+  $('#bannerText').innerHTML = text;
+  $('#banner').classList.add('show');
+  if (bannerTimer) clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(function(){ $('#banner').classList.remove('show'); }, ms||2000);
+}
+
+/* ═══ سکانس اژدها ═══ */
+function startDragonScene(){
+  state = 'cutscene';
+  var size = cell*COLS;
+  ds = {
+    t:0, stage:'flyin', x:-size*0.5, y:size*0.3,
+    targetX:size*0.55, targetY:size*0.42,
+    S: cell*DRAGON_STYLE[level].size, key: level,
+    face: (snake.length && (snake[0].x+.5)*cell < size*0.55) ? -1 : 1
+  };
+  items = [];
+  sfx.roar(); vibrate([180,90,220]);
+  banner('🐉 اژدهای '+faNum(LEVELS[level].name)+' از آسمون سرازیر شد!', 2400);
+}
+function updateDragonScene(dt){
+  ds.t += dt;
+  if (ds.stage === 'flyin'){
+    ds.x += (ds.targetX - ds.x)*dt*0.0024;
+    ds.y = ds.targetY + Math.sin(ds.t/280)*cell*0.6;
+    if (Math.abs(ds.x - ds.targetX) < cell*0.5){
+      ds.stage='roar'; ds.t=0; sfx.roar(); vibrate([200,80,200]);
+      banner('🔥 اژدها مار رو شکار کرد!', 1400);
+    }
+  } else if (ds.stage === 'roar'){
+    if (ds.t > 1200){ ds.stage='fire'; ds.t=0; ds.fireT=0; sfx.fire(); vibrate(120); }
+  } else if (ds.stage === 'fire'){
+    ds.fireT += dt;
+    if (ds.fireT > 60){
+      ds.fireT=0;
+      var m = pixelMouthPoint(ds.x, ds.y, ds.S, ds.face===-1);
+      fireParticles.push({
+        x:m.x, y:m.y,
+        vx:((snake.length?(snake[0].x+.5)*cell:m.x)-m.x)/40+(Math.random()-.5)*2,
+        vy:((snake.length?(snake[0].y+.5)*cell:m.y)-m.y)/40+(Math.random()-.5)*2,
+        life:1, size:cell*(.2+Math.random()*.3)
+      });
+    }
+    if (ds.t > 1400){ ds.stage='eat'; ds.t=0; ds.chompT=0; }
+  } else if (ds.stage === 'eat'){
+    ds.chompT += dt;
+    if (ds.chompT > 140){
+      ds.chompT=0;
+      if (snake.length > 0){
+        var seg = snake.pop(); burst(seg.x,seg.y,'#46f88f'); sfx.chomp(); vibrate(30);
+      }
+      if (snake.length === 0){ ds.stage='gulp'; ds.t=0; sfx.gulp(); vibrate([120,70,120]); }
+    }
+  } else if (ds.stage === 'gulp'){
+    if (ds.t > 1100) enterBelly();
+  }
+}
+function enterBelly(){
+  world='belly'; orbsEaten=0;
+  save.stats.bellyVisits++;
+  items=[]; particles=[]; floatTexts=[]; fireParticles=[]; pShots=[]; bossShots=[];
+  combo=0; comboTimer=0; fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0;
+  makeSnake();
+  spawnItem('orb'); spawnItem('orb');
+  state='playing'; tickAcc=0;
+  updateComboBadge(); updateGoalChip();
+  banner('🫀 داخل شکم اژدها! '+faNum(ORB_GOAL)+' حباب جمع کن و فرار کن', 3000);
+  sfx.warp();
+}
+function escapeBelly(){
+  score += 200;
+  $('#hScore').textContent = faNum(score);
+  dragonVisits++;
+  if (dragonVisits >= 3){ startBossFight(); return; }
+  level++;
+  resetOutside();
+  state='playing'; tickAcc=0;
+  updateGoalChip();
+  banner('🎉 فرار کردی! +۲۰۰<br>مرحله '+faNum(level)+' — 🍎 '+faNum(LEVELS[level].goal)+' سیب بخور!', 3000);
+  sfx.start();
+}
+
+/* ═══ نبرد نهایی با اژدها (کاملاً قابل شکست، با ۳ قلب و شلیک قدرتمند!) ═══ */
+var DIR_SHOTS = {
+  E: { vx: 1, vy: 0, col:'#ff7d1a', col2:'#ffe0b0', f:660 },
+  S: { vx: 0, vy: 1, col:'#ffd83e', col2:'#fff6c8', f:520 },
+  W: { vx:-1, vy: 0, col:'#ff4d9e', col2:'#ffc9e2', f:400 },
+  N: { vx: 0, vy:-1, col:'#a34dff', col2:'#ddb8ff', f:300 }
+};
+function startBossFight(){
+  world = 'boss'; level = 4; state = 'playing'; tickAcc = 0;
+  reachedFinalThisRun = true;
+  items = []; fireParticles = []; pShots = []; bossShots = [];
+  fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0;
+  playerHp = maxPlayerHp; invulnT = 0;
+  makeSnake();
+  for (var si=0; si<snake.length; si++){
+    snake[si].y = Math.min(ROWS-1, snake[si].y + 6);
+    prevSnake[si].y = snake[si].y;
+  }
+  boss = {
+    x: cell*COLS*0.5, y: cell*ROWS*0.42,
+    hp: 12, maxHp: 12,
+    vx: cell*0.075, vy: cell*0.045,
+    fireT: 0, fireCd: 2300,
+    seq: [], seqT: 0,
+    enraged: false, hitFlash: 0,
+    S: cell*DRAGON_STYLE[4].size, key: 4, face: 1
+  };
+  spawnItem('fireball'); spawnItem('superfire');
+  $('#hpbar').style.display='block';
+  $('#hpfill').style.width='100%';
+  $('#hpTxt').textContent = '🐉 جان اژدها: '+faNum(boss.hp)+' / '+faNum(boss.maxHp);
+  $('#heartsRow').style.display='block';
+  updateHeartsUI();
+  updateGoalChip();
+  banner('⚔️ نبرد نهایی! با ۳ قلب به اژدها شلیک کن!<br>🔥=۱ آسیب  ☄️=۳ آسیب  ❤️=جان  🛡️=سپر', 3600);
+  sfx.roar(); vibrate([250,100,250]);
+}
+function updateBoss(dt){
+  if (!boss || state !== 'playing') return;
+  var size = cell*COLS;
+  boss.x += boss.vx*dt*.06;
+  boss.y += boss.vy*dt*.06;
+  if (boss.x < size*.34){ boss.x = size*.34; boss.vx = Math.abs(boss.vx); }
+  if (boss.x > size*.66){ boss.x = size*.66; boss.vx = -Math.abs(boss.vx); }
+  if (boss.y < size*.32){ boss.y = size*.32; boss.vy = Math.abs(boss.vy); }
+  if (boss.y > size*.48){ boss.y = size*.48; boss.vy = -Math.abs(boss.vy); }
+
+  var hx = snake.length ? (snake[0].x+.5)*cell : size/2;
+  if (hx < boss.x - cell*3) boss.face = -1;
+  else if (hx > boss.x + cell*3) boss.face = 1;
+
+  if (boss.hitFlash > 0) boss.hitFlash -= dt;
+  if (invulnT > 0) invulnT = Math.max(0, invulnT - dt);
+
+  boss.fireT += dt;
+  if (boss.fireT > boss.fireCd && boss.seq.length === 0){
+    boss.fireT = 0;
+    boss.seq = ['E','S','W','N'];
+    boss.seqT = 0;
+    sfx.fire(); vibrate(50);
+  }
+  if (boss.seq.length){
+    boss.seqT += dt;
+    if (boss.seqT >= 460){
+      boss.seqT = 0;
+      var D = DIR_SHOTS[boss.seq.shift()];
+      var m = pixelMouthPoint(boss.x, boss.y, boss.S, boss.face===-1);
+      var spd = cell*.11;
+      var dbl = boss.hp <= 4;
+      var offs = dbl ? [cell*.45, -cell*.45] : [0];
+      for (var oi=0; oi<offs.length; oi++){
+        bossShots.push({
+          x: m.x - D.vy*offs[oi], y: m.y + D.vx*offs[oi],
+          vx: D.vx*spd, vy: D.vy*spd, life: 1, col: D.col, col2: D.col2
+        });
+      }
+      tone(D.f,.07,0,.05);
+    }
+  }
+
+  for (var i=bossShots.length-1; i>=0; i--){
+    var bs = bossShots[i];
+    bs.x += bs.vx*dt*.06; bs.y += bs.vy*dt*.06;
+    bs.life -= dt*.00035;
+    if (bs.life <= 0 || bs.x<0 || bs.y<0 || bs.x>size || bs.y>size){ bossShots.splice(i,1); continue; }
+    if (invulnT > 0 || fx.shield > 0) continue;
+    /* برخورد فقط با سر یا بدنه با شعاع دقیق و منصفانه */
+    var hit = false;
+    for (var s2=0; s2<snake.length; s2++){
+      var ddx = (snake[s2].x+.5)*cell - bs.x;
+      var ddy = (snake[s2].y+.5)*cell - bs.y;
+      if (ddx*ddx + ddy*ddy < cell*cell*.34){ hit = true; break; }
+    }
+    if (hit){
+      bossShots.splice(i,1);
+      playerHp--;
+      updateHeartsUI();
+      sfx.bosshit(); vibrate([140,60,140]);
+      burst(snake[0].x, snake[0].y, '#ff5470');
+      if (playerHp <= 0){
+        gameOver('🔥 آتش اژدها تموم جانت رو گرفت!');
+        return;
+      } else {
+        invulnT = 1600;
+        floatText(snake[0].x, snake[0].y, '💔 -۱ قلب', '#ff5470');
+      }
+    }
+  }
+
+  for (var j=pShots.length-1; j>=0; j--){
+    var ps = pShots[j];
+    ps.t += dt;
+    ps.tx = boss.x; ps.ty = boss.y;
+    var prog = clamp01(ps.t/480);
+    ps.x = ps.sx + (ps.tx-ps.sx)*prog;
+    ps.y = ps.sy + (ps.ty-ps.sy)*prog - Math.sin(prog*Math.PI)*cell*1.8;
+    if (prog >= 1){
+      pShots.splice(j,1);
+      boss.hp = Math.max(0, boss.hp - (ps.dmg||1));
+      boss.hitFlash = 250;
+      $('#hpfill').style.width = Math.max(0, boss.hp/boss.maxHp*100)+'%';
+      $('#hpTxt').textContent = '🐉 جان اژدها: '+faNum(boss.hp)+' / '+faNum(boss.maxHp);
+      sfx.hit(); vibrate(40);
+      burst(boss.x/cell-.5, boss.y/cell-.5, '#ffd166');
+      floatText(boss.x/cell-.5, boss.y/cell-.5, '💥 -'+faNum(ps.dmg||1), '#ffd166');
+      if (!boss.enraged && boss.hp > 0 && boss.hp <= 4){
+        boss.enraged = true;
+        banner('⚠️ اژدها خشمگین شد! آخرین ضربه‌ها رو بزن!', 2400);
+      }
+      if (boss.hp <= 0){
+        bossShots = [];
+        for (var ex=0; ex<24; ex++)
+          burst(boss.x/cell-.5+(Math.random()-.5)*3, boss.y/cell-.5+(Math.random()-.5)*3,
+                pick(['#ff5470','#ffd166','#ff9800','#46f88f']));
+        winGame(); return;
+      }
+    }
+  }
+}
+
+function rewardAfterRun(won){
+  var sk = getSkinObj(save.skin);
+  var baseGold = won ? 250 : Math.max(15, Math.floor(score / 18) + (reachedFinalThisRun ? 45 : 0));
+  var goldGain = Math.round(baseGold * (sk.bonusGold || 1));
+  var gemGain = won ? 15 : (reachedFinalThisRun ? 3 : 0);
+  var trophyGain = won ? 30 : (reachedFinalThisRun ? 10 : Math.min(8, Math.floor(score / 80)));
+
+  save.gold += goldGain;
+  save.gems += gemGain;
+  save.trophies += trophyGain;
+  addXP(won ? 90 : Math.max(15, Math.floor(score / 25)));
+  save.stats.gamesPlayed++;
+  if (won) save.stats.bossWins++;
+
+  if (score > save.best) save.best = score;
+
+  var droppedChest = null;
+  if (won){
+    droppedChest = Math.random() < 0.4 ? 'dragon' : 'gold';
+    if (!addChestToSlot(droppedChest)){
+      /* اگر جایگاه پر بود، پاداش نقدی جایگزین می‌گیرد */
+      save.gold += 100; goldGain += 100;
+    }
+  } else if (reachedFinalThisRun){
+    droppedChest = Math.random() < 0.5 ? 'silver' : 'bronze';
+    if (!addChestToSlot(droppedChest)) droppedChest = 'full';
+  } else if (dragonVisits >= 1 && Math.random() < 0.5){
+    droppedChest = 'bronze';
+    if (!addChestToSlot(droppedChest)) droppedChest = null;
+  }
+
+  persist();
+  return { gold:goldGain, gems:gemGain, chest:droppedChest };
+}
+
+function winGame(){
+  if (state !== 'playing') return;
+  score += 1000;
+  $('#hScore').textContent = faNum(score);
+  state = 'won';
+  $('#hpbar').style.display='none';
+  $('#heartsRow').style.display='none';
+  var rw = rewardAfterRun(true);
+  sfx.win(); vibrate([200,100,200,100,350]);
+  $('#ovWS').textContent = faNum(score);
+  $('#ovWinGold').textContent = '+'+faNum(rw.gold);
+  $('#ovWinGems').textContent = '+'+faNum(rw.gems);
+  hideAll();
+  $('#ovWin').classList.add('show');
+}
+
+function gameOver(reason){
+  if (state !== 'playing') return;
+  state = 'over';
+  sfx.die(); vibrate([120,60,120]);
+  if (snake.length) burst(snake[0].x, snake[0].y, '#ff5470');
+  $('#hpbar').style.display='none';
+  $('#heartsRow').style.display='none';
+  $('#overTitle').textContent = reason;
+  var wasRec = score > save.best;
+  var rw = rewardAfterRun(false);
+  $('#ovRec').style.display = wasRec ? 'block' : 'none';
+  $('#ovS').textContent = faNum(score);
+  $('#ovL').textContent = faNum(snake.length);
+  $('#ovGoldEarned').textContent = '+'+faNum(rw.gold);
+  if (rw.chest === 'full'){
+    $('#ovChestNotice').textContent = '📦 جایگاه صندوق پر است — یکی را باز کن!';
+  } else if (rw.chest){
+    $('#ovChestNotice').textContent = CHEST_TYPES[rw.chest].emoji + ' ' + CHEST_TYPES[rw.chest].name + ' به جایگاه اضافه شد!';
+  } else {
+    $('#ovChestNotice').textContent = '';
+  }
+  setTimeout(function(){ if (state==='over') $('#ovOver').classList.add('show'); }, 420);
+}
+
+/* ═══ افکت‌ها و رسم ═══ */
+function burst(gx,gy,color){
+  for (var i=0;i<10;i++){
+    var a=Math.random()*Math.PI*2, sp=(.5+Math.random()*1.4)*.15;
+    particles.push({x:gx+.5,y:gy+.5,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+      life:1,size:1.5+Math.random()*2,color:color});
+  }
+}
+function floatText(gx,gy,text,color){
+  floatTexts.push({x:gx+.5,y:gy+.3,text:text,color:color,life:1});
+}
+function roundedRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function draw(t, alpha){
+  if (state === 'menu') return;
+  var size = cell*COLS;
+  var belly = (world === 'belly');
+  var L = LEVELS[level] || LEVELS[1];
+  ctx.clearRect(0,0,size,size);
+
+  if (belly){
+    var beat = .5 + .5*Math.sin(t/300);
+    ctx.fillStyle = 'rgb('+Math.round(30+beat*18)+','+Math.round(6+beat*4)+','+Math.round(14+beat*6)+')';
+    ctx.fillRect(0,0,size,size);
+    ctx.strokeStyle = 'rgba(255,80,120,'+(0.12+beat*0.1)+')'; ctx.lineWidth = 3;
+    for (var v=0; v<5; v++){
+      ctx.beginPath();
+      ctx.moveTo(0, size*v/4 + Math.sin(t/500+v)*8);
+      ctx.quadraticCurveTo(size/2, size*v/4 + Math.cos(t/400+v)*16, size, size*v/4 + Math.sin(t/450+v)*8);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,84,112,'+(0.35+beat*0.3)+')'; ctx.lineWidth = 4;
+    ctx.strokeRect(2,2,size-4,size-4);
+  } else {
+    ctx.fillStyle = world==='boss' ? '#1a0a02' : L.bg;
+    ctx.fillRect(0,0,size,size);
+    ctx.strokeStyle = world==='boss' ? 'rgba(255,150,40,.07)' : L.grid; ctx.lineWidth = 1;
+    for (var g=1; g<COLS; g++){
+      ctx.beginPath(); ctx.moveTo(g*cell,0); ctx.lineTo(g*cell,size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,g*cell); ctx.lineTo(size,g*cell); ctx.stroke();
+    }
+    ctx.strokeStyle = (world==='boss' || fx.ghost>0) ? 'rgba(184,207,255,'+(.35+.2*Math.sin(t/150))+')' : L.wall;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(1.5,1.5,size-3,size-3);
+  }
+
+  for (var f=0; f<fireParticles.length; f++){
+    var fp = fireParticles[f];
+    ctx.globalAlpha = Math.max(0, fp.life);
+    ctx.fillStyle = fp.life > .5 ? '#ffd166' : '#ff5470';
+    ctx.beginPath(); ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  for (var i=0;i<items.length;i++){
+    var it = items[i];
+    var px=(it.x+.5)*cell, py=(it.y+.5)*cell;
+    var pulse = 1 + Math.sin((t+i*400)/200)*.12;
+    if (it.type === 'portal'){
+      ctx.save(); ctx.translate(px,py); ctx.rotate(t/300);
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5;
+      for (var sp=0; sp<3; sp++){
+        ctx.beginPath(); ctx.arc(0,0,cell*(.28+sp*.09), sp*2.1, sp*2.1+4); ctx.stroke();
+      }
+      ctx.restore(); continue;
+    }
+    ctx.font = Math.round(cell*.75*pulse)+'px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(TYPES[it.type].emoji, px, py+1);
+  }
+
+  /* مار با اسکین و اکسسوری انتخاب‌شده! */
+  var sk = getSkinObj(save.skin);
+  var rainbow = combo >= 5 || sk.body === 'rainbow';
+  var headX = 0, headY = 0;
+  var blinkHide = invulnT > 0 && Math.floor(t/90)%2 === 0;
+  if (!blinkHide){
+    for (var s=snake.length-1; s>=0; s--){
+      var cur = snake[s];
+      var prv = prevSnake[s] || cur;
+      var dxg = cur.x - prv.x, dyg = cur.y - prv.y;
+      var ix, iy;
+      if (Math.abs(dxg) > 1 || Math.abs(dyg) > 1){ ix = cur.x; iy = cur.y; }
+      else { ix = prv.x + dxg*alpha; iy = prv.y + dyg*alpha; }
+      var sx=(ix+.5)*cell, sy=(iy+.5)*cell, r=cell*.39;
+      if (s===0){
+        headX = sx; headY = sy;
+        ctx.fillStyle = belly ? '#ffd6de' : sk.head;
+        r = cell*.44;
+      }
+      else if (rainbow) ctx.fillStyle = 'hsl('+((s*22+t/6)%360)+',90%,62%)';
+      else if (belly) ctx.fillStyle = '#ff8fa8';
+      else if (fx.double>0) ctx.fillStyle = '#ffe66d';
+      else if (fx.slow>0) ctx.fillStyle = '#7fd8e8';
+      else if (fx.ghost>0) ctx.fillStyle = '#9fb8e8';
+      else ctx.fillStyle = sk.body;
+      roundedRect(sx-r,sy-r,r*2,r*2,r*.48);
+      ctx.fill();
+
+      /* چشم‌های مار روی سر */
+      if (s === 0){
+        var dv = DIRS[dir];
+        ctx.fillStyle = '#07120c';
+        var ex1 = sx + dv.x*r*.35 - dv.y*r*.32, ey1 = sy + dv.y*r*.35 + dv.x*r*.32;
+        var ex2 = sx + dv.x*r*.35 + dv.y*r*.32, ey2 = sy + dv.y*r*.35 - dv.x*r*.32;
+        ctx.beginPath(); ctx.arc(ex1, ey1, r*.17, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ex2, ey2, r*.17, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    if (snake.length){
+      drawAccessoryOnHead(ctx, save.acc, headX, headY, cell*.44);
+      if (fx.shield > 0){
+        ctx.strokeStyle = 'rgba(127,227,255,'+(.5+.3*Math.sin(t/100))+')';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(headX, headY, cell*.65, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+  }
+
+  if (state === 'cutscene' && ds)
+    drawPixelDragonOn(ctx, t, ds.x, ds.y, ds.S, ds.key, ds.stage, ds.face===-1);
+
+  if (world === 'boss' && boss){
+    ctx.save();
+    if (boss.hitFlash > 0){ ctx.globalAlpha = .45 + .5*Math.sin(t/35); }
+    var bstage = (boss.seq && boss.seq.length) ? 'fire' : 'idle';
+    drawPixelDragonOn(ctx, t, boss.x, boss.y, boss.S, boss.key, bstage, boss.face===-1);
+    ctx.restore();
+  }
+
+  for (var pj=0; pj<pShots.length; pj++){
+    var ps2 = pShots[pj];
+    ctx.fillStyle = ps2.sup ? '#ffd166' : '#ff9800';
+    ctx.beginPath(); ctx.arc(ps2.x, ps2.y, cell*(ps2.sup?.32:.23), 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(ps2.x, ps2.y, cell*.11, 0, Math.PI*2); ctx.fill();
+  }
+
+  for (var pk=0; pk<bossShots.length; pk++){
+    var bs2 = bossShots[pk];
+    ctx.globalAlpha = Math.max(0, Math.min(1, bs2.life));
+    ctx.fillStyle = bs2.col || '#ff5722';
+    ctx.beginPath(); ctx.arc(bs2.x, bs2.y, cell*.27, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = bs2.col2 || '#ffeb3b';
+    ctx.beginPath(); ctx.arc(bs2.x, bs2.y, cell*.13, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  for (var p=0;p<particles.length;p++){
+    var pt=particles[p];
+    ctx.globalAlpha=Math.max(0,pt.life); ctx.fillStyle=pt.color;
+    ctx.beginPath(); ctx.arc(pt.x*cell,pt.y*cell,pt.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  for (var ft2=0; ft2<floatTexts.length; ft2++){
+    var ftx=floatTexts[ft2];
+    ctx.globalAlpha=Math.min(1,ftx.life);
+    ctx.font='bold '+Math.round(cell*.54)+'px Tahoma';
+    ctx.fillStyle=ftx.color;
+    ctx.fillText(ftx.text, ftx.x*cell, ftx.y*cell);
+  }
+  ctx.globalAlpha=1;
+
+  if (state === 'playing' && snake.length && (fx.ghost>0 || fx.slow>0 || fx.double>0 || fx.shield>0)){
+    var bparts = [];
+    if (fx.shield>0) bparts.push('🛡️'+faNum(Math.ceil(fx.shield/1000)));
+    if (fx.ghost>0)  bparts.push('👻'+faNum(Math.ceil(fx.ghost/1000)));
+    if (fx.slow>0)   bparts.push('🐌'+faNum(Math.ceil(fx.slow/1000)));
+    if (fx.double>0) bparts.push('💰'+faNum(Math.ceil(fx.double/1000)));
+    var btxt = bparts.join(' ');
+    var bx = Math.max(cell*2, Math.min(size-cell*2, (snake[0].x+.5)*cell));
+    var by = Math.max(cell*.9, (snake[0].y-.65)*cell);
+    ctx.font='bold '+Math.round(cell*.48)+'px Tahoma';
+    ctx.fillStyle='rgba(0,0,0,.75)'; ctx.fillText(btxt, bx+1, by+1);
+    ctx.fillStyle='#ffffff'; ctx.fillText(btxt, bx, by);
+  }
+}
+
+/* ═══ حلقه اصلی ═══ */
+function loop(t){
+  try {
+    var dt = Math.min(50, Math.max(0, t-lastT)); lastT = t;
+
+    if (state === 'playing'){
+      tickAcc += dt;
+      var tm2 = getTickMs();
+      while (tickAcc >= tm2){
+        tickAcc -= tm2;
+        step();
+        if (state !== 'playing') break;
+      }
+    }
+    var alpha = (state === 'playing') ? clamp01(tickAcc / getTickMs()) : 1;
+
+    if (state === 'playing'){
+      ['ghost','slow','double','shield'].forEach(function(k){
+        if (fx[k] > 0){ fx[k] -= dt; if (fx[k] <= 0) fx[k] = 0; }
+      });
+      if (comboTimer > 0){
+        comboTimer -= dt;
+        if (comboTimer <= 0){ comboTimer = 0; combo = 0; updateComboBadge(); }
+      }
+      if (world === 'out') randomSpawnOut(dt);
+      else if (world === 'belly') randomSpawnBelly(dt);
+      else if (world === 'boss'){ randomSpawnBoss(dt); updateBoss(dt); }
+    }
+    else if (state === 'cutscene') updateDragonScene(dt);
+    else tickAcc = 0;
+
+    var i, fr = Math.pow(.93, dt/16.7), frF = Math.pow(.97, dt/16.7);
+    for (i=particles.length-1;i>=0;i--){
+      var p=particles[i];
+      p.x+=p.vx*dt*.06; p.y+=p.vy*dt*.06; p.vx*=fr; p.vy*=fr; p.life-=dt*.003;
+      if (p.life<=0) particles.splice(i,1);
+    }
+    for (i=floatTexts.length-1;i>=0;i--){
+      var ft=floatTexts[i];
+      ft.y-=dt*.0015; ft.life-=dt*.0016;
+      if (ft.life<=0) floatTexts.splice(i,1);
+    }
+    for (i=fireParticles.length-1;i>=0;i--){
+      var fp=fireParticles[i];
+      fp.x+=fp.vx*dt*.06; fp.y+=fp.vy*dt*.06; fp.vx*=frF; fp.vy*=frF;
+      fp.size += dt*.0008; fp.life-=dt*.0022;
+      if (fp.life<=0) fireParticles.splice(i,1);
+    }
+    draw(t, alpha);
+  } catch(e){}
+  requestAnimationFrame(loop);
+}
+
+function hideAll(){ document.querySelectorAll('.overlay').forEach(function(o){o.classList.remove('show');}); }
+function showMenu(){
+  state = 'menu';
+  hideAll();
+  $('#game-screen').classList.remove('active');
+  $('#menu-screen').classList.add('active');
+  renderAllMenu();
+}
+function startGame(){
+  $('#menu-screen').classList.remove('active');
+  $('#game-screen').classList.add('active');
+  resize();
+  resetWorld();
+  score = 0; tickAcc = 0; lastT = performance.now();
+  $('#hScore').textContent = faNum(0);
+  $('#hBest').textContent = faNum(save.best);
+  hideAll();
+  if (selectedMode === 'boss'){
+    startBossFight();
+  } else {
+    state = 'playing';
+    banner('🟢 مرحله ۱ — 🍎 '+faNum(LEVELS[1].goal)+' سیب بخور تا اژدها بیدار شود!', 2400);
+    sfx.start();
+  }
+}
+function togglePause(){
+  if (state==='playing'){ state='paused'; $('#ovPause').classList.add('show'); sfx.click(); }
+  else if (state==='paused'){ state='playing'; lastT=performance.now(); hideAll(); sfx.click(); }
+}
+
+ $('#btnBattle').onclick = startGame;
+ $('#btnRetry').onclick = startGame;
+ $('#btnAgain').onclick = startGame;
+ $('#btnBackMenuOver').onclick = showMenu;
+ $('#btnBackMenuWin').onclick = showMenu;
+ $('#btnQuitMenu').onclick = showMenu;
+ $('#btnResume').onclick = togglePause;
+ $('#btnPause').onclick = togglePause;
+function toggleSound(){
+  soundOn = !soundOn;
+  save.soundOn = soundOn;
+  persist();
+  renderTopBar();
+}
+ $('#btnSound').onclick = toggleSound;
+ $('#btnMenuSound').onclick = toggleSound;
+
+/* ═══ ورودی لمسی و کیبورد بدون باگ ═══ */
+document.querySelectorAll('.dpad-btn').forEach(function(btn){
+  var active = false;
+  btn.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    active = true;
+    btn.classList.add('pressed');
+    queueDir(btn.dataset.dir);
+    setTimeout(function(){ btn.classList.remove('pressed'); active=false; }, 120);
+  });
+});
+(function(){
+  var start = null, swipedThisTouch = false;
+  var stage = $('#stage');
+  stage.addEventListener('touchstart', function(e){
+    var t = e.changedTouches[0];
+    start = { x:t.clientX, y:t.clientY };
+    swipedThisTouch = false;
+  }, {passive:true});
+  stage.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if (!start || state!=='playing') return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - start.x, dy = t.clientY - start.y;
+    var dist = Math.max(Math.abs(dx), Math.abs(dy));
+    if (dist >= 26){
+      var newDir = Math.abs(dx) > Math.abs(dy) ? (dx>0?'right':'left') : (dy>0?'down':'up');
+      queueDir(newDir);
+      start = { x:t.clientX, y:t.clientY };
+      swipedThisTouch = true;
+    }
+  }, {passive:false});
+  stage.addEventListener('touchend', function(){ start = null; swipedThisTouch = false; }, {passive:true});
+})();
+window.addEventListener('keydown', function(e){
+  var m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+  if (m[e.key]){ e.preventDefault(); queueDir(m[e.key]); }
+});
+document.addEventListener('visibilitychange', function(){
+  if (document.hidden && state==='playing'){ state='paused'; $('#ovPause').classList.add('show'); }
+});
+
+window.getGameState = function(){ return state; };
+window.pauseFromAndroid = function(){
+  if (state==='playing'){ state='paused'; $('#ovPause').classList.add('show'); }
+};
+window.handleAndroidBack = function(){
+  if ($('#chestModal').classList.contains('show')){
+    $('#chestModal').classList.remove('show');
+    renderAllMenu();
+    return 'handled';
+  }
+  if (state === 'playing'){
+    state = 'paused';
+    $('#ovPause').classList.add('show');
+    return 'handled';
+  }
+  if (state !== 'menu'){
+    showMenu();
+    return 'handled';
+  }
+  return 'exit';
+};
+
+renderAllMenu();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

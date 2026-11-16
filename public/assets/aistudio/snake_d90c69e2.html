@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>مار نئونی — نبرد با اژدها</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; overflow:hidden; background:#050807; color:#d9ffe9;
+  font-family:Tahoma,sans-serif; overscroll-behavior:none; touch-action:none;
+  user-select:none; -webkit-user-select:none; }
+#app { position:fixed; inset:0; display:flex; flex-direction:column; }
+#hud { display:flex; align-items:center; justify-content:space-between; padding:8px 16px 2px; }
+.hud-cell { display:flex; flex-direction:column; align-items:center; min-width:70px; }
+.hud-label { font-size:10px; color:#5f8a72; }
+.hud-value { font-weight:bold; font-size:20px; color:#46f88f; line-height:1.3; }
+.hud-cell.best .hud-value { color:#ff5470; font-size:16px; }
+#hud-title { text-align:center; font-weight:bold; font-size:14px; }
+.combo-badge { background:#ff5470; color:#fff; font-size:11px; padding:2px 10px;
+  border-radius:999px; display:none; font-weight:normal; }
+.goal-chip { display:inline-block; font-size:11px; color:#ffd166; margin-top:3px; font-weight:normal; }
+#stage-wrap { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:4px 10px; }
+#stage { position:relative; border-radius:16px; background:#0b120e;
+  box-shadow:0 0 0 1px rgba(70,248,143,.25), inset 0 0 60px rgba(0,0,0,.5); overflow:hidden; }
+canvas { position:absolute; top:0; left:0; }
+#banner { position:absolute; top:36%; left:0; right:0; z-index:4; text-align:center;
+  pointer-events:none; opacity:0; transition:opacity .4s; }
+#banner span { display:inline-block; background:rgba(5,8,7,.88); border:1px solid rgba(80,170,255,.6);
+  color:#bfe0ff; font-size:17px; font-weight:bold; padding:12px 22px; border-radius:16px; line-height:2; }
+#banner.show { opacity:1; }
+.overlay { position:absolute; inset:0; z-index:5; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:12px; text-align:center; padding:20px;
+  background:rgba(5,8,7,.93); opacity:0; pointer-events:none; transition:opacity .25s; }
+.overlay.show { opacity:1; pointer-events:auto; }
+.ov-title { font-size:30px; font-weight:bold; color:#46f88f; }
+.ov-sub { color:#5f8a72; font-size:12.5px; max-width:300px; line-height:2; }
+.legend { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; font-size:11px; color:#5f8a72; text-align:right; }
+.new-record { color:#ffd166; font-weight:bold; animation:pulse .9s infinite; }
+@keyframes pulse { 50%{opacity:.35} }
+.ov-stats { display:flex; gap:22px; }
+.ov-stat b { display:block; font-size:23px; color:#46f88f; }
+.ov-stat span { font-size:11px; color:#5f8a72; }
+.btn { border:1px solid rgba(70,248,143,.5); background:rgba(70,248,143,.12); color:#46f88f;
+  font-family:inherit; font-weight:bold; font-size:17px; padding:12px 42px; border-radius:999px;
+  cursor:pointer; touch-action:manipulation; }
+.btn:active { transform:scale(.93); background:rgba(70,248,143,.3); }
+#controls { direction:ltr !important; display:grid; grid-template-columns:repeat(3,66px);
+  grid-template-rows:repeat(2,54px); gap:7px; justify-content:center; align-content:center;
+  margin:6px auto 12px; flex-shrink:0; }
+.dpad-btn { border:1px solid rgba(70,248,143,.35); background:rgba(70,248,143,.07);
+  border-radius:13px; display:flex; align-items:center; justify-content:center;
+  color:#46f88f; font-size:17px; cursor:pointer; touch-action:none; }
+.dpad-btn.pressed { background:rgba(70,248,143,.35); transform:scale(.92); }
+.dp-up{grid-column:2;grid-row:1} .dp-left{grid-column:1;grid-row:2}
+.dp-down{grid-column:2;grid-row:2} .dp-right{grid-column:3;grid-row:2}
+#float-actions { position:absolute; bottom:8px; left:10px; display:flex; gap:8px; z-index:4; }
+.icon-btn { width:34px; height:34px; border-radius:10px; cursor:pointer;
+  border:1px solid rgba(70,248,143,.3); background:rgba(5,8,7,.75); color:#46f88f;
+  font-size:14px; display:flex; align-items:center; justify-content:center; }
+#hpbar { position:absolute; top:6px; left:50%; transform:translateX(-50%); z-index:4;
+  width:70%; display:none; }
+#hpbar .hptxt { font-size:10px; color:#ffb3c0; text-align:center; margin-bottom:2px; }
+#hpbar .hptrack { height:10px; border-radius:999px; background:rgba(0,0,0,.5);
+  border:1px solid rgba(255,84,112,.5); overflow:hidden; }
+#hpbar .hpfill { height:100%; width:100%; background:linear-gradient(90deg,#ff5470,#ffd166); transition:width .2s; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="hud-cell"><span class="hud-label">امتیاز</span><span class="hud-value" id="hScore">۰</span></div>
+    <div id="hud-title">🐍 مار نئونی<br>
+      <span class="combo-badge" id="comboBadge"></span><br>
+      <span class="goal-chip" id="goalChip"></span>
+    </div>
+    <div class="hud-cell best"><span class="hud-label">رکورد</span><span class="hud-value" id="hBest">۰</span></div>
+  </header>
+  <main id="stage-wrap">
+    <div id="stage">
+      <canvas id="game"></canvas>
+      <div id="hpbar"><div class="hptxt">🐉 جان اژدها</div><div class="hptrack"><div class="hpfill" id="hpfill"></div></div></div>
+      <div id="banner"><span id="bannerText"></span></div>
+      <div id="float-actions">
+        <button class="icon-btn" id="btnSound">🔊</button>
+        <button class="icon-btn" id="btnPause">⏸</button>
+      </div>
+      <div class="overlay show" id="ovStart">
+        <div class="ov-title">🐍 مار نئونی</div>
+        <p class="ov-sub">سفر تو تا نبرد با اژدها!</p>
+        <div class="legend">
+          <span>🟢 مرحله ۱: ۸ سیب</span>
+          <span>🟠 مرحله ۲: ۱۲ سیب</span>
+          <span>🔴 مرحله ۳: ۱۶ سیب</span>
+          <span>⚔️ مرحله ۴: نبرد نهایی!</span>
+          <span>🔥 گلوله بخور = شلیک</span>
+          <span>🐉 آتش اژدها = مرگ!</span>
+          <span>⭐=۵۰ 👻=دیوار 💣=مرگ</span>
+          <span>🐌=آهسته 💰=×۲</span>
+        </div>
+        <button class="btn" id="btnStart">🎮 شروع بازی</button>
+      </div>
+      <div class="overlay" id="ovOver">
+        <div class="ov-title" style="color:#ff5470" id="overTitle">بازی تمام شد!</div>
+        <div class="new-record" id="ovRec" style="display:none">✦ رکورد جدید ✦</div>
+        <div class="ov-stats">
+          <div class="ov-stat"><b id="ovS">۰</b><span>امتیاز</span></div>
+          <div class="ov-stat"><b id="ovL">۳</b><span>طول مار</span></div>
+        </div>
+        <button class="btn" id="btnRetry">🔄 دوباره بازی کن</button>
+      </div>
+      <div class="overlay" id="ovWin">
+        <div class="ov-title" style="color:#ffd166">🏆 اژدها شکست خورد!</div>
+        <p class="ov-sub">تو قهرمان شدی! +۱۰۰۰ امتیاز</p>
+        <div class="ov-stats">
+          <div class="ov-stat"><b id="ovWS">۰</b><span>امتیاز نهایی</span></div>
+        </div>
+        <button class="btn" id="btnAgain">🔄 بازی از اول</button>
+      </div>
+      <div class="overlay" id="ovPause">
+        <div class="ov-title" style="font-size:26px">⏸ متوقف شد</div>
+        <button class="btn" id="btnResume">ادامه</button>
+      </div>
+    </div>
+  </main>
+  <nav id="controls">
+    <div class="dpad-btn dp-up" data-dir="up">▲</div>
+    <div class="dpad-btn dp-left" data-dir="left">◀</div>
+    <div class="dpad-btn dp-down" data-dir="down">▼</div>
+    <div class="dpad-btn dp-right" data-dir="right">▶</div>
+  </nav>
+</div>
+
+<script>
+'use strict';
+var $ = function(s){ return document.querySelector(s); };
+function faNum(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+function vibrate(ms){ if (navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+function lsGet(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ window.localStorage.setItem(k,v); }catch(e){} }
+
+var COLS = 19, ROWS = 19;
+var DIRS = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
+var OPPO = { up:'down', down:'up', left:'right', right:'left' };
+var TYPES = {
+  apple:{emoji:'🍎',color:'#ff5470'}, gold:{emoji:'⭐',color:'#ffd166'},
+  bomb:{emoji:'💣',color:'#aaa'}, ghost:{emoji:'👻',color:'#b8cfff'},
+  slow:{emoji:'🐌',color:'#7fe3ff'}, double:{emoji:'💰',color:'#ffe66d'},
+  orb:{emoji:'💠',color:'#7fe3ff'}, acid:{emoji:'🟣',color:'#c44dff'},
+  portal:{emoji:'🌀',color:'#fff'}, fireball:{emoji:'🔥',color:'#ff9800'}
+};
+
+var LEVELS = {
+  1: { bg:'#0b120e', grid:'rgba(90,255,160,.06)', name:'۱', goal:8,  wall:'rgba(70,248,143,.25)' },
+  2: { bg:'#1a1206', grid:'rgba(255,180,60,.07)', name:'۲', goal:12, wall:'rgba(255,180,60,.3)' },
+  3: { bg:'#1a0608', grid:'rgba(255,80,80,.08)',  name:'۳', goal:16, wall:'rgba(255,84,112,.35)' }
+};
+
+/* ═══ اژدهای پیکسلی: هر بار بزرگ‌تر + رنگ جدید ═══
+   ۱=آبی(پالت اصلی) ۲=بنفش ۳=سرخ ۴=سبز(نبرد نهایی، بزرگ‌ترین) */
+var DRAGON_STYLE = {
+  1: { hue:222, size:1.7  },
+  2: { hue:285, size:2.05 },
+  3: { hue:0,   size:2.4  },
+  4: { hue:135, size:2.75 }
+};
+var PAL_ORIGINAL = ['#000000','#101024','#2b5ce6','#1c3fae','#142e85','#4a80ff','#7ea6ff',
+  '#ffd83e','#dfa21c','#fff3b0','#ffffff','#7a0e0e','#e63214','#ff7d1a','#ffc31f','#fff6c8'];
+function hslHex(h,s,l){
+  s/=100; l/=100;
+  var k=function(n){ return (n+h/30)%12; };
+  var a=s*Math.min(l,1-l);
+  var f=function(n){ return l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1))); };
+  var to=function(v){ var c=Math.round(v*255).toString(16); return c.length<2?'0'+c:c; };
+  return '#'+to(f(0))+to(f(8))+to(f(4));
+}
+function dragonPalette(hue){
+  if (hue === 222) return PAL_ORIGINAL;      /* مرحله ۱: پالت اصلی دست‌نخورده */
+  var p = PAL_ORIGINAL.slice();
+  p[2]=hslHex(hue,75,54); p[3]=hslHex(hue,73,40); p[4]=hslHex(hue,73,30);
+  p[5]=hslHex(hue,100,65); p[6]=hslHex(hue,100,75);
+  return p;                                   /* زرد/شعله/سفید همیشه ثابت */
+}
+
+/* ─── بافر پیکسل و توابع رسم پیکسلی ─── */
+var SP_W=200, SP_H=150, SP_OX=32, SP_OY=36, SP_AX=50, SP_AY=52;
+function newBuf(){ return { b:new Uint8Array(SP_W*SP_H) }; }
+function bpx(g,x,y,i){ x=Math.round(x)+SP_OX; y=Math.round(y)+SP_OY;
+  if(x>=0&&x<SP_W&&y>=0&&y<SP_H) g.b[y*SP_W+x]=i; }
+function brect(g,x,y,w,h,i){ for(var j=0;j<h;j++)for(var k=0;k<w;k++)bpx(g,x+k,y+j,i); }
+function bell(g,cx,cy,rx,ry,i){ if(rx<.5)rx=.5;if(ry<.5)ry=.5;
+  for(var y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++)
+  for(var x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){
+    var dx=(x-cx)/rx,dy=(y-cy)/ry;if(dx*dx+dy*dy<=1.05)bpx(g,x,y,i);} }
+function bpoly(g,p,i){ var y0=1e9,y1=-1e9,k;
+  for(k=0;k<p.length;k++){if(p[k][1]<y0)y0=p[k][1];if(p[k][1]>y1)y1=p[k][1];}
+  for(var y=Math.ceil(y0);y<=Math.floor(y1);y++){var xs=[];
+    for(k=0;k<p.length;k++){var a=p[k],q=p[(k+1)%p.length];
+      if((a[1]<=y&&q[1]>y)||(q[1]<=y&&a[1]>y))xs.push(a[0]+(y-a[1])/(q[1]-a[1])*(q[0]-a[0]));}
+    xs.sort(function(m,n){return m-n;});
+    for(k=0;k+1<xs.length;k+=2)for(var x=Math.ceil(xs[k]);x<=Math.floor(xs[k+1]);x++)bpx(g,x,y,i);} }
+function bline(g,x0,y0,x1,y1,i,t){ t=t||1; var r=t>>1,n=0;
+  var dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx-dy;
+  while(n++<900){for(var j=-r;j<=r;j++)for(var k=-r;k<=r;k++)bpx(g,x0+k,y0+j,i);
+    if(x0==x1&&y0==y1)break;var e2=2*e;
+    if(e2>-dy){e-=dy;x0+=sx;}if(e2<dx){e+=dx;y0+=sy;}}}
+function outlineBuf(g){
+  var s=new Uint8Array(g.b);
+  for(var y=0;y<SP_H;y++)for(var x=0;x<SP_W;x++){
+    if(s[y*SP_W+x])continue;
+    var l=x>0?s[y*SP_W+x-1]:0, r=x<SP_W-1?s[y*SP_W+x+1]:0,
+        u=y>0?s[(y-1)*SP_W+x]:0, d=y<SP_H-1?s[(y+1)*SP_W+x]:0;
+    if((l&&l!=1)||(r&&r!=1)||(u&&u!=1)||(d&&d!=1)) g.b[y*SP_W+x]=1; }
+}
+function bakeBuf(g,pal){
+  var c=document.createElement('canvas'); c.width=SP_W; c.height=SP_H;
+  var cc=c.getContext('2d');
+  for(var y=0;y<SP_H;y++)for(var x=0;x<SP_W;x++){
+    var v=g.b[y*SP_W+x];
+    if(v){ cc.fillStyle=pal[v]; cc.fillRect(x,y,1,1); } }
+  return c;
+}
+
+/* ─── ساخت ۴ لایه: بال دور / بدن / بال نزدیک / شعله ─── */
+function buildDragonSet(pal){
+  var fw=newBuf();
+  bpoly(fw,[[60,44],[66,30],[74,19],[84,11],[92,7],[95,10],[91,14],[96,18],[89,22],[93,27],[85,29],[88,34],[79,35],[81,40],[72,42],[66,46]],3);
+  bline(fw,63,43,92,7,4); bline(fw,63,43,96,18,4); bline(fw,63,43,93,27,4); bline(fw,63,43,88,34,4);
+  bpx(fw,76,24,8); bpx(fw,82,18,8); bpx(fw,78,30,8); bpx(fw,86,26,8); bpx(fw,72,34,8); bpx(fw,84,33,8);
+  outlineBuf(fw);
+
+  var bd=newBuf();
+  bell(bd,28,63,4.5,4,2); bell(bd,21,66,4,3.6,2); bell(bd,15,63,3.5,3.2,2); bell(bd,12,57,3,2.8,2);
+  bell(bd,13,51,2.7,2.5,2); bell(bd,17,47,2.4,2.2,2); bell(bd,21,45,2,1.9,2);
+  bpx(bd,27,60,5); bpx(bd,20,63,5); bpx(bd,13,61,5); bpx(bd,11,55,5); bpx(bd,13,49,5); bpx(bd,17,45,5);
+  bpoly(bd,[[24,67],[20,72],[27,69]],7); bpoly(bd,[[15,66],[10,70],[17,68]],7);
+  bpoly(bd,[[9,60],[5,64],[11,63]],7); bpoly(bd,[[10,52],[7,48],[13,54]],7);
+  bpoly(bd,[[15,45],[13,39],[20,44]],7);
+  bell(bd,30,66,5,5,3); bline(bd,29,70,27,76,3,5);
+  bpoly(bd,[[22,76],[31,76],[32,79],[22,79]],4); brect(bd,22,78,10,1,8);
+  bell(bd,60,66,5,5,3); bline(bd,62,70,64,75,3,5);
+  bpoly(bd,[[62,76],[70,76],[71,79],[62,79]],4); brect(bd,62,78,9,1,8);
+  bpoly(bd,[[40,48],[37,42],[43,49]],7); bpoly(bd,[[47,46],[44,40],[50,47]],7);
+  bell(bd,44,57,14,11,2);
+  bell(bd,46,64,12,5,3); bell(bd,38,50,7,4,5);
+  bell(bd,50,60,6,8.5,7);
+  bline(bd,46,54,54,54,8); bline(bd,45,57,55,57,8); bline(bd,45,60,55,60,8);
+  bline(bd,45,63,55,63,8); bline(bd,46,66,54,66,8); bline(bd,48,68,52,68,8);
+  bell(bd,36,63,7,6,2); bell(bd,33,60,3,2,5);
+  bline(bd,35,68,33,75,2,6);
+  bpoly(bd,[[27,76],[38,76],[40,78],[39,80],[27,80]],2);
+  bline(bd,31,77,31,79,3); bline(bd,35,77,35,79,3);
+  brect(bd,27,79,12,1,9);
+  bpoly(bd,[[39,76],[42,77],[39,78]],9);
+  bpoly(bd,[[50,50],[60,30],[68,32],[62,52]],2);
+  bline(bd,54,48,61,34,3);
+  bpoly(bd,[[58,36],[53,31],[60,38]],7); bpoly(bd,[[54,44],[49,40],[56,46]],7);
+  bpoly(bd,[[66,26],[61,11],[62,10],[63,14],[70,25]],7);
+  bline(bd,64,20,63,15,8); bline(bd,67,23,65,18,8);
+  bpoly(bd,[[70,25],[67,10],[68,9],[69,13],[75,24]],7);
+  bline(bd,70,20,68,15,8); bline(bd,72,22,70,17,8);
+  bell(bd,72,28,7,6,2);
+  bell(bd,72,32,5,2.5,3);
+  bell(bd,73,25,3.5,1.8,5);
+  bpoly(bd,[[74,23],[86,26],[88,31],[86,35],[74,34]],2);
+  bline(bd,75,24,86,27,5);
+  bpx(bd,85,30,3);
+  brect(bd,67,26,5,4,7);
+  bline(bd,69,26,69,29,1);
+  bpx(bd,70,27,10);
+  bline(bd,65,25,74,26,4,2);
+  bpoly(bd,[[66,31],[59,36],[67,35]],7);
+  bell(bd,71,37,3,2,3);
+  bpoly(bd,[[75,33],[88,31],[88,36],[85,42],[74,41]],11);
+  bpoly(bd,[[77,37],[83,37],[80,41]],14);
+  bpoly(bd,[[77,33],[79,33],[78,38]],10);
+  bpoly(bd,[[81,32],[83,33],[82,37]],10);
+  bpoly(bd,[[85,32],[87,33],[86,36]],10);
+  bpoly(bd,[[74,41],[85,42],[83,47],[72,44]],2);
+  bline(bd,74,43,82,44,3);
+  bpoly(bd,[[76,41],[78,41],[77,39]],10);
+  bpoly(bd,[[82,42],[84,42],[83,40]],10);
+  bell(bd,52,64,6,5.5,2);
+  bline(bd,54,68,56,75,2,5);
+  bpoly(bd,[[50,76],[60,76],[62,78],[61,80],[50,80]],2);
+  bline(bd,54,77,54,79,3); bline(bd,58,77,58,79,3);
+  brect(bd,50,79,11,1,9);
+  bpoly(bd,[[61,76],[64,77],[61,78]],9);
+  outlineBuf(bd);
+
+  var nw=newBuf();
+  bpoly(nw,[[46,50],[40,34],[31,20],[19,10],[10,5],[5,9],[8,15],[3,21],[10,26],[6,33],[14,37],[10,44],[20,47],[16,54],[28,55],[25,62],[40,58],[44,54]],2);
+  bline(nw,43,52,10,5,5); bline(nw,43,52,3,21,5); bline(nw,43,52,6,33,5); bline(nw,43,52,10,44,5); bline(nw,43,52,16,54,5);
+  bpx(nw,28,24,7); bpx(nw,34,30,7); bpx(nw,22,30,7); bpx(nw,30,38,7); bpx(nw,18,24,7); bpx(nw,26,46,7); bpx(nw,36,42,7); bpx(nw,20,40,7); bpx(nw,32,50,7); bpx(nw,24,20,7);
+  bell(nw,42,50,3,2.5,5);
+  outlineBuf(nw);
+
+  var fr=newBuf();
+  bpoly(fr,[[86,30],[92,24],[97,29],[103,21],[108,28],[114,22],[118,29],[125,24],[127,31],[133,29],[134,35],[128,37],[134,42],[127,43],[130,50],[123,46],[124,53],[117,48],[118,55],[111,49],[112,44],[105,45],[107,39],[99,41],[100,35],[93,38],[90,34],[86,36]],12);
+  bpoly(fr,[[87,31],[92,26],[97,30],[103,24],[108,30],[114,25],[118,31],[124,27],[126,33],[131,32],[131,36],[126,38],[130,43],[124,42],[126,47],[120,44],[121,49],[115,45],[116,42],[108,43],[110,38],[102,39],[103,34],[95,36],[92,33],[88,34]],13);
+  bpoly(fr,[[88,32],[93,29],[98,32],[104,28],[109,32],[114,29],[118,33],[123,31],[124,35],[128,35],[127,38],[122,39],[124,43],[118,41],[119,44],[112,41],[110,38],[103,38],[104,34],[96,35],[93,33],[89,33]],14);
+  bell(fr,90,33,4,2.5,15); bpx(fr,94,33,15);
+  bpx(fr,133,18,12); bpx(fr,129,54,13); bpx(fr,135,40,14);
+  outlineBuf(fr);
+
+  return { body:bakeBuf(bd,pal), wingFar:bakeBuf(fw,pal), wingNear:bakeBuf(nw,pal), fire:bakeBuf(fr,pal) };
+}
+
+var dragonCache = {};
+function dragonSet(key){
+  if (!dragonCache[key])
+    dragonCache[key] = buildDragonSet(dragonPalette(DRAGON_STYLE[key].hue));
+  return dragonCache[key];
+}
+
+/* رسم لایه با چرخش حول مفصل (افکت بال‌زدن) */
+function drawLayerCv(cv, u0, v0, ang, sc){
+  ctx.save();
+  ctx.translate((u0-SP_AX)*sc, (v0-SP_AY)*sc);
+  if (ang) ctx.rotate(ang);
+  ctx.drawImage(cv, -(SP_OX+u0)*sc, -(SP_OY+v0)*sc, cv.width*sc, cv.height*sc);
+  ctx.restore();
+}
+/* شعله با سوسو و جوشیدن */
+function drawFireCv(cv, u0, v0, sc, len, alpha, t){
+  var sx = len*(0.88 + 0.1*Math.sin(t/37) + Math.random()*0.1);
+  var sy = 0.92 + 0.08*Math.sin(t/29+2) + Math.random()*0.08;
+  ctx.save();
+  ctx.translate((u0-SP_AX)*sc, (v0-SP_AY)*sc);
+  ctx.rotate((Math.random()-.5)*0.07);
+  ctx.scale(sx, sy);
+  ctx.globalAlpha = alpha*(0.8+Math.random()*0.2);
+  ctx.drawImage(cv, -(SP_OX+u0)*sc, -(SP_OY+v0)*sc, cv.width*sc, cv.height*sc);
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+function drawPixelDragon(t, x, y, S, key, stage, faceL){
+  var set = dragonSet(key);
+  var sc = S/50;
+  var spd = (stage==='fire') ? 85 : 125;   /* هنگام آتش، بال‌زن تندتر */
+  var flap = Math.sin(t/spd);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(x, y + Math.sin(t/300)*S*0.06);
+  if (faceL) ctx.scale(-1,1);
+  drawLayerCv(set.wingFar, 63,43, Math.sin(t/spd-0.8)*0.13, sc);
+  drawLayerCv(set.body, 0,0, 0, sc);
+  drawLayerCv(set.wingNear, 43,52, flap*0.16, sc);
+  if (stage === 'fire'){
+    drawFireCv(set.fire, 86,33, sc, 1.0, 0.95, t);
+    drawFireCv(set.fire, 86,33, sc, 0.62, 1.0, t);
+  }
+  ctx.restore();
+}
+/* نقطه دهان — نوک پوزه در اسپرایت (87,34) */
+function pixelMouthPoint(x, y, S, faceL){
+  var sc = S/50;
+  var dx = (87-SP_AX)*sc, dy = (34-SP_AY)*sc;
+  if (faceL) dx = -dx;
+  return { x:x+dx, y:y+dy };
+}
+
+var canvas = $('#game'), ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+var cell = 20, state = 'menu';
+var world = 'out';            /* out | belly | boss */
+var level = 1;                /* 1..4 */
+var dragonVisits = 0;
+var snake, prevSnake, dir, dirQueue, items;
+var score = 0, tickMs = 170, tickAcc = 0, lastT = 0;
+var particles = [], floatTexts = [], fireParticles = [];
+var combo = 0, comboTimer = 0;
+var fx = { ghost:0, slow:0, double:0 };
+var applesEaten = 0;
+var orbsEaten = 0, ORB_GOAL = 6;
+var ds = null;
+var boss = null;
+var pShots = [], bossShots = [];
+
+var best = Number(lsGet('neon-snake-plus-best') || 0);
+ $('#hBest').textContent = faNum(best);
+
+/* ═══ صدا ═══ */
+var soundOn = true, audioCtx = null;
+function tone(f, dur, delay, vol){
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var t0 = audioCtx.currentTime + (delay||0);
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type='square'; o.frequency.value=f;
+    g.gain.setValueAtTime(vol||.06,t0);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t0); o.stop(t0+dur+.02);
+  } catch(e){}
+}
+function noiseBurst(dur, vol){
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var len = Math.floor(audioCtx.sampleRate * dur);
+    var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i=0;i<len;i++) data[i] = (Math.random()*2-1)*(1-i/len);
+    var src = audioCtx.createBufferSource(); src.buffer = buf;
+    var g = audioCtx.createGain(); g.gain.value = vol||.1;
+    src.connect(g); g.connect(audioCtx.destination); src.start();
+  } catch(e){}
+}
+var sfx = {
+  eat:function(){ tone(660,.06); tone(990,.08,.05,.05); },
+  gold:function(){ tone(784,.09); tone(988,.09,.07); tone(1175,.09,.14); },
+  power:function(){ tone(523,.08); tone(659,.08,.08); },
+  bomb:function(){ tone(110,.25,0,.1); },
+  die:function(){ tone(392,.15); tone(330,.15,.12); tone(262,.15,.24); },
+  click:function(){ tone(520,.04,0,.03); },
+  start:function(){ tone(523,.09); tone(659,.09,.09); tone(784,.12,.18); },
+  roar:function(){ noiseBurst(.7,.14); tone(60,.8,0,.14); tone(48,.9,.2,.14); tone(720,.3,.1,.04); },
+  fire:function(){ noiseBurst(.5,.12); },
+  chomp:function(){ tone(180,.08,0,.1); tone(120,.1,.05,.08); },
+  gulp:function(){ tone(300,.15,0,.09); tone(150,.25,.12,.09); },
+  warp:function(){ [400,600,900,1300].forEach(function(f,i){ tone(f,.08,i*.07,.07); }); },
+  shoot:function(){ tone(880,.07,0,.07); tone(1200,.05,.04,.05); },
+  hit:function(){ tone(200,.12,0,.1); noiseBurst(.15,.08); },
+  bosshit:function(){ tone(150,.2,0,.12); tone(90,.25,.08,.1); },
+  win:function(){ [523,659,784,1047,1319].forEach(function(f,i){ tone(f,.15,i*.12,.08); }); }
+};
+
+function resize(){
+  var r = $('#stage-wrap').getBoundingClientRect();
+  var size = Math.max(100, Math.floor(Math.min(r.width, r.height)));
+  var stage = $('#stage');
+  stage.style.width = size+'px'; stage.style.height = size+'px';
+  var dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = size*dpr; canvas.height = size*dpr;
+  canvas.style.width = size+'px'; canvas.style.height = size+'px';
+  var oldCell = cell;
+  cell = size / COLS;
+  if (oldCell > 0 && Math.abs(cell-oldCell) > 0.001){
+    var k = cell/oldCell, ri;
+    if (ds){ ds.x*=k; ds.y*=k; ds.targetX*=k; ds.targetY*=k; ds.S*=k; }
+    if (boss){ boss.x*=k; boss.y*=k; boss.vx*=k; boss.vy*=k; boss.S*=k; }
+    for (ri=0; ri<pShots.length; ri++){
+      var q1=pShots[ri];
+      q1.sx*=k; q1.sy*=k; q1.tx*=k; q1.ty*=k; q1.x*=k; q1.y*=k;
+    }
+    for (ri=0; ri<bossShots.length; ri++){
+      var q2=bossShots[ri];
+      q2.x*=k; q2.y*=k; q2.vx*=k; q2.vy*=k;
+    }
+    for (ri=0; ri<fireParticles.length; ri++){
+      var q3=fireParticles[ri];
+      q3.x*=k; q3.y*=k; q3.vx*=k; q3.vy*=k; q3.size*=k;
+    }
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', function(){ setTimeout(resize,250); });
+
+/* ═══ جهان ═══ */
+function makeSnake(){
+  var cx = Math.floor(COLS/2), cy = Math.floor(ROWS/2);
+  snake = [{x:cx,y:cy},{x:cx-1,y:cy},{x:cx-2,y:cy}];
+  prevSnake = snake.map(function(s){ return {x:s.x,y:s.y}; });
+  dir = 'right'; dirQueue = [];
+}
+function occupied(x,y){
+  var i;
+  for (i=0;i<snake.length;i++) if (snake[i].x===x&&snake[i].y===y) return true;
+  for (i=0;i<items.length;i++) if (items[i].x===x&&items[i].y===y) return true;
+  return false;
+}
+/* اسپاون تضمینی: بعد از تلاش تصادفی، اسکن خطی کامل — دیگر هیچ‌وقت جا نمی‌ماند */
+function spawnItem(type){
+  var t, x, y;
+  for (t=0; t<300; t++){
+    x = Math.floor(Math.random()*COLS); y = Math.floor(Math.random()*ROWS);
+    if (!occupied(x,y)){ items.push({x:x,y:y,type:type}); return true; }
+  }
+  for (y=0; y<ROWS; y++) for (x=0; x<COLS; x++)
+    if (!occupied(x,y)){ items.push({x:x,y:y,type:type}); return true; }
+  return false;
+}
+function hasType(tp){
+  for (var i=0;i<items.length;i++) if (items[i].type===tp) return true;
+  return false;
+}
+function resetOutside(){
+  world = 'out'; items = []; makeSnake();
+  fx.ghost=0; fx.slow=0; fx.double=0;
+  applesEaten = 0;
+  spawnItem('apple');
+}
+function resetWorld(){
+  particles=[]; floatTexts=[]; fireParticles=[];
+  pShots=[]; bossShots=[]; boss=null; ds=null;
+  $('#hpbar').style.display='none';
+  combo=0; comboTimer=0;
+  level = 1; dragonVisits = 0;
+  orbsEaten = 0;
+  resetOutside();
+  updateComboBadge(); updateGoalChip();
+}
+function randomSpawnOut(dt){
+  var apples=0, i;
+  for (i=0;i<items.length;i++) if (items[i].type==='apple') apples++;
+  if (apples === 0){ spawnItem('apple'); return; }
+  if (items.length >= 3 || Math.random() > 0.12*dt/170) return;
+  spawnItem(pick(['gold','bomb','bomb','ghost','slow','double']));
+}
+function randomSpawnBelly(dt){
+  var orbs=0, acids=0, i;
+  for (i=0;i<items.length;i++){
+    if (items[i].type==='orb') orbs++;
+    if (items[i].type==='acid') acids++;
+  }
+  if (orbs < 2) spawnItem('orb');
+  if (acids < 2 && Math.random() < 0.25*dt/170) spawnItem('acid');
+}
+function randomSpawnBoss(){
+  var fb=0, i;
+  for (i=0;i<items.length;i++) if (items[i].type==='fireball') fb++;
+  if (fb < 2) spawnItem('fireball');
+}
+function updateGoalChip(){
+  var g = $('#goalChip');
+  if (world === 'out'){
+    g.textContent = '🟡 مرحله '+faNum(LEVELS[level].name)+' — 🍎 '+faNum(applesEaten)+' / '+faNum(LEVELS[level].goal);
+    g.style.color = '#ffd166';
+  } else if (world === 'belly'){
+    g.textContent = '🫀 داخل شکم — 💠 '+faNum(orbsEaten)+' / '+faNum(ORB_GOAL);
+    g.style.color = '#7fe3ff';
+  } else {
+    g.textContent = '⚔️ نبرد نهایی — 🔥 گلوله بخور و شلیک کن!';
+    g.style.color = '#ff9800';
+  }
+}
+
+/* ═══ ورودی ═══ */
+function queueDir(d){
+  if (state !== 'playing') return;
+  var last = dirQueue.length ? dirQueue[dirQueue.length-1] : dir;
+  if (d === last || d === OPPO[last]) return;
+  if (dirQueue.length >= 3) return;
+  dirQueue.push(d);
+}
+function getTickMs(){ return fx.slow > 0 ? tickMs * 1.8 : tickMs; }
+function grow(){ snake.push({x:snake[snake.length-1].x, y:snake[snake.length-1].y}); }
+
+/* ═══ گام ═══ */
+function step(){
+  if (dirQueue.length) dir = dirQueue.shift();
+  prevSnake = snake.map(function(s){ return {x:s.x,y:s.y}; });
+  var h = snake[0], d = DIRS[dir];
+  var nx = h.x + d.x, ny = h.y + d.y;
+
+  if (nx<0 || ny<0 || nx>=COLS || ny>=ROWS){
+    if (fx.ghost > 0){
+      nx=(nx+COLS)%COLS; ny=(ny+ROWS)%ROWS;
+      floatText(nx,ny,'👻','#b8cfff');
+    } else { gameOver('بازی تمام شد!'); return; }
+  }
+  snake.unshift({x:nx,y:ny});
+
+  /* اسید در دنیای شکم */
+  if (world === 'belly'){
+    for (var a=0; a<items.length; a++){
+      if (items[a].type !== 'acid') continue;
+      var ad = DIRS[pick(['up','down','left','right'])];
+      var ax = items[a].x+ad.x, ay = items[a].y+ad.y;
+      if (ax>=0&&ay>=0&&ax<COLS&&ay<ROWS&&!(ax===nx&&ay===ny)){
+        var block=false,b;
+        for (b=0;b<items.length;b++)
+          if (b!==a&&items[b].x===ax&&items[b].y===ay){block=true;break;}
+        if (!block){
+          var onSnake=false, si;
+          for (si=1; si<snake.length; si++)
+            if (snake[si].x===ax && snake[si].y===ay){ onSnake=true; break; }
+          if (!onSnake){ items[a].x=ax; items[a].y=ay; }
+        }
+      }
+      if (items[a].x===nx && items[a].y===ny){
+        items.splice(a,1);
+        sfx.bomb(); vibrate([100,60,100]); burst(nx,ny,'#c44dff');
+        gameOver('🟣 توسط اسید هضم شدی!'); return;
+      }
+    }
+  }
+
+  for (var k = items.length-1; k >= 0; k--){
+    var it = items[k];
+    if (it.x!==nx || it.y!==ny) continue;
+
+    if (it.type === 'apple'){
+      addScore(10,it,'+۱۰'); grow(); sfx.eat(); vibrate(30); bumpCombo();
+      applesEaten++; updateGoalChip();
+      if (applesEaten >= LEVELS[level].goal && world === 'out'){ startDragonScene(); return; }
+    } else if (it.type === 'gold'){
+      addScore(50,it,'+۵۰⭐'); grow(); sfx.gold(); vibrate([40,40,60]); bumpCombo();
+    } else if (it.type === 'bomb'){
+      items.splice(k,1); sfx.bomb(); vibrate([80,50,80]);
+      gameOver('💥 منفجر شدی!'); return;
+    } else if (it.type === 'ghost'){
+      fx.ghost=8000; floatText(nx,ny,'👻','#b8cfff'); sfx.power(); grow();
+    } else if (it.type === 'slow'){
+      fx.slow=7000; floatText(nx,ny,'🐌','#7fe3ff'); sfx.power(); grow();
+    } else if (it.type === 'double'){
+      fx.double=9000; floatText(nx,ny,'💰','#ffe66d'); sfx.power(); grow();
+    } else if (it.type === 'orb'){
+      addScore(25,it,'+۲۵'); grow(); sfx.eat(); vibrate(30);
+      orbsEaten++; updateGoalChip();
+      if (orbsEaten >= ORB_GOAL && !hasType('portal')){
+        spawnItem('portal'); banner('🌀 پورتال فرار باز شد!',2200); sfx.warp();
+      }
+    } else if (it.type === 'portal'){
+      escapeBelly(); return;
+    } else if (it.type === 'fireball' && boss){
+      /* خوردن گلوله = شلیک به اژدها */
+      items.splice(k,1);
+      sfx.shoot(); vibrate(25);
+      burst(nx,ny,'#ff9800');
+      floatText(nx,ny,'🔥','#ff9800');
+      var m = { x:(nx+.5)*cell, y:(ny+.5)*cell };
+      pShots.push({ sx:m.x, sy:m.y, x:m.x, y:m.y, tx:boss.x, ty:boss.y, t:0 });
+      continue;
+    }
+    items.splice(k,1);
+  }
+
+  snake.pop();
+
+  for (var c=1; c<snake.length; c++){
+    if (snake[c].x===nx && snake[c].y===ny){ gameOver('بازی تمام شد!'); return; }
+  }
+
+  /* نگهبان سیب — پایان هر گام، اگر سیبی نباشد فوراً اسپاون می‌شود */
+  if (world === 'out' && !hasType('apple')) spawnItem('apple');
+}
+function addScore(base, item, label){
+  var mult = (fx.double>0?2:1)*(1+combo*0.25);
+  score += Math.round(base*mult);
+  $('#hScore').textContent = faNum(score);
+  burst(item.x,item.y,TYPES[item.type].color);
+  floatText(item.x,item.y,label,TYPES[item.type].color);
+}
+function bumpCombo(){ combo++; comboTimer=3000; updateComboBadge(); }
+function updateComboBadge(){
+  var b=$('#comboBadge');
+  if (combo>=2){
+    b.style.display='inline-block';
+    b.textContent='🔥 کمبو ×'+faNum(combo);
+    b.style.background = combo>=5?'#ffd166':'#ff5470';
+  } else b.style.display='none';
+}
+
+var bannerTimer = null;
+function banner(text, ms){
+  $('#bannerText').innerHTML = text;
+  $('#banner').classList.add('show');
+  if (bannerTimer) clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(function(){ $('#banner').classList.remove('show'); }, ms||2000);
+}
+
+/* ═══ سکانس اژدها ═══ */
+function startDragonScene(){
+  state = 'cutscene';
+  var size = cell*COLS;
+  ds = {
+    t:0, stage:'flyin',
+    x:-size*0.5, y:size*0.3,
+    targetX:size*0.55, targetY:size*0.42,
+    S: cell*DRAGON_STYLE[level].size,   /* هر مرحله بزرگ‌تر */
+    key: level,                          /* هر مرحله رنگ جدید */
+    face: (snake.length && (snake[0].x+.5)*cell < size*0.55) ? -1 : 1
+  };
+  items = [];
+  sfx.roar(); vibrate([200,100,250]);
+  banner('🐉 اژدهای '+faNum(LEVELS[level].name)+' از آسمون سرازیر شد!', 2600);
+}
+function updateDragonScene(dt){
+  ds.t += dt;
+  if (ds.stage === 'flyin'){
+    ds.x += (ds.targetX - ds.x)*dt*0.0022;
+    ds.y = ds.targetY + Math.sin(ds.t/280)*cell*0.6;
+    if (Math.abs(ds.x - ds.targetX) < cell*0.5){
+      ds.stage='roar'; ds.t=0;
+      sfx.roar(); vibrate([250,80,250]);
+      banner('🔥 اژدها مار رو شکار کرد!', 1600);
+    }
+  } else if (ds.stage === 'roar'){
+    if (ds.t > 1400){ ds.stage='fire'; ds.t=0; ds.fireT=0; sfx.fire(); vibrate(150); }
+  } else if (ds.stage === 'fire'){
+    ds.fireT += dt;
+    if (ds.fireT > 60){
+      ds.fireT=0;
+      var m = dragonMouth();
+      fireParticles.push({
+        x:m.x, y:m.y,
+        vx:((snake.length?(snake[0].x+.5)*cell:m.x)-m.x)/40+(Math.random()-.5)*2,
+        vy:((snake.length?(snake[0].y+.5)*cell:m.y)-m.y)/40+(Math.random()-.5)*2,
+        life:1, size:cell*(.2+Math.random()*.3)
+      });
+    }
+    if (ds.t > 1600){ ds.stage='eat'; ds.t=0; ds.chompT=0; }
+  } else if (ds.stage === 'eat'){
+    ds.chompT += dt;
+    if (ds.chompT > 160){
+      ds.chompT=0;
+      if (snake.length > 0){
+        var seg = snake.pop();
+        burst(seg.x,seg.y,'#46f88f');
+        sfx.chomp(); vibrate(35);
+      }
+      if (snake.length === 0){ ds.stage='gulp'; ds.t=0; sfx.gulp(); vibrate([150,80,150]); }
+    }
+  } else if (ds.stage === 'gulp'){
+    if (ds.t > 1300) enterBelly();
+  }
+}
+function dragonMouth(){
+  return pixelMouthPoint(ds.x, ds.y, ds.S, ds.face===-1);
+}
+function enterBelly(){
+  world='belly'; orbsEaten=0;
+  items=[]; particles=[]; floatTexts=[]; fireParticles=[];
+  pShots=[]; bossShots=[];
+  combo=0; comboTimer=0;
+  fx.ghost=0; fx.slow=0; fx.double=0;
+  makeSnake();
+  spawnItem('orb'); spawnItem('orb');
+  state='playing';
+  updateComboBadge(); updateGoalChip();
+  banner('🫀 داخل شکم اژدها هستی! '+faNum(ORB_GOAL)+' حباب جمع کن و فرار کن', 3200);
+  sfx.warp();
+}
+/* بعد از فرار سوم، نبرد نهایی شروع می‌شود */
+function escapeBelly(){
+  score += 200;
+  $('#hScore').textContent = faNum(score);
+  dragonVisits++;
+  if (dragonVisits >= 3){
+    startBossFight();
+    return;
+  }
+  level++;
+  resetOutside();
+  state='playing';
+  updateGoalChip();
+  banner('🎉 فرار کردی! +۲۰۰<br>ورودی مرحله بعدی: 🟠 مرحله '+faNum(level)+'<br>🍎 '+faNum(LEVELS[level].goal)+' سیب بخور!', 3200);
+  sfx.start();
+}
+
+/* ═══ نبرد نهایی با اژدها ═══ */
+
+/* جدول شلیک ۴ جهت — هر جهت رنگ و صدای خودش را دارد تا قابل تشخیص باشد */
+var DIR_SHOTS = {
+  E: { vx: 1, vy: 0, col:'#ff7d1a', col2:'#ffe0b0', f:660 },  /* شرق  = نارنجی */
+  S: { vx: 0, vy: 1, col:'#ffd83e', col2:'#fff6c8', f:520 },  /* جنوب = زرد */
+  W: { vx:-1, vy: 0, col:'#ff4d9e', col2:'#ffc9e2', f:400 },  /* غرب  = صورتی */
+  N: { vx: 0, vy:-1, col:'#a34dff', col2:'#ddb8ff', f:300 }   /* شمال = بنفش */
+};
+
+function startBossFight(){
+  world = 'boss';
+  level = 4;
+  state = 'playing';
+  items = []; fireParticles = [];
+  pShots = []; bossShots = [];
+  makeSnake();
+  for (var si=0; si<snake.length; si++){
+    snake[si].y = Math.min(ROWS-1, snake[si].y + 5);
+    prevSnake[si].y = snake[si].y;
+  }
+  boss = {
+    x: cell*COLS*0.5, y: cell*ROWS*0.46,
+    hp: 20, maxHp: 20,
+    vx: cell*0.08, vy: cell*0.05,
+    fireT: 0, fireCd: 2000,
+    seq: [], seqT: 0,        /* صف شلیک: شرق → جنوب → غرب → شمال */
+    enraged: false,
+    hitFlash: 0,
+    S: cell*DRAGON_STYLE[4].size,   /* بزرگ‌ترین اژدها */
+    key: 4, face: 1                 /* رنگ سبز */
+  };
+  spawnItem('fireball'); spawnItem('fireball');
+  $('#hpbar').style.display='block';
+  $('#hpfill').style.width='100%';
+  updateGoalChip();
+  banner('⚔️ نبرد نهایی! 🔥 گلوله‌ها رو بخور تا شلیک بشه<br>🔥 مواظب آتش اژدها باش!', 3500);
+  sfx.roar(); vibrate([300,100,300]);
+}
+function updateBoss(dt, t){
+  if (!boss || state !== 'playing') return;
+  var size = cell*COLS;
+  boss.x += boss.vx*dt*.06;
+  boss.y += boss.vy*dt*.06;
+  if (boss.x < size*.34){ boss.x = size*.34; boss.vx = Math.abs(boss.vx); }
+  if (boss.x > size*.62){ boss.x = size*.62; boss.vx = -Math.abs(boss.vx); }
+  if (boss.y < size*.40){ boss.y = size*.40; boss.vy = Math.abs(boss.vy); }
+  if (boss.y > size*.53){ boss.y = size*.53; boss.vy = -Math.abs(boss.vy); }
+
+  /* رو به سمت مار (با هیسترزیس تا فلیپ نزند) */
+  var hx = snake.length ? (snake[0].x+.5)*cell : size/2;
+  if (hx < boss.x - cell*3) boss.face = -1;
+  else if (hx > boss.x + cell*3) boss.face = 1;
+
+  if (boss.hitFlash > 0) boss.hitFlash -= dt;
+
+  if (boss.hp <= 0){
+    winGame();
+    return;
+  }
+
+  /* ─── شلیک ترتیبی: شرق → جنوب → غرب → شمال (هر ۴۲۰ms یکی) ─── */
+  boss.fireT += dt;
+  if (boss.fireT > boss.fireCd && boss.seq.length === 0){
+    boss.fireT = 0;
+    boss.seq = ['E','S','W','N'];
+    boss.seqT = 0;
+    sfx.fire(); vibrate(60);
+  }
+  if (boss.seq.length){
+    boss.seqT += dt;
+    if (boss.seqT >= 420){
+      boss.seqT = 0;
+      var D = DIR_SHOTS[boss.seq.shift()];
+      var m = bossMouth();
+      var spd = cell*.14;
+      /* جان به یک‌سوم رسید؟ در هر جهت ۲ گلوله موازی به‌جای ۱ */
+      var dbl = boss.hp <= boss.maxHp/3;
+      var offs = dbl ? [cell*.38, -cell*.38] : [0];
+      for (var oi=0; oi<offs.length; oi++){
+        bossShots.push({
+          x: m.x - D.vy*offs[oi],
+          y: m.y + D.vx*offs[oi],
+          vx: D.vx*spd, vy: D.vy*spd,
+          life: 1, col: D.col, col2: D.col2
+        });
+      }
+      tone(D.f,.07,0,.05);
+      vibrate(25);
+    }
+  }
+
+  /* حرکت گلوله‌های اژدها + برخورد با مار */
+  for (var i=bossShots.length-1; i>=0; i--){
+    var bs = bossShots[i];
+    bs.x += bs.vx*dt*.06; bs.y += bs.vy*dt*.06;
+    bs.life -= dt*.0004;
+    if (bs.life <= 0 || bs.x<0 || bs.y<0 || bs.x>size || bs.y>size){
+      bossShots.splice(i,1); continue;
+    }
+    var hit = false, hitSeg = 0;
+    for (var s2=0; s2<snake.length; s2++){
+      var ddx = (snake[s2].x+.5)*cell - bs.x;
+      var ddy = (snake[s2].y+.5)*cell - bs.y;
+      if (ddx*ddx + ddy*ddy < cell*cell*.6){ hit = true; hitSeg = s2; break; }
+    }
+    if (hit){
+      bossShots.splice(i,1);
+      sfx.bosshit(); vibrate([150,60,150]);
+      burst(snake[hitSeg].x, snake[hitSeg].y, '#ff5470');
+      gameOver('🔥 آتش اژدها تو رو سوزوند!'); return;
+    }
+  }
+
+  /* حرکت گلوله‌های مار (هومینگ) + برخورد با اژدها */
+  for (var j=pShots.length-1; j>=0; j--){
+    var ps = pShots[j];
+    ps.t += dt;
+    ps.tx = boss.x; ps.ty = boss.y;
+    var prog = clamp01(ps.t/600);
+    ps.x = ps.sx + (ps.tx-ps.sx)*prog;
+    ps.y = ps.sy + (ps.ty-ps.sy)*prog - Math.sin(prog*Math.PI)*cell*2;
+    if (prog >= 1){
+      pShots.splice(j,1);
+      boss.hp--;
+      boss.hitFlash = 250;
+      $('#hpfill').style.width = Math.max(0, boss.hp/boss.maxHp*100)+'%';
+      sfx.hit(); vibrate(40);
+      burst(boss.x/cell-.5, boss.y/cell-.5, '#ffd166');
+      floatText(boss.x/cell-.5, boss.y/cell-.5, '💥', '#ffd166');
+      /* اخطار ورود به فاز خشم (یک‌سوم جان) */
+      if (!boss.enraged && boss.hp <= boss.maxHp/3){
+        boss.enraged = true;
+        banner('⚠️ اژدها خشمگین شد — حالا در هر جهت ۲ گلوله می‌ندازه!', 2800);
+      }
+      if (boss.hp <= 0){
+        for (var ex=0; ex<20; ex++)
+          burst(boss.x/cell-.5+(Math.random()-.5)*3, boss.y/cell-.5+(Math.random()-.5)*3,
+                pick(['#ff5470','#ffd166','#ff9800']));
+        winGame(); return;
+      }
+    }
+  }
+}
+function bossMouth(){
+  return pixelMouthPoint(boss.x, boss.y, boss.S, boss.face===-1);
+}
+function winGame(){
+  if (state !== 'playing') return;
+  score += 1000;
+  $('#hScore').textContent = faNum(score);
+  if (score > best){
+    best = score;
+    lsSet('neon-snake-plus-best', best);
+    $('#hBest').textContent = faNum(best);
+  }
+  state = 'won';
+  $('#hpbar').style.display='none';
+  sfx.win(); vibrate([200,100,200,100,400]);
+  $('#ovWS').textContent = faNum(score);
+  hideAll();
+  $('#ovWin').classList.add('show');
+}
+
+/* ═══ افکت‌ها ═══ */
+function burst(gx,gy,color){
+  for (var i=0;i<12;i++){
+    var a=Math.random()*Math.PI*2, sp=(.5+Math.random()*1.5)*.15;
+    particles.push({x:gx+.5,y:gy+.5,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+      life:1,size:1.5+Math.random()*2,color:color});
+  }
+}
+function floatText(gx,gy,text,color){
+  floatTexts.push({x:gx+.5,y:gy+.3,text:text,color:color,life:1});
+}
+
+/* ═══ رسم ═══ */
+function draw(t, alpha){
+  var size = cell*COLS;
+  var belly = (world === 'belly');
+  var L = LEVELS[level] || LEVELS[1];
+
+  ctx.clearRect(0,0,size,size);
+
+  if (belly){
+    var beat = .5 + .5*Math.sin(t/300);
+    ctx.fillStyle = 'rgb('+Math.round(30+beat*18)+','+Math.round(6+beat*4)+','+Math.round(14+beat*6)+')';
+    ctx.fillRect(0,0,size,size);
+    ctx.strokeStyle = 'rgba(255,80,120,'+(0.12+beat*0.1)+')';
+    ctx.lineWidth = 3;
+    for (var v=0; v<5; v++){
+      ctx.beginPath();
+      ctx.moveTo(0, size*v/4 + Math.sin(t/500+v)*8);
+      ctx.quadraticCurveTo(size/2, size*v/4 + Math.cos(t/400+v)*16, size, size*v/4 + Math.sin(t/450+v)*8);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,84,112,'+(0.35+beat*0.3)+')';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2,2,size-4,size-4);
+  } else {
+    ctx.fillStyle = world==='boss' ? '#1a0a02' : L.bg;
+    ctx.fillRect(0,0,size,size);
+    ctx.strokeStyle = world==='boss' ? 'rgba(255,150,40,.07)' : L.grid;
+    ctx.lineWidth = 1;
+    for (var g=1; g<COLS; g++){
+      ctx.beginPath(); ctx.moveTo(g*cell,0); ctx.lineTo(g*cell,size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,g*cell); ctx.lineTo(size,g*cell); ctx.stroke();
+    }
+    ctx.strokeStyle = world==='boss' ? 'rgba(255,150,40,.4)' : L.wall;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(1.5,1.5,size-3,size-3);
+    if (fx.ghost > 0){
+      ctx.strokeStyle = 'rgba(184,207,255,'+(.3+.15*Math.sin(t/150))+')';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(1.5,1.5,size-3,size-3);
+    }
+  }
+
+  for (var f=0; f<fireParticles.length; f++){
+    var fp = fireParticles[f];
+    ctx.globalAlpha = Math.max(0, fp.life);
+    ctx.fillStyle = fp.life > .5 ? '#ffd166' : '#ff5470';
+    ctx.beginPath(); ctx.arc(fp.x, fp.y, fp.size, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  for (var i=0;i<items.length;i++){
+    var it = items[i];
+    var px=(it.x+.5)*cell, py=(it.y+.5)*cell;
+    var pulse = 1 + Math.sin((t+i*400)/200)*.12;
+    if (it.type === 'portal'){
+      ctx.save(); ctx.translate(px,py); ctx.rotate(t/300);
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5;
+      for (var sp=0; sp<3; sp++){
+        ctx.beginPath();
+        ctx.arc(0,0,cell*(.28+sp*.09), sp*2.1, sp*2.1+4);
+        ctx.stroke();
+      }
+      ctx.restore(); continue;
+    }
+    ctx.font = Math.round(cell*.75*pulse)+'px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(TYPES[it.type].emoji, px, py+1);
+  }
+
+  var rainbow = combo >= 5;
+  for (var s=snake.length-1; s>=0; s--){
+    var cur = snake[s];
+    var prv = prevSnake[s] || cur;
+    var dxg = cur.x - prv.x, dyg = cur.y - prv.y;
+    var ix, iy;
+    if (Math.abs(dxg) > 1 || Math.abs(dyg) > 1){ ix = cur.x; iy = cur.y; }
+    else { ix = prv.x + dxg*alpha; iy = prv.y + dyg*alpha; }
+    var sx=(ix+.5)*cell, sy=(iy+.5)*cell, r=cell*.38;
+    if (s===0){ ctx.fillStyle = belly ? '#ffd6de' : '#c8ffe0'; r = cell*.42; }
+    else if (rainbow) ctx.fillStyle = 'hsl('+((s*18+t/6)%360)+',90%,62%)';
+    else if (belly) ctx.fillStyle = '#ff8fa8';
+    else if (world==='boss') ctx.fillStyle = '#ffb347';
+    else if (level===2) ctx.fillStyle = '#ffb84d';
+    else if (level===3) ctx.fillStyle = '#ff6b6b';
+    else if (fx.double>0) ctx.fillStyle = '#ffe66d';
+    else if (fx.slow>0) ctx.fillStyle = '#7fd8e8';
+    else if (fx.ghost>0) ctx.fillStyle = '#9fb8e8';
+    else ctx.fillStyle = '#46f88f';
+    roundedRect(sx-r,sy-r,r*2,r*2,r*.45);
+    ctx.fill();
+  }
+
+  /* اژدهای پیکسلی — سکانس */
+  if (state === 'cutscene' && ds)
+    drawPixelDragon(t, ds.x, ds.y, ds.S, ds.key, ds.stage, ds.face===-1);
+
+  /* اژدهای پیکسلی — نبرد نهایی
+     شعله فقط هنگام دمیدن الگوی شلیک (خودش راهنمای بصری است) */
+  if (world === 'boss' && boss){
+    ctx.save();
+    if (boss.hitFlash > 0){ ctx.globalAlpha = .5 + .5*Math.sin(t/40); }
+    var bstage = (boss.seq && boss.seq.length) ? 'fire' : 'idle';
+    drawPixelDragon(t, boss.x, boss.y, boss.S, boss.key, bstage, boss.face===-1);
+    ctx.restore();
+  }
+
+  /* گلوله‌های مار */
+  for (var pj=0; pj<pShots.length; pj++){
+    var ps2 = pShots[pj];
+    ctx.fillStyle = '#ff9800';
+    ctx.beginPath(); ctx.arc(ps2.x, ps2.y, cell*.22, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(ps2.x, ps2.y, cell*.12, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* گلوله‌های اژدها — با رنگ مخصوص هر جهت */
+  for (var pk=0; pk<bossShots.length; pk++){
+    var bs2 = bossShots[pk];
+    ctx.globalAlpha = Math.max(0, Math.min(1, bs2.life));
+    ctx.fillStyle = bs2.col || '#ff5722';
+    ctx.beginPath(); ctx.arc(bs2.x, bs2.y, cell*.3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = bs2.col2 || '#ffeb3b';
+    ctx.beginPath(); ctx.arc(bs2.x, bs2.y, cell*.15, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  for (var p=0;p<particles.length;p++){
+    var pt=particles[p];
+    ctx.globalAlpha=Math.max(0,pt.life);
+    ctx.fillStyle=pt.color;
+    ctx.beginPath(); ctx.arc(pt.x*cell,pt.y*cell,pt.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  for (var ft2=0; ft2<floatTexts.length; ft2++){
+    var ftx=floatTexts[ft2];
+    ctx.globalAlpha=Math.min(1,ftx.life);
+    ctx.font='bold '+Math.round(cell*.55)+'px Tahoma';
+    ctx.fillStyle=ftx.color;
+    ctx.fillText(ftx.text, ftx.x*cell, ftx.y*cell);
+  }
+  ctx.globalAlpha=1;
+
+  /* شمارش معکوس افکت‌های فعال بالای سر مار */
+  if (state === 'playing' && (fx.ghost>0 || fx.slow>0 || fx.double>0)){
+    var bparts = [];
+    if (fx.ghost>0)  bparts.push('👻'+faNum(Math.ceil(fx.ghost/1000)));
+    if (fx.slow>0)   bparts.push('🐌'+faNum(Math.ceil(fx.slow/1000)));
+    if (fx.double>0) bparts.push('💰'+faNum(Math.ceil(fx.double/1000)));
+    var btxt = bparts.join(' ');
+    var bx = Math.max(cell*2, Math.min(size-cell*2, (snake[0].x+.5)*cell));
+    var by = Math.max(cell*.9, (snake[0].y-.6)*cell);
+    ctx.font='bold '+Math.round(cell*.5)+'px Tahoma';
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.globalAlpha=.95;
+    ctx.fillStyle='rgba(0,0,0,.7)';
+    ctx.fillText(btxt, bx+1, by+1);
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(btxt, bx, by);
+    ctx.globalAlpha=1;
+  }
+}
+
+function roundedRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* ═══ حلقه اصلی ═══ */
+function loop(t){
+  try {
+    var dt = Math.min(60, t-lastT); lastT = t;
+
+    if (state === 'playing'){
+      tickAcc += dt;
+      var tm2 = getTickMs();
+      while (tickAcc >= tm2){
+        tickAcc -= tm2;
+        step();
+        if (state !== 'playing') break;
+      }
+    }
+
+    /* alpha بعد از گام‌ها محاسبه می‌شود تا حرکت مار هیچ‌وقت نپرد */
+    var alpha = (state === 'playing') ? clamp01(tickAcc / getTickMs()) : 1;
+
+    if (state === 'playing'){
+      ['ghost','slow','double'].forEach(function(k){
+        if (fx[k] > 0){ fx[k] -= dt; if (fx[k] <= 0) fx[k] = 0; }
+      });
+      if (comboTimer > 0){
+        comboTimer -= dt;
+        if (comboTimer <= 0){ comboTimer = 0; combo = 0; updateComboBadge(); }
+      }
+      if (world === 'out') randomSpawnOut(dt);
+      else if (world === 'belly') randomSpawnBelly(dt);
+      else if (world === 'boss'){ randomSpawnBoss(); updateBoss(dt, t); }
+    }
+    else if (state === 'cutscene') updateDragonScene(dt);
+    else tickAcc = 0;
+
+    var i;
+    var fr = Math.pow(.93, dt/16.7);
+    for (i=particles.length-1;i>=0;i--){
+      var p=particles[i];
+      p.x+=p.vx*dt*.06; p.y+=p.vy*dt*.06;
+      p.vx*=fr; p.vy*=fr;
+      p.life-=dt*.003;
+      if (p.life<=0) particles.splice(i,1);
+    }
+    for (i=floatTexts.length-1;i>=0;i--){
+      var ft=floatTexts[i];
+      ft.y-=dt*.0015; ft.life-=dt*.0016;
+      if (ft.life<=0) floatTexts.splice(i,1);
+    }
+    for (i=fireParticles.length-1;i>=0;i--){
+      var fp=fireParticles[i];
+      fp.x+=fp.vx*dt*.06; fp.y+=fp.vy*dt*.06;
+      fp.vx*=.97; fp.vy*=.97;
+      fp.size += dt*.0008;
+      fp.life-=dt*.0022;
+      if (fp.life<=0) fireParticles.splice(i,1);
+    }
+
+    draw(t, alpha);
+  } catch(e){ console.error('BUG:', e); }
+  requestAnimationFrame(loop);
+}
+
+/* ═══ صفحات ═══ */
+function hideAll(){ document.querySelectorAll('.overlay').forEach(function(o){o.classList.remove('show');}); }
+function startGame(){
+  resetWorld();
+  score=0;
+  $('#hScore').textContent = faNum(0);
+  hideAll();
+  state='playing';
+  /* برای تست مستقیم نبرد، این خط را به startBossFight(); تغییر بده */
+  banner('🟢 مرحله ۱ — 🍎 '+faNum(LEVELS[1].goal)+' سیب بخور تا اژدها بیدار شود...', 2600);
+  sfx.start();
+}
+function gameOver(reason){
+  if (state !== 'playing') return;
+  state='over';
+  sfx.die(); vibrate([120,60,120]);
+  burst(snake[0].x, snake[0].y, '#ff5470');
+  $('#hpbar').style.display='none';
+  $('#overTitle').textContent = reason;
+  var isRec = score > best;
+  if (isRec){
+    best = score;
+    lsSet('neon-snake-plus-best', best);
+    $('#hBest').textContent = faNum(best);
+  }
+  $('#ovRec').style.display = isRec?'block':'none';
+  $('#ovS').textContent = faNum(score);
+  $('#ovL').textContent = faNum(snake.length);
+  setTimeout(function(){ if(state==='over') $('#ovOver').classList.add('show'); }, 450);
+}
+function togglePause(){
+  if (state==='playing'){ state='paused'; $('#ovPause').classList.add('show'); sfx.click(); }
+  else if (state==='paused'){ state='playing'; hideAll(); sfx.click(); }
+}
+
+ $('#btnStart').addEventListener('click', startGame);
+ $('#btnRetry').addEventListener('click', startGame);
+ $('#btnAgain').addEventListener('click', startGame);
+ $('#btnResume').addEventListener('click', togglePause);
+ $('#btnPause').addEventListener('click', togglePause);
+ $('#btnSound').addEventListener('click', function(){
+  soundOn=!soundOn;
+  this.textContent = soundOn?'🔊':'🔇';
+});
+
+/* ═══ ورودی ═══ */
+document.querySelectorAll('.dpad-btn').forEach(function(btn){
+  btn.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    btn.classList.add('pressed');
+    queueDir(btn.dataset.dir);
+    setTimeout(function(){ btn.classList.remove('pressed'); },130);
+  }, {passive:false});
+  btn.addEventListener('mousedown', function(e){
+    e.preventDefault(); queueDir(btn.dataset.dir);
+  });
+});
+(function(){
+  var start=null;
+  var stage=$('#stage');
+  stage.addEventListener('touchstart', function(e){
+    var t=e.changedTouches[0]; start={x:t.clientX,y:t.clientY};
+  }, {passive:true});
+  stage.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if (!start || state!=='playing') return;
+    var t=e.changedTouches[0];
+    var dx=t.clientX-start.x, dy=t.clientY-start.y;
+    if (Math.abs(dx)>=22 || Math.abs(dy)>=22){
+      queueDir(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'));
+      start={x:t.clientX,y:t.clientY};
+    }
+  }, {passive:false});
+})();
+window.addEventListener('keydown', function(e){
+  var m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+  if (m[e.key]){ e.preventDefault(); queueDir(m[e.key]); }
+});
+document.addEventListener('visibilitychange', function(){
+  if (document.hidden && state==='playing'){ state='paused'; $('#ovPause').classList.add('show'); }
+});
+
+/* ═══ اجرا ═══ */
+resize();
+resetWorld();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
