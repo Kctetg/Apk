@@ -352,11 +352,82 @@ html, body {
   border:2px solid #ff4757; overflow:hidden;
 }
 #hpbar .hpfill { height:100%; width:100%; background:linear-gradient(90deg,#ff4757,#ffd43b); transition:width .2s; }
+
+/* ═══════════ استایل‌های تکامل مار (Snake: Evolution) ═══════════ */
+.mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.mode-btn {
+  border:2px solid var(--border-px); background:#112230; color:#d8ecff;
+  border-radius:4px; padding:7px 4px; cursor:pointer; font-family:inherit;
+  font-size:10.5px; font-weight:bold; display:flex; flex-direction:column;
+  align-items:center; gap:3px; box-shadow:0 3px 0 #081018;
+}
+.mode-btn.active {
+  border-color:var(--gold); background:#2b2710; color:var(--gold);
+  box-shadow:0 3px 0 #7a4b00, inset 0 1px 0 rgba(255,255,255,.2);
+}
+.mode-subbar {
+  display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap;
+  background:#0e1b26; border:2px solid #2b475c; border-radius:4px; padding:6px 8px; font-size:10.5px;
+}
+.mini-pill-btn {
+  border:2px solid #4e7ba0; background:#172b3d; color:#e6f2fa; border-radius:4px;
+  padding:4px 8px; font-family:inherit; font-size:10.5px; font-weight:bold; cursor:pointer;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.mini-pill-btn.on { border-color:#68c962; background:#163822; color:#85f27e; }
+.gene-slots {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:#0e1b26; border:2px solid #9353d3; border-radius:5px; padding:8px 10px;
+}
+.fusion-badge {
+  flex:1; text-align:center; font-size:11px; font-weight:bold; color:#ffd43b;
+  background:#221238; border:1px solid #9353d3; border-radius:4px; padding:5px 6px;
+}
+.skill-row {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:var(--bg-card); border:2px solid var(--border-px); border-radius:4px; padding:8px 10px;
+}
+.controls-bar {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin:4px auto 8px; flex-shrink:0; width:100%; max-width:390px; padding:0 8px;
+}
+.controls-bar #controls { margin:0; }
+.action-col { display:flex; flex-direction:column; gap:7px; }
+.act-btn {
+  width:66px; height:52px; border-radius:5px; border:2px solid #ffd43b;
+  background:#2b2108; color:#ffd43b; font-family:inherit; font-size:10px; font-weight:bold;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  cursor:pointer; box-shadow:0 4px 0 #140e02; position:relative;
+}
+.act-btn:active { transform:translateY(3px); box-shadow:0 1px 0 #140e02; }
+.act-btn.cd { opacity:.45; border-color:#4e6375; color:#92b0c2; }
+.act-btn.blue { border-color:#38bdf8; background:#0b2436; color:#7fe3ff; }
+.draft-grid { display:flex; flex-direction:column; gap:8px; width:100%; }
+.draft-card {
+  background:#0c1721; border:2px solid #68c962; border-radius:5px; padding:9px 10px;
+  display:flex; align-items:center; gap:10px; text-align:right; cursor:pointer;
+}
+.draft-card:active { background:#183323; }
+.editor-grid {
+  display:grid; grid-template-columns:repeat(19, 1fr); gap:1px;
+  background:#070e14; border:2px solid #395b75; padding:2px; width:100%; max-width:300px; aspect-ratio:1/1;
+}
+.ed-cell { background:#112420; cursor:pointer; }
+.ed-cell.w { background:#64748b; }
+.ed-cell.a { background:#ff4757; }
+.ed-cell.k { background:#ffd43b; }
+.ed-cell.t { background:#d946ef; }
+.album-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:7px; }
+.album-card {
+  background:#0e1b26; border:2px solid #2b475c; border-radius:4px; padding:8px;
+  display:flex; align-items:center; gap:8px; font-size:10.5px;
+}
+.album-card.seen { border-color:#68c962; background:#132a20; }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ منوی پیکسلی کلش رویال ═══════════════ -->
+<!-- ═══════════════ منوی پیکسلی کلش رویال: Snake Evolution ═══════════════ -->
 <div id="menu-screen" class="screen active">
   <header class="cr-topbar">
     <div class="cr-level-badge">
@@ -377,21 +448,33 @@ html, body {
   <main class="cr-body">
     <section id="tab-battle" class="tab-pane active">
       <div class="arena-banner">
-        <span class="arena-tag" id="uiArenaTag">آرنا ۱ • جنگل نئونی</span>
-        <div class="arena-title">مار پیکسلی رویال</div>
+        <span class="arena-tag" id="uiArenaTag">آرنا ۱ • جنگل تکامل</span>
+        <div class="arena-title">SNAKE: EVOLUTION</div>
         <div class="arena-preview-row">
           <canvas id="menuPreviewCanvas" width="96" height="96"></canvas>
           <div class="arena-stats-col">
             <div class="stat-row"><span>رکورد امتیاز</span><b id="uiBest">۰</b></div>
-            <div class="stat-row"><span>اژدهای شکست‌خورده</span><b id="uiBossWins">۰</b></div>
+            <div class="stat-row"><span>تکامل و ژن</span><b id="uiActiveFusion">پایه</b></div>
             <div class="stat-row"><span>شخصیت فعال</span><b id="uiActiveSkinName">مار جنگلی</b></div>
           </div>
         </div>
       </div>
 
+      <div class="section-head">
+        <span>انتخاب حالت بازی</span>
+        <span class="section-sub" id="uiModeHint">رقابت با مارها تا اژدها</span>
+      </div>
+      <div class="mode-grid" id="modeGrid"></div>
+
+      <div class="mode-subbar">
+        <button class="mini-pill-btn" id="btnToggleGhost">شبح رکورد: خاموش</button>
+        <button class="mini-pill-btn" id="btnWatchReplay">بازپخش رکورد</button>
+        <button class="mini-pill-btn" id="btnOpenEditor">ساخت نقشه</button>
+      </div>
+
       <button class="cr-battle-btn" id="btnBattle">
         <span id="icoBattleSword"></span>
-        <span>نبرد!</span>
+        <span id="btnBattleTxt">نبرد!</span>
       </button>
 
       <div class="section-head">
@@ -403,6 +486,23 @@ html, body {
 
     <section id="tab-deck" class="tab-pane">
       <div class="section-head">
+        <span>تکامل و ترکیب ۲ ژن مار</span>
+        <span class="section-sub">قدرت‌های فعال و ترکیبی بساز</span>
+      </div>
+      <div class="gene-slots">
+        <span id="geneSlot1Lbl" style="font-size:11px;font-weight:bold;color:#68c962">ژن ۱: -</span>
+        <span class="fusion-badge" id="uiFusionBox">ترکیب: -</span>
+        <span id="geneSlot2Lbl" style="font-size:11px;font-weight:bold;color:#38bdf8">ژن ۲: -</span>
+      </div>
+      <div class="card-grid" id="genesGrid"></div>
+
+      <div class="section-head" style="margin-top:4px;">
+        <span>ارتقای ۳ مهارت تکامل</span>
+        <span class="section-sub">با سکه قدرت مارت را بالا ببر</span>
+      </div>
+      <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+
+      <div class="section-head" style="margin-top:6px;">
         <span>شخصیت‌ها و اسکین‌های پیکسلی مار</span>
         <span class="section-sub">هر اسکین قدرت ویژه دارد</span>
       </div>
@@ -433,13 +533,25 @@ html, body {
 
     <section id="tab-events" class="tab-pane">
       <div class="section-head">
-        <span>تقویم جایزه روزانه (۷ روزه)</span>
+        <span>تقویم جایزه روزانه (بدون جریمه غیبت)</span>
         <button class="daily-btn" id="btnClaimDaily" style="padding:6px 11px;font-size:11px;">دریافت امروز</button>
       </div>
       <div class="calendar-grid" id="dailyCalendar"></div>
 
       <div class="section-head" style="margin-top:6px;">
-        <span>ماموریت‌ها</span>
+        <span>چالش روزانه یکسان</span>
+        <span class="section-sub" id="uiDailySeedLbl">بذر امروز</span>
+      </div>
+      <div class="quest-card">
+        <div class="quest-info">
+          <div class="quest-title" id="uiDailyChallengeTitle">نقشه مشترک امروز</div>
+          <div style="font-size:10px;color:#ffd43b;margin-top:3px;" id="uiDailySeedBest">رکورد امروز: ۰</div>
+        </div>
+        <button class="daily-btn" id="btnPlayDailySeed">شروع چالش</button>
+      </div>
+
+      <div class="section-head" style="margin-top:6px;">
+        <span>ماموریت‌ها و دستاوردها</span>
         <span class="section-sub">سکه و الماس بیشتر بگیر</span>
       </div>
       <div id="questsList" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -453,6 +565,12 @@ html, body {
       <div id="trophyRoadList" style="display:flex;flex-direction:column;gap:8px;"></div>
 
       <div class="section-head" style="margin-top:6px;">
+        <span>آلبوم موجودات و کشفیات</span>
+        <span class="section-sub" id="uiBestiaryCount">۰ / ۸</span>
+      </div>
+      <div class="album-grid" id="bestiaryGrid"></div>
+
+      <div class="section-head" style="margin-top:6px;">
         <span>آمار نبردها</span>
       </div>
       <div class="arena-stats-col" id="statsSummary"></div>
@@ -461,10 +579,10 @@ html, body {
 
   <nav class="cr-bottom-nav">
     <button class="nav-tab" data-tab="tab-shop"><span id="navIcoShop"></span><span>فروشگاه</span></button>
-    <button class="nav-tab" data-tab="tab-deck"><span id="navIcoDeck"></span><span>اسکین‌ها</span></button>
+    <button class="nav-tab" data-tab="tab-deck"><span id="navIcoDeck"></span><span>تکامل</span></button>
     <button class="nav-tab active" data-tab="tab-battle"><span id="navIcoBattle"></span><span>نبرد</span></button>
-    <button class="nav-tab" data-tab="tab-events"><span id="navIcoDaily"></span><span>روزانه</span></button>
-    <button class="nav-tab" data-tab="tab-social"><span id="navIcoTrophy"></span><span>کاپ‌ها</span></button>
+    <button class="nav-tab" data-tab="tab-events"><span id="navIcoDaily"></span><span>چالش</span></button>
+    <button class="nav-tab" data-tab="tab-social"><span id="navIcoTrophy"></span><span>آلبوم</span></button>
   </nav>
 </div>
 
@@ -477,7 +595,7 @@ html, body {
       <span class="goal-chip" id="goalChip"></span>
       <div id="heartsRow"></div>
     </div>
-    <div class="hud-cell best"><span class="hud-label">رکورد</span><span class="hud-value" id="hBest">۰</span></div>
+    <div class="hud-cell best"><span class="hud-label" id="hRightLbl">رکورد</span><span class="hud-value" id="hBest">۰</span></div>
     <div class="hud-btns">
       <button class="icon-btn" id="btnSound"></button>
       <button class="icon-btn" id="btnPause"></button>
@@ -498,13 +616,16 @@ html, body {
           <div class="ov-stat"><b id="ovGoldEarned" style="color:#ffd43b">+۰</b><span id="ovCoinLbl">سکه</span></div>
         </div>
         <div class="ov-sub" id="ovChestNotice" style="color:#85c278;font-weight:bold;"></div>
-        <button class="btn" id="btnRetry">نبرد دوباره</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <button class="btn" id="btnRetry">نبرد دوباره</button>
+          <button class="btn sec" id="btnReplayLast">بازپخش</button>
+        </div>
         <button class="btn sec" id="btnBackMenuOver">بازگشت به منو</button>
       </div>
 
       <div class="overlay" id="ovWin">
-        <div class="ov-title" style="color:#ffd43b">اژدها شکست خورد!</div>
-        <p class="ov-sub">پیروزی باشکوه! سکه، الماس و صندوق جایزه گرفتی!</p>
+        <div class="ov-title" style="color:#ffd43b" id="winTitle">پیروزی باشکوه!</div>
+        <p class="ov-sub" id="winSub">سکه، الماس و جایزه تکامل گرفتی!</p>
         <div class="ov-stats">
           <div class="ov-stat"><b id="ovWS">۰</b><span>امتیاز نهایی</span></div>
           <div class="ov-stat"><b id="ovWinGold" style="color:#ffd43b">+۶۰</b><span>سکه</span></div>
@@ -522,12 +643,18 @@ html, body {
       </div>
     </div>
   </main>
-  <nav id="controls">
-    <div class="dpad-btn dp-up" data-dir="up">▲</div>
-    <div class="dpad-btn dp-left" data-dir="left">◀</div>
-    <div class="dpad-btn dp-down" data-dir="down">▼</div>
-    <div class="dpad-btn dp-right" data-dir="right">▶</div>
-  </nav>
+  <div class="controls-bar">
+    <div class="action-col">
+      <button class="act-btn" id="btnSkill"><span id="icoSkillBtn"></span><span id="txtSkillBtn">مهارت</span></button>
+      <button class="act-btn blue" id="btnRewind"><span id="icoRewindBtn"></span><span id="txtRewindBtn">زمان</span></button>
+    </div>
+    <nav id="controls">
+      <div class="dpad-btn dp-up" data-dir="up">▲</div>
+      <div class="dpad-btn dp-left" data-dir="left">◀</div>
+      <div class="dpad-btn dp-down" data-dir="down">▼</div>
+      <div class="dpad-btn dp-right" data-dir="right">▶</div>
+    </nav>
+  </div>
 </div>
 
 <div class="cr-toast" id="crToast"></div>
@@ -538,6 +665,32 @@ html, body {
     <div style="font-size:18px;font-weight:bold;color:#ffd43b;" id="modalChestTitle">صندوق باز شد!</div>
     <div class="loot-list" id="modalLootList"></div>
     <button class="cr-battle-btn" id="btnCloseChestModal" style="font-size:15px;padding:10px;">جمع‌آوری</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="draftModal">
+  <div class="chest-modal" style="border-color:#68c962;">
+    <div style="font-size:16px;font-weight:bold;color:#85f27e;">تکامل روگ‌لایک — ۱ قدرت انتخاب کن!</div>
+    <div class="draft-grid" id="draftOptions"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="editorModal">
+  <div class="chest-modal" style="border-color:#38bdf8;max-width:355px;padding:14px;">
+    <div style="font-size:15px;font-weight:bold;color:#7fe3ff;">سازنده نقشه پیکسلی</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;" id="editorTools">
+      <button class="mini-pill-btn on" data-tool="w">دیوار</button>
+      <button class="mini-pill-btn" data-tool="a">سیب</button>
+      <button class="mini-pill-btn" data-tool="k">کلید</button>
+      <button class="mini-pill-btn" data-tool="t">سست</button>
+      <button class="mini-pill-btn" data-tool="e">پاک</button>
+    </div>
+    <div class="editor-grid" id="editorGrid"></div>
+    <div style="display:flex;gap:8px;width:100%;">
+      <button class="cr-battle-btn" id="btnPlayCustom" style="font-size:13px;padding:8px;">اجرای نقشه</button>
+      <button class="btn sec" id="btnClearEditor" style="padding:8px 12px;font-size:12px;">پاکسازی</button>
+      <button class="btn sec" id="btnCloseEditor" style="padding:8px 12px;font-size:12px;">بستن</button>
+    </div>
   </div>
 </div>
 
@@ -1465,7 +1618,191 @@ function initPixelIcons(){
       '....................',
       '....................',
       '....................'
-    ], { o:'#3b0a0a', R:'#ef4444', r:'#b91c1c', W:'#f8fafc' }]
+    ], { o:'#3b0a0a', R:'#ef4444', r:'#b91c1c', W:'#f8fafc' }],
+
+    key: [20, 20, [
+      '....................',
+      '.....oooooo.........',
+      '....oYYYYYYo........',
+      '...oYYWWWWYYo.......',
+      '...oYYWooWYYo.......',
+      '...oYYooooYYo.......',
+      '....oYYYYYYoooooooo.',
+      '.....ooooooYYYYYYYo.',
+      '...........ooYYoYYo.',
+      '.............oo.ooo.',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#422006', Y:'#ffd43b', W:'#fffbeb' }],
+
+    lightning: [20, 20, [
+      '....................',
+      '..........ooooo.....',
+      '.........oYYYYo.....',
+      '........oYYWWYo.....',
+      '.......oYYWWYo......',
+      '......oYYWWYoooo....',
+      '.....oYYYYYYYYYYo...',
+      '.....oooooYYWWYYo...',
+      '.........oYYWWYo....',
+      '........oYYWWYo.....',
+      '.......oYYWYYo......',
+      '......oYYYYYo.......',
+      '.....oYYWYYo........',
+      '.....oYYYYo.........',
+      '......oooo..........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0c2d48', Y:'#fde047', W:'#ffffff' }],
+
+    magnet: [20, 20, [
+      '....................',
+      '....oooo....oooo....',
+      '...oSSSSo..oSSSSo...',
+      '...oSSSSo..oSSSSo...',
+      '...oRRRRo..oBBBBo...',
+      '...oRRRRo..oBBBBo...',
+      '...oRRRRo..oBBBBo...',
+      '...oRRRRo..oBBBBo...',
+      '...oRRRRooooBBBBo...',
+      '....oRRRRBBBBBBo....',
+      '.....oRRRBBBBBo.....',
+      '......oooooooo......',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', S:'#e2e8f0', R:'#ef4444', B:'#3b82f6' }],
+
+    rewind: [20, 20, [
+      '....................',
+      '....................',
+      '.......oo......oo...',
+      '......oCCo....oCCo..',
+      '.....oCWCCo..oCWCCo.',
+      '....oCWWCCCoCWWCCCo.',
+      '...oCWWWCCCWWCCCCCo.',
+      '....oCWWCCCoCWWCCCo.',
+      '.....oCWCCo..oCWCCo.',
+      '......oCCo....oCCo..',
+      '.......oo......oo...',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0c2d48', C:'#38bdf8', W:'#e0f2fe' }],
+
+    dna: [20, 20, [
+      '....................',
+      '....oooo....oooo....',
+      '....oGGooooooCCo....',
+      '.....oGGGGGGGGoo....',
+      '......oGGGGCCo......',
+      '.......oooooo.......',
+      '......oCCGGGGoo.....',
+      '....ooCCCCCCCCoo....',
+      '....oCCooooooGGo....',
+      '......oGGGGCCo......',
+      '.......oooooo.......',
+      '......oGGCCCCo......',
+      '....ooGGGGGGGGoo....',
+      '....oGGooooooCCo....',
+      '....oooo....oooo....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#091412', G:'#68c962', C:'#38bdf8' }],
+
+    mimic: [20, 20, [
+      '....................',
+      '...oooooooooooooo...',
+      '..oRRRRRRRRRRRRRRo..',
+      '..oRWWWWWWWWWWWWRo..',
+      '..oRWKWKWKWKWKWKRo..',
+      '..oooooooooooooooo..',
+      '..oBBBBooYYooBBBBo..',
+      '..oBBBBooKKooBBBBo..',
+      '..oDDDDooooooDDDDo..',
+      '..oDDDDDDDDDDDDDDo..',
+      '...oooooooooooooo...',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#2b0712', R:'#dc2626', W:'#ffffff', K:'#090d14', B:'#a16207', D:'#713f12', Y:'#ffd43b' }],
+
+    timer: [20, 20, [
+      '....................',
+      '.......oooooo.......',
+      '......oSSSSSSo......',
+      '.......ooSSoo.......',
+      '.....ooooSSoooo.....',
+      '...ooSSWWWWWWSSoo...',
+      '..oSSWWWWKKWWWWSSo..',
+      '..oSSWWWWKKWWWWSSo..',
+      '..oSSWWWWKKKWWWSSo..',
+      '..oSSWWWWWWWWWWSSo..',
+      '...ooSSWWWWWWSSoo...',
+      '.....oooooooooo.....',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#0f172a', S:'#94a3b8', W:'#f8fafc', K:'#ef4444' }],
+
+    meteor: [20, 20, [
+      '....................',
+      '............oooo....',
+      '..........ooYYRRo...',
+      '........ooYYOORRo...',
+      '......ooYYOORRRo....',
+      '....oooOORRRRRo.....',
+      '...oKKKRROORRo......',
+      '..oKWWKKROORo.......',
+      '..oKKKKKKRRoo.......',
+      '..oKKddKKKo.........',
+      '...odddddo..........',
+      '....ooooo...........',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................'
+    ], { o:'#1e0909', K:'#57534e', d:'#292524', W:'#d6d3d1', R:'#ef4444', O:'#f97316', Y:'#fde047' }]
   };
 
   for (var key in defs){
@@ -1737,6 +2074,7 @@ var QUEST_DEFS = [
   { id:'q_apples', title:'۳۰ سیب در ماجراجویی بخور', stat:'totalApples',  target:30, gold:35, gems:2 },
   { id:'q_belly',  title:'۳ بار وارد شکم اژدها شو',    stat:'bellyVisits',  target:3,  gold:50, gems:3 },
   { id:'q_boss',   title:'اژدهای نهایی را شکست بده',  stat:'bossWins',     target:1,  gold:90, gems:5 },
+  { id:'q_rivals', title:'۵ مار رقیب را شکست بده',      stat:'rivalsDefeated', target:5, gold:75, gems:4 },
   { id:'q_chests', title:'۵ صندوق باز کن',            stat:'chestsOpened', target:5,  gold:60, gems:4 }
 ];
 
@@ -1747,6 +2085,83 @@ var TROPHY_ROAD = [
   { trophies:260, gold:140, gems:8, chest:'dragon', title:'۲۶۰ کاپ — پادشاه اژدها' }
 ];
 
+/* ═══════════════ داده‌های Snake: Evolution ═══════════════ */
+var GAME_MODES = [
+  { id:'adventure', name:'ماجراجویی',   ico:'sword',     hint:'رقابت با مارها تا شکم و نبرد اژدها' },
+  { id:'dungeon',   name:'سیاهچال',     ico:'chest_gold',hint:'اتاق‌های تصادفی + انتخاب قدرت روگ‌لایک' },
+  { id:'bossrush',  name:'باس‌راش',     ico:'fireball',  hint:'نبرد پشت‌سرهم با ۴ اژدهای متفاوت' },
+  { id:'puzzle',    name:'معمایی',      ico:'key',       hint:'کلیدها را جمع کن و از دروازه خارج شو' },
+  { id:'arena60',   name:'۶۰ ثانیه',    ico:'timer',     hint:'رقابت سریع ۶۰ ثانیه‌ای با ۳ مار رقیب' },
+  { id:'dailyseed', name:'بذر روزانه',  ico:'dna',       hint:'نقشه تصادفی یکسان برای همه امروز' }
+];
+
+var GENES = [
+  { id:'fire',     name:'ژن آتشین',    ico:'fireball',  rarity:'common', price:0,   desc:'ردپای شعله‌ور برای آسیب و تله رقیبان', color:'#ff6b2b' },
+  { id:'frost',    name:'ژن یخی',      ico:'slow',      rarity:'common', price:65,  desc:'کند کردن دشمنان و رقبای اطراف',       color:'#38bdf8' },
+  { id:'electric', name:'ژن برقی',     ico:'lightning', rarity:'rare',   price:110, desc:'موج شوک الکتریکی + دیوار انرژی',     color:'#fde047' },
+  { id:'magnet',   name:'ژن مغناطیس',  ico:'magnet',    rarity:'rare',   price:125, desc:'جذب سیب‌ها و سکه‌های اطراف به سر مار', color:'#60a5fa' },
+  { id:'toxic',    name:'ژن سمی',      ico:'acid',      rarity:'epic',   price:170, desc:'ایجاد ابر سمی علیه رقیبان و باس',      color:'#a3e635' },
+  { id:'armor',    name:'ژن زرهی',     ico:'shield',    rarity:'epic',   price:190, desc:'سپر اضطراری در برابر برخورد خطرناک',  color:'#cbd5e1' },
+  { id:'ghost',    name:'ژن روحی',     ico:'ghost',     rarity:'epic',   price:210, desc:'عبور از دیوار و موانع هنگام فعالسازی', color:'#93c5fd' },
+  { id:'shadow',   name:'ژن سایه',     ico:'acc_ninja', rarity:'legend', price:260, desc:'نامرئی موقت و امتیاز کمبو دو برابر',  color:'#c084fc' }
+];
+
+var FUSIONS = {
+  'electric+fire':   { name:'طوفان پلاسما', desc:'ردپای آتشین + موج برق نابودگر' },
+  'fire+frost':      { name:'انفجار بخار',  desc:'انفجار یخی-آتشین و کندی دشمنان' },
+  'fire+toxic':      { name:'باران مذاب',   desc:'منطقه سمی شعله‌ور' },
+  'electric+magnet': { name:'میدان مغناطیس',desc:'جذب خودکار + شوک الکتریکی' },
+  'frost+ghost':     { name:'شبح یخ‌زده',  desc:'عبور از دیوار و انجماد رقبا' },
+  'magnet+toxic':    { name:'جذب سمی',     desc:'جذب غنیمت + ابر سمی محافظ' },
+  'armor+shadow':    { name:'شوالیه سایه',  desc:'سپر و نامرئی با امتیاز دوبرابر' },
+  'ghost+shadow':    { name:'طیف ناپدید',   desc:'عبور از موانع + مخفی‌شدن کامل' }
+};
+function getFusionInfo(g1, g2){
+  if (!g1 || !g2 || g1 === g2) return null;
+  var k = [g1, g2].sort().join('+');
+  return FUSIONS[k] || { name:'ترکیب '+getGeneObj(g1).name.replace('ژن ','')+' و '+getGeneObj(g2).name.replace('ژن ',''), desc:'اجرای هم‌زمان هر دو مهارت ژنتیکی' };
+}
+function getGeneObj(id){
+  for (var i=0;i<GENES.length;i++) if (GENES[i].id===id) return GENES[i];
+  return GENES[0];
+}
+
+var SKILLS = [
+  { id:'reflex', name:'چابکی و کنترل', desc:'بازگشت زمان بیشتر و سرعت چرخش بهتر', maxLv:5, baseCost:45 },
+  { id:'power',  name:'قدرت ژن',       desc:'زمان کوتاه‌تر شارژ مهارت فعال و دوام بیشتر', maxLv:5, baseCost:55 },
+  { id:'greed',  name:'مغناطیس غنیمت', desc:'برد جذب آیتم و سکه بیشتر از هر بازی', maxLv:5, baseCost:50 }
+];
+
+var ROGUE_CARDS = [
+  { id:'rg_magnet', title:'مغناطیس دائمی',   ico:'magnet',   desc:'آیتم‌ها به سمت سر مار کشیده می‌شوند' },
+  { id:'rg_hp',     title:'+۱ قلب زرهی',    ico:'heart_full',desc:'جان بیشتر برای دوام در سیاهچال' },
+  { id:'rg_bolt',   title:'رعد و برق',      ico:'lightning', desc:'کاهش شدید زمان شارژ مهارت فعال' },
+  { id:'rg_combo',  title:'کمبوی طلایی',    ico:'gold',     desc:'امتیاز تمام غذاها ۵۰٪ بیشتر می‌شود' },
+  { id:'rg_ghost',  title:'قدم روح',        ico:'ghost',    desc:'مدت قدرت روح دو برابر می‌شود' },
+  { id:'rg_rewind', title:'ساعت شنی',       ico:'rewind',   desc:'۲ بار شارژ اضافه برای بازگشت زمان' }
+];
+
+var BESTIARY = [
+  { id:'rival',  name:'مار رقیب هوشمند', ico:'snake_ico',  desc:'رقابت برای سیب‌ها و تله‌گذاری' },
+  { id:'mimic',  name:'صندوق فریبنده',   ico:'mimic',      desc:'گاه گنج می‌دهد و گاه تله می‌سازد!' },
+  { id:'meteor', name:'شهاب‌سنگ',        ico:'meteor',     desc:'از آسمان فرود می‌آید و سنگ می‌سازد' },
+  { id:'frost',  name:'کاشی یخ‌زده',     ico:'slow',       desc:'سرعت مار را روی یخ بالا می‌برد' },
+  { id:'d1',     name:'اژدهای آبی',      ico:'fireball',   desc:'نگهبان مرحله اول ماجراجویی' },
+  { id:'d2',     name:'اژدهای بنفش',     ico:'acid',       desc:'اژدهای اسیدی مرحله دوم' },
+  { id:'d3',     name:'اژدهای سرخ',      ico:'superfire',  desc:'پادشاه آتشین دروازه نهایی' },
+  { id:'d4',     name:'پادشاه اژدها',    ico:'chest_dragon',desc:'باس نهایی افسانه‌ای در نبرد آخر' }
+];
+
+/* ۶ مرحله معمایی پیکسلی (w=دیوار, k=کلید, c=سست, a=سیب/ستاره) */
+var PUZZLE_LEVELS = [
+  { name:'معمای ۱: کلید سنگی', walls:[[6,4],[6,5],[6,6],[6,7],[12,11],[12,12],[12,13],[12,14]], keys:[[4,4],[14,14]], crumble:[[9,5],[9,6],[9,13]], door:[16,9] },
+  { name:'معمای ۲: پل شکننده', walls:[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,6],[8,12],[8,13],[8,14],[8,15],[8,16],[8,17],[8,18]], keys:[[3,3],[15,15],[15,3]], crumble:[[8,7],[8,8],[8,9],[8,10],[8,11]], door:[17,9] },
+  { name:'معمای ۳: هزارتوی مربع', walls:[[5,5],[6,5],[7,5],[8,5],[10,5],[11,5],[12,5],[13,5],[5,13],[6,13],[7,13],[8,13],[10,13],[11,13],[12,13],[13,13],[5,6],[5,7],[5,11],[5,12],[13,6],[13,7],[13,11],[13,12]], keys:[[9,3],[9,15],[16,9]], crumble:[[9,5],[9,13],[5,9],[13,9]], door:[2,9] },
+  { name:'معمای ۴: دالان تنگ', walls:[[4,2],[4,3],[4,4],[4,5],[4,6],[4,7],[4,8],[4,10],[4,11],[4,12],[4,13],[4,14],[4,15],[4,16],[14,2],[14,3],[14,4],[14,5],[14,6],[14,7],[14,8],[14,10],[14,11],[14,12],[14,13],[14,14],[14,15],[14,16]], keys:[[2,2],[9,2],[9,16],[16,16]], crumble:[[4,9],[14,9],[9,8],[9,10]], door:[17,2] },
+  { name:'معمای ۵: جزیره‌های سست', walls:[[6,6],[7,6],[6,7],[12,6],[11,6],[12,7],[6,12],[7,12],[6,11],[12,12],[11,12],[12,11]], keys:[[3,15],[15,3],[9,9],[15,15]], crumble:[[9,6],[9,7],[9,11],[9,12],[6,9],[7,9],[11,9],[12,9]], door:[2,2] },
+  { name:'معمای ۶: تاج معماها', walls:[[3,3],[4,3],[5,3],[13,3],[14,3],[15,3],[3,15],[4,15],[5,15],[13,15],[14,15],[15,15],[9,2],[9,3],[9,4],[9,14],[9,15],[9,16],[3,9],[4,9],[14,9],[15,9]], keys:[[2,2],[16,2],[2,16],[16,16],[9,9]], crumble:[[6,6],[12,6],[6,12],[12,12],[8,9],[10,9]], door:[9,1] }
+];
+
 var SAVE_KEY = 'neon-snake-royale-v2';
 function defaultSave(){
   return {
@@ -1754,9 +2169,16 @@ function defaultSave(){
     best: Number(lsGet('neon-snake-plus-best') || 0),
     skin: 'neon', acc: 'none',
     ownedSkins: ['neon'], ownedAcc: ['none'],
+    mode: 'adventure',
+    genes: ['fire', 'frost'], ownedGenes: ['fire'],
+    skills: { reflex: 1, power: 1, greed: 1 },
+    ghostEnabled: false, bestGhost: null,
+    puzzleIdx: 0, customMap: null,
+    dailySeedKey: '', dailySeedBest: 0,
+    discovered: [],
     slot: { type:'bronze', unlockAt:0, ready:false },
     dailyDay: 1, lastDailyTs: 0, lastShopGiftTs: 0,
-    stats: { gamesPlayed:0, totalApples:0, bellyVisits:0, bossWins:0, chestsOpened:0 },
+    stats: { gamesPlayed:0, totalApples:0, bellyVisits:0, bossWins:0, chestsOpened:0, rivalsDefeated:0 },
     claimedQuests: [], claimedRoad: [], soundOn: true
   };
 }
@@ -1768,6 +2190,8 @@ var save = (function(){
       var def = defaultSave();
       for (var k in def) if (parsed[k] === undefined) parsed[k] = def[k];
       if (!parsed.stats) parsed.stats = def.stats;
+      for (var sk in def.stats) if (parsed.stats[sk] === undefined) parsed.stats[sk] = def.stats[sk];
+      if (!parsed.skills) parsed.skills = def.skills;
       return parsed;
     }
   } catch(e){}
@@ -1876,18 +2300,33 @@ function getArenaInfo(){
   return 'آرنا ۱ • جنگل نئونی';
 }
 
+function todayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
 function initStaticPixelIcons(){
   $('#icoTopCoin').innerHTML = pxImgTag('coin', 16);
   $('#icoTopGem').innerHTML = pxImgTag('gem', 16);
   $('#icoTopTrophy').innerHTML = pxImgTag('trophy', 16);
   $('#icoBattleSword').innerHTML = pxImgTag('sword', 24);
   $('#navIcoShop').innerHTML = pxImgTag('shop', 22);
-  $('#navIcoDeck').innerHTML = pxImgTag('snake_ico', 22);
+  $('#navIcoDeck').innerHTML = pxImgTag('dna', 22);
   $('#navIcoBattle').innerHTML = pxImgTag('sword', 22);
   $('#navIcoDaily').innerHTML = pxImgTag('gift', 22);
   $('#navIcoTrophy').innerHTML = pxImgTag('trophy', 22);
   $('#btnPause').innerHTML = pxImgTag('pause_ico', 18);
   $('#ovCoinLbl').innerHTML = pxImgTag('coin', 14) + ' سکه';
+  $('#icoSkillBtn').innerHTML = pxImgTag('lightning', 18);
+  $('#icoRewindBtn').innerHTML = pxImgTag('rewind', 18);
+}
+
+function getActiveFusionTitle(){
+  var g1 = save.genes[0], g2 = save.genes[1];
+  if (g1 && g2 && save.ownedGenes.indexOf(g2) !== -1){
+    var f = getFusionInfo(g1, g2);
+    return f ? f.name : getGeneObj(g1).name;
+  }
+  return g1 ? getGeneObj(g1).name : 'پایه';
 }
 
 function renderTopBar(){
@@ -1899,13 +2338,34 @@ function renderTopBar(){
   $('#uiGems').textContent = faNum(save.gems);
   $('#uiTrophies').textContent = faNum(save.trophies);
   $('#uiBest').textContent = faNum(save.best);
-  $('#uiBossWins').textContent = faNum(save.stats.bossWins);
+  $('#uiActiveFusion').textContent = getActiveFusionTitle();
   $('#uiActiveSkinName').textContent = getSkinObj(save.skin).name;
   $('#uiArenaTag').textContent = getArenaInfo();
   $('#hBest').textContent = faNum(save.best);
   var sTag = pxImgTag(soundOn ? 'sound_on' : 'sound_off', 18);
   $('#btnMenuSound').innerHTML = sTag;
   $('#btnSound').innerHTML = sTag;
+}
+
+function renderModes(){
+  var html = '';
+  GAME_MODES.forEach(function(m){
+    var act = save.mode === m.id;
+    html += '<button class="mode-btn '+(act?'active':'')+'" data-mode="'+m.id+'">'
+          + pxImgTag(m.ico, 22) + '<span>'+m.name+'</span></button>';
+  });
+  $('#modeGrid').innerHTML = html;
+  var curM = GAME_MODES.filter(function(x){ return x.id === save.mode; })[0] || GAME_MODES[0];
+  $('#uiModeHint').textContent = curM.hint;
+  $('#btnBattleTxt').textContent = 'شروع '+curM.name;
+  $('#btnToggleGhost').classList.toggle('on', !!save.ghostEnabled);
+  $('#btnToggleGhost').textContent = 'شبح رکورد: ' + (save.ghostEnabled ? 'روشن' : 'خاموش');
+  $('#btnWatchReplay').style.opacity = (save.bestGhost && save.bestGhost.length) ? '1' : '0.45';
+  document.querySelectorAll('[data-mode]').forEach(function(b){
+    b.onclick = function(){
+      save.mode = b.dataset.mode; sfx.click(); persist(); renderModes();
+    };
+  });
 }
 
 function renderSingleChest(){
@@ -2030,6 +2490,45 @@ function makeSkinPreviewDataUrl(sk){
 }
 
 function renderDeck(){
+  var g1 = save.genes[0], g2 = (save.genes[1] && save.ownedGenes.indexOf(save.genes[1]) !== -1) ? save.genes[1] : null;
+  $('#geneSlot1Lbl').textContent = 'ژن ۱: ' + (g1 ? getGeneObj(g1).name.replace('ژن ','') : '-');
+  $('#geneSlot2Lbl').textContent = 'ژن ۲: ' + (g2 ? getGeneObj(g2).name.replace('ژن ','') : 'خالی');
+  var fu = getFusionInfo(g1, g2);
+  $('#uiFusionBox').textContent = fu ? fu.name : '۱ یا ۲ ژن انتخاب کن';
+
+  var gHtml = '';
+  GENES.forEach(function(g){
+    var owned = save.ownedGenes.indexOf(g.id) !== -1;
+    var slotIdx = (g1 === g.id) ? 1 : (g2 === g.id ? 2 : 0);
+    var btnHtml = slotIdx > 0
+      ? '<button class="card-btn active-btn" data-toggle-gene="'+g.id+'">اسلات '+faNum(slotIdx)+'</button>'
+      : (owned
+          ? '<button class="card-btn equip" data-toggle-gene="'+g.id+'">ترکیب کن</button>'
+          : '<button class="card-btn buy" data-buy-gene="'+g.id+'">'+pxImgTag('coin',15)+' '+faNum(g.price)+'</button>');
+    gHtml += '<div class="cr-card rarity-'+g.rarity+' '+(slotIdx>0?'equipped':'')+'">'
+          + (slotIdx>0?'<span class="card-badge">ژن '+faNum(slotIdx)+'</span>':'')
+          + '<div style="margin-top:6px;">'+pxImgTag(g.ico, 34)+'</div>'
+          + '<div class="card-title">'+g.name+'</div>'
+          + '<div class="card-desc">'+g.desc+'</div>'
+          + btnHtml + '</div>';
+  });
+  $('#genesGrid').innerHTML = gHtml;
+
+  var skHtml = '';
+  SKILLS.forEach(function(skItem){
+    var lv = save.skills[skItem.id] || 1;
+    var maxed = lv >= skItem.maxLv;
+    var cost = skItem.baseCost * lv;
+    skHtml += '<div class="skill-row">'
+            + '<div style="flex:1"><div style="font-size:12px;font-weight:bold;">'+skItem.name+' <span style="color:#ffd43b">سطح '+faNum(lv)+'/'+faNum(skItem.maxLv)+'</span></div>'
+            + '<div style="font-size:10px;color:#92b0c2;margin-top:2px;">'+skItem.desc+'</div></div>'
+            + (maxed
+                ? '<span style="font-size:11px;color:#68c962;font-weight:bold;">حداکثر</span>'
+                : '<button class="daily-btn" data-upskill="'+skItem.id+'" style="padding:6px 10px;">'+pxImgTag('coin',14)+' '+faNum(cost)+'</button>')
+            + '</div>';
+  });
+  $('#skillsList').innerHTML = skHtml;
+
   var sHtml = '';
   SKINS.forEach(function(sk){
     var owned = save.ownedSkins.indexOf(sk.id) !== -1;
@@ -2066,6 +2565,44 @@ function renderDeck(){
   });
   $('#accGrid').innerHTML = aHtml;
 
+  document.querySelectorAll('[data-toggle-gene]').forEach(function(b){
+    b.onclick = function(){
+      var gid = b.dataset.toggleGene;
+      if (save.genes[0] === gid){
+        if (save.genes[1] && save.ownedGenes.indexOf(save.genes[1]) !== -1) save.genes = [save.genes[1]];
+      } else if (save.genes[1] === gid){
+        save.genes = [save.genes[0]];
+      } else {
+        save.genes = [gid, save.genes[0]];
+      }
+      sfx.click(); persist(); renderAllMenu();
+    };
+  });
+  document.querySelectorAll('[data-buy-gene]').forEach(function(b){
+    b.onclick = function(){
+      var g = getGeneObj(b.dataset.buyGene);
+      if (save.gold >= g.price){
+        save.gold -= g.price; save.ownedGenes.push(g.id);
+        save.genes = [g.id, save.genes[0]];
+        sfx.gold(); vibrate(40); persist(); renderAllMenu();
+        showToast(g.name+' باز و ترکیب شد!');
+      } else { sfx.bomb(); showToast('سکه کافی نیست!'); }
+    };
+  });
+  document.querySelectorAll('[data-upskill]').forEach(function(b){
+    b.onclick = function(){
+      var skId = b.dataset.upskill;
+      var skDef = SKILLS.filter(function(x){ return x.id===skId; })[0];
+      var lv = save.skills[skId] || 1;
+      var cost = skDef.baseCost * lv;
+      if (lv >= skDef.maxLv) return;
+      if (save.gold >= cost){
+        save.gold -= cost; save.skills[skId] = lv + 1;
+        sfx.gold(); vibrate(35); persist(); renderAllMenu();
+        showToast(skDef.name+' به سطح '+faNum(lv+1)+' ارتقا یافت!');
+      } else { sfx.bomb(); showToast('سکه کافی نیست!'); }
+    };
+  });
   document.querySelectorAll('[data-eqskin]').forEach(function(b){
     b.onclick = function(){ save.skin = b.dataset.eqskin; sfx.click(); persist(); renderAllMenu(); };
   });
@@ -2182,6 +2719,10 @@ function renderEvents(){
       sfx.gold(); vibrate(50); persist(); renderAllMenu();
     };
   });
+  var td = todayKey();
+  if (save.dailySeedKey !== td){ save.dailySeedKey = td; save.dailySeedBest = 0; }
+  $('#uiDailySeedLbl').textContent = 'بذر ' + faNum(td);
+  $('#uiDailySeedBest').textContent = 'رکورد امروز: ' + faNum(save.dailySeedBest);
 }
  $('#btnClaimDaily').onclick = function(){
   var now = Date.now();
@@ -2192,6 +2733,11 @@ function renderEvents(){
   save.dailyDay = save.dailyDay >= 7 ? 1 : save.dailyDay + 1;
   if (dr.chest){ openChest(dr.chest); } else { sfx.gold(); vibrate(40); showToast(dr.label+' دریافت شد!'); }
   persist(); renderAllMenu();
+};
+ $('#btnPlayDailySeed').onclick = function(){
+  save.mode = 'dailyseed';
+  persist();
+  startGame();
 };
 
 function renderTrophyRoad(){
@@ -2219,8 +2765,24 @@ function renderTrophyRoad(){
       persist(); renderAllMenu();
     };
   });
+
+  var seenCnt = 0;
+  var bHtml = '';
+  BESTIARY.forEach(function(item){
+    var seen = save.discovered.indexOf(item.id) !== -1;
+    if (seen) seenCnt++;
+    bHtml += '<div class="album-card '+(seen?'seen':'')+'">'
+           + pxImgTag(item.ico, 28)
+           + '<div><div style="font-weight:bold;color:'+(seen?'#85f27e':'#64748b')+'">'+(seen?item.name:'ناشناخته')+'</div>'
+           + '<div style="font-size:9.5px;color:#92b0c2;margin-top:2px;">'+(seen?item.desc:'در بازی کشف کن!')+'</div></div>'
+           + '</div>';
+  });
+  $('#bestiaryGrid').innerHTML = bHtml;
+  $('#uiBestiaryCount').textContent = faNum(seenCnt) + ' / ' + faNum(BESTIARY.length);
+
   $('#statsSummary').innerHTML =
     '<div class="stat-row"><span>کل بازی‌ها</span><b>'+faNum(save.stats.gamesPlayed)+'</b></div>'
+  + '<div class="stat-row"><span>رقیبان شکست‌خورده</span><b>'+faNum(save.stats.rivalsDefeated||0)+'</b></div>'
   + '<div class="stat-row"><span>کل سیب‌های خورده‌شده</span><b>'+faNum(save.stats.totalApples)+'</b></div>'
   + '<div class="stat-row"><span>ورود به شکم اژدها</span><b>'+faNum(save.stats.bellyVisits)+'</b></div>'
   + '<div class="stat-row"><span>صندوق‌های بازشده</span><b>'+faNum(save.stats.chestsOpened)+'</b></div>';
@@ -2228,6 +2790,7 @@ function renderTrophyRoad(){
 
 function renderAllMenu(){
   renderTopBar();
+  renderModes();
   renderSingleChest();
   renderDeck();
   renderShop();
@@ -2327,6 +2890,16 @@ function renderMenuPreview(t){
       pxBlock(pCtx, 63,27+bob,2,2, '#e62e4c');
       pxBlock(pCtx, 63,31+bob,2,2, '#e62e4c');
     }
+    /* تکامل ظاهری با بالا رفتن سطح: بال، شاخ انرژی یا هاله */
+    if (save.level >= 2){
+      pxBlock(pCtx, 18,36+bob,7,5, getGeneObj(save.genes[0]).color);
+      pxBlock(pCtx, 20,33+bob,5,4, '#ffd43b');
+    }
+    if (save.level >= 4){
+      pxBlock(pCtx, 37,16+bob,3,5, '#ffd43b');
+      pxBlock(pCtx, 43,16+bob,3,5, '#ffd43b');
+    }
+
     /* اکسسوری روی سر مار در پیش‌نمایش */
     if (save.acc && save.acc !== 'none'){
       var acIco = PX_ICONS[getAccObj(save.acc).ico];
@@ -2345,19 +2918,23 @@ var COLS = 19, ROWS = 19;
 var DIRS = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
 var OPPO = { up:'down', down:'up', left:'right', right:'left' };
 var TYPES = {
-  apple:     { ico:'apple',     color:'#ff4757' },
-  gold:      { ico:'gold',      color:'#ffd43b' },
-  bomb:      { ico:'bomb',      color:'#94a3b8' },
-  ghost:     { ico:'ghost',     color:'#93c5fd' },
-  slow:      { ico:'slow',      color:'#38bdf8' },
-  double:    { ico:'double',    color:'#ffd43b' },
-  orb:       { ico:'orb',       color:'#38bdf8' },
-  acid:      { ico:'acid',      color:'#d946ef' },
-  portal:    { ico:'portal',    color:'#ffffff' },
-  fireball:  { ico:'fireball',  color:'#ff9800' },
-  superfire: { ico:'superfire', color:'#ffd43b' },
-  heart:     { ico:'heart_full',color:'#ff4757' },
-  shield:    { ico:'shield',    color:'#60a5fa' }
+  apple:      { ico:'apple',       color:'#ff4757' },
+  gold:       { ico:'gold',        color:'#ffd43b' },
+  bomb:       { ico:'bomb',        color:'#94a3b8' },
+  ghost:      { ico:'ghost',       color:'#93c5fd' },
+  slow:       { ico:'slow',        color:'#38bdf8' },
+  double:     { ico:'double',      color:'#ffd43b' },
+  orb:        { ico:'orb',         color:'#38bdf8' },
+  acid:       { ico:'acid',        color:'#d946ef' },
+  portal:     { ico:'portal',      color:'#ffffff' },
+  fireball:   { ico:'fireball',    color:'#ff9800' },
+  superfire:  { ico:'superfire',   color:'#ffd43b' },
+  heart:      { ico:'heart_full',  color:'#ff4757' },
+  shield:     { ico:'shield',      color:'#60a5fa' },
+  key:        { ico:'key',         color:'#ffd43b' },
+  mimic:      { ico:'mimic',       color:'#ef4444' },
+  coin_drop:  { ico:'coin',        color:'#ffd43b' },
+  divide:     { ico:'dna',         color:'#68c962' }
 };
 var LEVELS = {
   1: { bg:'#102420', bg2:'#142b26', name:'۱', goal:8,  wall:'#2f5e53' },
@@ -2509,21 +3086,52 @@ function drawPixelAccOnHead(cctx, accId, hx, hy, segSize, dirStr){
   cctx.restore();
 }
 
-/* ═══════════════ موتور بازی (بدون بخار/حباب آزاردهنده + اسپاون تضمینی سیب) ═══════════════ */
+/* ═══════════════ موتور بازی Snake: Evolution ═══════════════ */
 var canvas = $('#game'), ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 var cell = 20, state = 'menu';
-var world = 'out', level = 1, dragonVisits = 0;
+var mode = 'adventure', world = 'out', level = 1, dragonVisits = 0;
 var snake = [], prevSnake = [], dir = 'right', dirQueue = [], items = [];
 var score = 0, tickMs = 165, tickAcc = 0, lastT = 0;
 var particles = [], floatTexts = [], fireParticles = [], shockwaves = [];
 var combo = 0, comboTimer = 0;
-var fx = { ghost:0, slow:0, double:0, shield:0 };
+var fx = { ghost:0, slow:0, double:0, shield:0, magnet:0, trailType:'', trailMs:0 };
 var applesEaten = 0, orbsEaten = 0, ORB_GOAL = 6;
 var ds = null, boss = null, pShots = [], bossShots = [];
 var playerHp = 3, maxPlayerHp = 3, invulnT = 0;
 var reachedFinalThisRun = false;
 var shakeMag = 0, screenFlash = { color:'#ffffff', alpha:0 };
+
+/* متغیرهای تکامل، رقبا، سیاهچال، رویدادها و بازپخش */
+var walls = [], iceTiles = [], crumbleTiles = [], doorCell = null, trailCells = [];
+var rivals = [], allies = [], historyBuf = [];
+var runTrace = [], lastRunTrace = null, replayIdx = 0, replayTrace = null, isReplay = false, isCustomRun = false;
+var skillCd = 0, skillMaxCd = 9000, rewindsLeft = 2;
+var roguePerks = {}, dungeonFloor = 1, bossRushStage = 1;
+var arenaTimeLeft = 60000, shrinkBorder = 0, onIce = false;
+var envEvent = null, envCd = 7500, reverseCtrlMs = 0, fogActiveMs = 0;
+var rngFn = Math.random;
+
+function hashStr(str){
+  var h = 2166136261;
+  for (var i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(a){
+  return function(){
+    var t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function discover(id){
+  if (!id || save.discovered.indexOf(id) !== -1) return;
+  save.discovered.push(id);
+  persist();
+  var b = BESTIARY.filter(function(x){ return x.id===id; })[0];
+  if (b) showToast('کشف جدید آلبوم: ' + b.name);
+}
 
 function addShake(amount){ shakeMag = Math.max(shakeMag, amount); }
 function addFlash(color, alpha){ screenFlash.color = color; screenFlash.alpha = Math.max(screenFlash.alpha, alpha); }
@@ -2556,16 +3164,28 @@ function resize(){
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', function(){ setTimeout(resize, 250); });
 
-function makeSnake(){
-  var cx = Math.floor(COLS/2), cy = Math.floor(ROWS/2);
-  snake = [{x:cx,y:cy},{x:cx-1,y:cy},{x:cx-2,y:cy}];
+function hasWall(x,y){
+  if (x < shrinkBorder || y < shrinkBorder || x >= COLS - shrinkBorder || y >= ROWS - shrinkBorder) return true;
+  for (var i=0;i<walls.length;i++) if (walls[i].x===x && walls[i].y===y) return true;
+  return false;
+}
+function makeSnake(sx, sy){
+  var cx = (sx!==undefined) ? sx : Math.floor(COLS/2);
+  var cy = (sy!==undefined) ? sy : Math.floor(ROWS/2);
+  snake = [{x:cx,y:cy},{x:Math.max(0,cx-1),y:cy},{x:Math.max(0,cx-2),y:cy}];
   prevSnake = snake.map(function(s){ return {x:s.x,y:s.y}; });
   dir = 'right'; dirQueue = [];
 }
 function occupied(x,y){
-  var i;
+  var i, j;
+  if (hasWall(x,y)) return true;
+  if (doorCell && doorCell.x===x && doorCell.y===y) return true;
   for (i=0;i<snake.length;i++) if (snake[i].x===x&&snake[i].y===y) return true;
   for (i=0;i<items.length;i++) if (items[i].x===x&&items[i].y===y) return true;
+  for (i=0;i<rivals.length;i++){
+    if (!rivals[i].alive) continue;
+    for (j=0;j<rivals[i].body.length;j++) if (rivals[i].body[j].x===x && rivals[i].body[j].y===y) return true;
+  }
   if (world === 'boss' && boss){
     var bx = (x+.5)*cell, by = (y+.5)*cell;
     if (Math.abs(bx - boss.x) < cell*2.6 && Math.abs(by - boss.y) < cell*2.2) return true;
@@ -2573,12 +3193,13 @@ function occupied(x,y){
   return false;
 }
 function spawnItem(type){
-  var t, x, y;
+  var t, x, y, r = rngFn;
   for (t=0; t<350; t++){
-    x = Math.floor(Math.random()*COLS); y = Math.floor(Math.random()*ROWS);
+    x = shrinkBorder + Math.floor(r()*(COLS - shrinkBorder*2));
+    y = shrinkBorder + Math.floor(r()*(ROWS - shrinkBorder*2));
     if (!occupied(x,y)){ items.push({x:x,y:y,type:type}); return true; }
   }
-  for (y=0; y<ROWS; y++) for (x=0; x<COLS; x++)
+  for (y=shrinkBorder; y<ROWS-shrinkBorder; y++) for (x=shrinkBorder; x<COLS-shrinkBorder; x++)
     if (!occupied(x,y)){ items.push({x:x,y:y,type:type}); return true; }
   return false;
 }
@@ -2586,28 +3207,171 @@ function hasType(tp){
   for (var i=0;i<items.length;i++) if (items[i].type===tp) return true;
   return false;
 }
-function resetOutside(){
-  world = 'out'; items = []; makeSnake();
-  fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0;
-  applesEaten = 0;
-  spawnItem('apple');
+function countType(tp){
+  var c = 0;
+  for (var i=0;i<items.length;i++) if (items[i].type===tp) c++;
+  return c;
 }
+
+function spawnRival(idx){
+  var skPool = SKINS.filter(function(s){ return s.id !== save.skin && s.body !== 'rainbow'; });
+  var rSk = skPool[(idx*2 + 1) % skPool.length] || SKINS[1];
+  for (var tries=0; tries<120; tries++){
+    var rx = 3 + Math.floor(rngFn()*(COLS-6));
+    var ry = 2 + Math.floor(rngFn()*(ROWS-4));
+    if (Math.abs(rx - snake[0].x) + Math.abs(ry - snake[0].y) < 6) continue;
+    if (!occupied(rx,ry) && !occupied(rx-1,ry) && !occupied(rx-2,ry)){
+      var b = [{x:rx,y:ry},{x:rx-1,y:ry},{x:rx-2,y:ry}];
+      rivals.push({
+        id: idx, body: b, prevBody: b.map(function(p){ return {x:p.x,y:p.y}; }),
+        dir: 'right', sk: rSk, alive: true, stunT: 0, growLeft: 0
+      });
+      discover('rival');
+      return true;
+    }
+  }
+  return false;
+}
+
+function setupDungeonFloor(){
+  world = 'out'; walls = []; iceTiles = []; crumbleTiles = []; trailCells = [];
+  items = []; rivals = []; allies = []; doorCell = null; shrinkBorder = 0;
+  makeSnake(2, 9);
+  var wallCnt = 10 + dungeonFloor * 3;
+  for (var wi=0; wi<wallCnt; wi++){
+    var wx = 2 + Math.floor(rngFn()*(COLS-4)), wy = 2 + Math.floor(rngFn()*(ROWS-4));
+    if (Math.abs(wx-2)<=2 && Math.abs(wy-9)<=1) continue;
+    if (!hasWall(wx,wy)) walls.push({x:wx,y:wy});
+  }
+  for (var ci=0; ci<3; ci++){
+    var cx = 4 + Math.floor(rngFn()*(COLS-8)), cy = 2 + Math.floor(rngFn()*(ROWS-4));
+    if (!hasWall(cx,cy)) crumbleTiles.push({x:cx,y:cy,stepped:false});
+  }
+  for (var ii=0; ii<3; ii++){
+    var ix = 3 + Math.floor(rngFn()*(COLS-6)), iy = 2 + Math.floor(rngFn()*(ROWS-4));
+    if (!hasWall(ix,iy)) iceTiles.push({x:ix,y:iy});
+  }
+  doorCell = { x: COLS-3, y: 9, open: false };
+  var keyGoal = 2 + Math.min(2, Math.floor(dungeonFloor/2));
+  for (var ki=0; ki<keyGoal; ki++) spawnItem('key');
+  spawnItem('apple'); spawnItem('apple');
+  spawnItem('mimic');
+  spawnRival(dungeonFloor);
+  if (dungeonFloor >= 3) spawnRival(dungeonFloor+1);
+  banner('سیاهچال طبقه '+faNum(dungeonFloor)+' — کلیدها را بردار و به دروازه برو!', 2500);
+}
+
+function setupPuzzleLevel(){
+  var P = PUZZLE_LEVELS[save.puzzleIdx % PUZZLE_LEVELS.length];
+  world = 'out'; walls = []; iceTiles = []; crumbleTiles = []; trailCells = [];
+  items = []; rivals = []; allies = []; shrinkBorder = 0;
+  P.walls.forEach(function(w){ walls.push({x:w[0],y:w[1]}); });
+  P.crumble.forEach(function(c){ crumbleTiles.push({x:c[0],y:c[1],stepped:false}); });
+  doorCell = { x: P.door[0], y: P.door[1], open: false };
+  makeSnake(2, 9);
+  if (hasWall(2,9) || hasWall(1,9) || hasWall(0,9)){ makeSnake(9, 1); }
+  P.keys.forEach(function(k){
+    if (!occupied(k[0],k[1])) items.push({x:k[0],y:k[1],type:'key'});
+    else spawnItem('key');
+  });
+  spawnItem('apple');
+  banner(P.name+' — کلیدها را جمع کن!', 2600);
+}
+
+function setupCustomMap(){
+  var cm = save.customMap;
+  world = 'out'; walls = []; iceTiles = []; crumbleTiles = []; trailCells = [];
+  items = []; rivals = []; allies = []; doorCell = null; shrinkBorder = 0;
+  makeSnake(3, 9);
+  if (cm && cm.length === COLS*ROWS){
+    for (var y=0;y<ROWS;y++) for (var x=0;x<COLS;x++){
+      if (Math.abs(x-3)<=2 && y===9) continue;
+      var v = cm[y*COLS+x];
+      if (v==='w') walls.push({x:x,y:y});
+      else if (v==='a') items.push({x:x,y:y,type:'apple'});
+      else if (v==='k') items.push({x:x,y:y,type:'key'});
+      else if (v==='t') crumbleTiles.push({x:x,y:y,stepped:false});
+    }
+  }
+  if (!hasType('apple')) spawnItem('apple');
+  if (hasType('key')) doorCell = { x:COLS-2, y:9, open:false };
+  banner('نقشه سفارشی تو آماده است!', 2200);
+}
+
+function resetOutside(){
+  world = 'out'; items = []; walls = []; iceTiles = []; crumbleTiles = []; trailCells = [];
+  rivals = []; allies = []; doorCell = null; shrinkBorder = 0;
+  makeSnake();
+  fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0; fx.magnet=0; fx.trailType=''; fx.trailMs=0;
+  applesEaten = 0;
+  if (mode === 'adventure'){
+    spawnItem('apple'); spawnItem('apple');
+    spawnRival(level);
+    if (level >= 2) spawnRival(level+1);
+  } else if (mode === 'arena60'){
+    for (var a=0;a<3;a++) spawnItem('apple');
+    spawnItem('coin_drop'); spawnItem('gold');
+    spawnRival(0); spawnRival(1); spawnRival(2);
+  } else if (mode === 'dailyseed'){
+    for (var wi=0; wi<12; wi++){
+      var wx = 2 + Math.floor(rngFn()*(COLS-4)), wy = 2 + Math.floor(rngFn()*(ROWS-4));
+      if (Math.abs(wx-9)<=2 && Math.abs(wy-9)<=1) continue;
+      if (!hasWall(wx,wy)) walls.push({x:wx,y:wy});
+    }
+    for (var ii=0; ii<4; ii++){
+      var ix = 2 + Math.floor(rngFn()*(COLS-4)), iy = 2 + Math.floor(rngFn()*(ROWS-4));
+      if (!hasWall(ix,iy)) iceTiles.push({x:ix,y:iy});
+    }
+    spawnItem('apple'); spawnItem('apple'); spawnItem('mimic');
+    spawnRival(0);
+  }
+}
+
 function resetWorld(){
   particles=[]; floatTexts=[]; fireParticles=[]; shockwaves=[];
   pShots=[]; bossShots=[]; boss=null; ds=null;
+  walls=[]; iceTiles=[]; crumbleTiles=[]; trailCells=[]; doorCell=null;
+  rivals=[]; allies=[]; historyBuf=[]; runTrace=[]; replayIdx=0;
+  envEvent=null; envCd=7500; reverseCtrlMs=0; fogActiveMs=0; onIce=false;
   shakeMag = 0; screenFlash.alpha = 0;
   $('#hpbar').style.display='none';
   $('#heartsRow').style.display='none';
   combo=0; comboTimer=0;
-  level = 1; dragonVisits = 0; orbsEaten = 0;
+  level = 1; dragonVisits = 0; orbsEaten = 0; dungeonFloor = 1; bossRushStage = 1;
+  roguePerks = {};
+  maxPlayerHp = 3; playerHp = 3;
+  rewindsLeft = 1 + Math.floor((save.skills.reflex||1)/2);
+  skillMaxCd = Math.max(4500, 10000 - ((save.skills.power||1)-1)*900);
+  skillCd = 0;
+  arenaTimeLeft = 60000; shrinkBorder = 0;
   reachedFinalThisRun = false;
-  resetOutside();
-  updateComboBadge(); updateGoalChip();
+  mode = isCustomRun ? 'custom' : (save.mode || 'adventure');
+  rngFn = (mode === 'dailyseed') ? mulberry32(hashStr(todayKey())) : Math.random;
+
+  if (isReplay){
+    world = 'out'; makeSnake(); spawnItem('apple');
+  } else if (isCustomRun){
+    setupCustomMap();
+  } else if (mode === 'dungeon'){
+    setupDungeonFloor();
+  } else if (mode === 'puzzle'){
+    setupPuzzleLevel();
+  } else if (mode === 'bossrush'){
+    startBossFight(1);
+  } else {
+    resetOutside();
+  }
+  updateComboBadge(); updateGoalChip(); updateActionBtnsUI();
 }
+
 function randomSpawnOut(dt){
-  if (!hasType('apple')){ spawnItem('apple'); }
-  if (items.length >= 3 || Math.random() > 0.12*dt/165) return;
-  spawnItem(pick(['gold','bomb','ghost','slow','double']));
+  if (isReplay || mode === 'puzzle' || mode === 'custom') return;
+  if (!hasType('apple')) spawnItem('apple');
+  if (mode === 'arena60' && countType('apple') < 3) spawnItem('apple');
+  if (items.length >= 4 || rngFn() > 0.14*dt/165) return;
+  var pool = ['gold','bomb','ghost','slow','double','coin_drop','divide'];
+  if (mode === 'dungeon' || mode === 'adventure' || mode === 'dailyseed') pool.push('mimic');
+  spawnItem(pool[Math.floor(rngFn()*pool.length)]);
 }
 function randomSpawnBelly(dt){
   var orbs=0, acids=0, i;
@@ -2625,7 +3389,7 @@ function randomSpawnBoss(dt){
     if (items[i].type==='heart' || items[i].type==='shield') sup++;
   }
   if (fb < 2) spawnItem(Math.random() < 0.28 ? 'superfire' : 'fireball');
-  if (sup === 0 && Math.random() < 0.035*dt/165){
+  if (sup === 0 && Math.random() < 0.04*dt/165){
     spawnItem(playerHp < maxPlayerHp ? 'heart' : 'shield');
   }
 }
@@ -2636,31 +3400,380 @@ function updateHeartsUI(){
   }
   $('#heartsRow').innerHTML = html;
 }
+function updateActionBtnsUI(){
+  var sb = $('#btnSkill'), st = $('#txtSkillBtn');
+  var rb = $('#btnRewind'), rt = $('#txtRewindBtn');
+  if (!sb || !rb) return;
+  if (skillCd > 0){
+    sb.classList.add('cd');
+    st.textContent = faNum(Math.ceil(skillCd/1000)) + 'ث';
+  } else {
+    sb.classList.remove('cd');
+    st.textContent = 'مهارت';
+  }
+  if (rewindsLeft <= 0 || isReplay){
+    rb.classList.add('cd');
+  } else {
+    rb.classList.remove('cd');
+  }
+  rt.textContent = 'زمان ('+faNum(rewindsLeft)+')';
+}
 function updateGoalChip(){
   var g = $('#goalChip');
-  if (world === 'out'){
-    g.innerHTML = pxImgTag('apple',16)+' <span>مرحله '+faNum(LEVELS[level].name)+': '+faNum(applesEaten)+' / '+faNum(LEVELS[level].goal)+'</span>';
-    g.style.color = '#ffd43b';
-  } else if (world === 'belly'){
+  if (isReplay){
+    g.innerHTML = pxImgTag('ghost',16)+' <span>در حال بازپخش رکورد</span>';
+    g.style.color = '#7fe3ff'; return;
+  }
+  if (world === 'belly'){
     g.innerHTML = pxImgTag('orb',16)+' <span>شکم اژدها: '+faNum(orbsEaten)+' / '+faNum(ORB_GOAL)+'</span>';
     g.style.color = '#7fe3ff';
-  } else {
-    g.innerHTML = pxImgTag('fireball',16)+' <span>نبرد نهایی — بخور و شلیک کن!</span>';
+  } else if (world === 'boss'){
+    var bLbl = mode==='bossrush' ? 'باس‌راش '+faNum(bossRushStage)+'/۴ — شلیک کن!' : 'نبرد نهایی — بخور و شلیک کن!';
+    g.innerHTML = pxImgTag('fireball',16)+' <span>'+bLbl+'</span>';
     g.style.color = '#ff9800';
+  } else if (mode === 'dungeon'){
+    var kRem = countType('key');
+    g.innerHTML = pxImgTag('key',16)+' <span>طبقه '+faNum(dungeonFloor)+'/۴ | کلید: '+faNum(kRem)+'</span>';
+    g.style.color = kRem===0 ? '#68c962' : '#ffd43b';
+  } else if (mode === 'puzzle'){
+    var pk = countType('key');
+    g.innerHTML = pxImgTag('key',16)+' <span>معما '+faNum((save.puzzleIdx%PUZZLE_LEVELS.length)+1)+' | کلید: '+faNum(pk)+'</span>';
+    g.style.color = pk===0 ? '#68c962' : '#ffd43b';
+  } else if (mode === 'arena60'){
+    g.innerHTML = pxImgTag('timer',16)+' <span>زمان: '+faNum(Math.ceil(arenaTimeLeft/1000))+'ث</span>';
+    g.style.color = arenaTimeLeft < 12000 ? '#ff4757' : '#7fe3ff';
+  } else if (mode === 'dailyseed'){
+    g.innerHTML = pxImgTag('dna',16)+' <span>بذر روزانه • طول: '+faNum(snake.length)+'</span>';
+    g.style.color = '#85f27e';
+  } else if (mode === 'custom'){
+    g.innerHTML = pxImgTag('apple',16)+' <span>نقشه سفارشی</span>';
+    g.style.color = '#7fe3ff';
+  } else {
+    g.innerHTML = pxImgTag('apple',16)+' <span>مرحله '+faNum(LEVELS[level].name)+': '+faNum(applesEaten)+' / '+faNum(LEVELS[level].goal)+'</span>';
+    g.style.color = '#ffd43b';
   }
 }
 
+function triggerSkill(){
+  if (state !== 'playing' || isReplay || skillCd > 0 || !snake.length) return;
+  var activeGenes = [save.genes[0]];
+  if (save.genes[1] && save.ownedGenes.indexOf(save.genes[1]) !== -1 && save.genes[1] !== save.genes[0]){
+    activeGenes.push(save.genes[1]);
+  }
+  var powLv = save.skills.power || 1;
+  skillMaxCd = Math.max(4000, 10000 - (powLv-1)*900 - (roguePerks.rg_bolt?2500:0));
+  skillCd = skillMaxCd;
+  sfx.power(); vibrate([45,30,60]);
+  var hx = snake[0].x, hy = snake[0].y;
+  var fu = getActiveFusionTitle();
+  banner('مهارت '+fu+' فعال شد!', 1600);
+
+  activeGenes.forEach(function(gid){
+    if (gid === 'fire' || gid === 'electric' || gid === 'toxic'){
+      var tp = gid==='fire' ? 'fire' : (gid==='electric' ? 'elec' : 'toxic');
+      fx.trailType = tp;
+      fx.trailMs = 4500 + powLv*600;
+      var col = tp==='fire' ? '#ff6b2b' : (tp==='elec' ? '#fde047' : '#a3e635');
+      addShockwave(hx, hy, col, cell*3.8);
+      for (var ri=0; ri<rivals.length; ri++){
+        var rv = rivals[ri];
+        if (!rv.alive) continue;
+        var dx = rv.body[0].x - hx, dy = rv.body[0].y - hy;
+        if (dx*dx + dy*dy <= 25){
+          rv.stunT = 2500;
+          if (gid === 'electric' || gid === 'fire'){ eliminateRival(rv, 'مهارت '+getGeneObj(gid).name); }
+        }
+      }
+      if (world === 'boss' && boss){
+        boss.hp = Math.max(1, boss.hp - 1);
+        boss.hitFlash = 250;
+        $('#hpfill').style.width = Math.max(0, boss.hp/boss.maxHp*100)+'%';
+        $('#hpTxt').textContent = 'جان اژدها: '+faNum(boss.hp)+' / '+faNum(boss.maxHp);
+      }
+    } else if (gid === 'frost'){
+      fx.slow = 4500 + powLv*400;
+      addFlash('#38bdf8', 0.22);
+      addShockwave(hx, hy, '#38bdf8', cell*4.5);
+      rivals.forEach(function(rv){ if (rv.alive){ rv.stunT = 4200; burst(rv.body[0].x, rv.body[0].y, '#38bdf8', 12); } });
+    } else if (gid === 'magnet'){
+      fx.magnet = 5500 + powLv*700;
+      addShockwave(hx, hy, '#60a5fa', cell*4.0);
+    } else if (gid === 'armor'){
+      fx.shield = 5500 + powLv*600;
+      addShockwave(hx, hy, '#cbd5e1', cell*2.6);
+    } else if (gid === 'ghost'){
+      fx.ghost = (5000 + powLv*500) * (roguePerks.rg_ghost?2:1);
+      addFlash('#93c5fd', 0.2);
+    } else if (gid === 'shadow'){
+      fx.double = 6500 + powLv*500;
+      invulnT = Math.max(invulnT, 3200 + powLv*300);
+      addFlash('#c084fc', 0.22);
+    }
+  });
+  updateActionBtnsUI();
+}
+
+function triggerRewind(){
+  if (state !== 'playing' || isReplay || rewindsLeft <= 0 || historyBuf.length < 3) return;
+  var stepsBack = Math.min(historyBuf.length - 1, 5 + (save.skills.reflex||1));
+  var snap = historyBuf[historyBuf.length - 1 - stepsBack];
+  historyBuf.length = Math.max(0, historyBuf.length - stepsBack);
+  snake = snap.snake.map(function(p){ return {x:p.x, y:p.y}; });
+  prevSnake = snake.map(function(p){ return {x:p.x, y:p.y}; });
+  dir = snap.dir; dirQueue = [];
+  applesEaten = snap.applesEaten;
+  rewindsLeft--;
+  invulnT = 1200;
+  sfx.warp(); vibrate([40,30,40]);
+  addFlash('#38bdf8', 0.28);
+  addShockwave(snake[0].x, snake[0].y, '#38bdf8', cell*3.2);
+  banner('بازگشت در زمان!', 1300);
+  updateGoalChip(); updateActionBtnsUI();
+}
+
+function eliminateRival(rv, reasonText){
+  if (!rv || !rv.alive) return;
+  rv.alive = false;
+  save.stats.rivalsDefeated++;
+  score += 120;
+  $('#hScore').textContent = faNum(score);
+  sfx.hit(); vibrate(65); addShake(6);
+  for (var b=0; b<rv.body.length; b++){
+    burst(rv.body[b].x, rv.body[b].y, rv.sk.body, 7);
+    if (b === 0 && !hasWall(rv.body[0].x, rv.body[0].y)) items.push({x:rv.body[0].x, y:rv.body[0].y, type:'coin_drop'});
+    else if (b === 1 && !hasWall(rv.body[1].x, rv.body[1].y)) items.push({x:rv.body[1].x, y:rv.body[1].y, type:'apple'});
+  }
+  floatText(rv.body[0].x, rv.body[0].y, '+۱۲۰ شکار رقیب', '#ffd43b');
+  if (reasonText) banner('مار رقیب شکست خورد! ('+reasonText+')', 1800);
+  setTimeout(function(){
+    if (state === 'playing' && world === 'out' && (mode==='adventure' || mode==='arena60' || mode==='dungeon')){
+      spawnRival(Math.floor(Math.random()*5));
+    }
+  }, 3500);
+}
+
+function stepRivals(){
+  for (var r=0; r<rivals.length; r++){
+    var rv = rivals[r];
+    if (!rv.alive) continue;
+    if (rv.stunT > 0) continue;
+    rv.prevBody = rv.body.map(function(p){ return {x:p.x,y:p.y}; });
+    var rh = rv.body[0];
+    /* یافتن نزدیک‌ترین سیب یا سکه */
+    var target = null, bestD = 1e9;
+    for (var ii=0; ii<items.length; ii++){
+      var it = items[ii];
+      if (it.type!=='apple' && it.type!=='gold' && it.type!=='coin_drop') continue;
+      var dist = Math.abs(it.x-rh.x) + Math.abs(it.y-rh.y);
+      if (dist < bestD){ bestD = dist; target = it; }
+    }
+    var dirsList = ['up','down','left','right'].filter(function(dn){ return dn !== OPPO[rv.dir]; });
+    var safeMoves = [];
+    for (var di=0; di<dirsList.length; di++){
+      var dn = dirsList[di], dVec = DIRS[dn];
+      var tx = rh.x + dVec.x, ty = rh.y + dVec.y;
+      if (tx<shrinkBorder || ty<shrinkBorder || tx>=COLS-shrinkBorder || ty>=ROWS-shrinkBorder) continue;
+      if (hasWall(tx,ty)) continue;
+      var bad = false, k;
+      for (k=0; k<rv.body.length-1; k++) if (rv.body[k].x===tx && rv.body[k].y===ty){ bad=true; break; }
+      if (!bad){
+        for (k=0; k<snake.length; k++) if (snake[k].x===tx && snake[k].y===ty){ bad=true; break; }
+      }
+      if (!bad){
+        for (k=0; k<trailCells.length; k++) if (trailCells[k].x===tx && trailCells[k].y===ty){ bad=true; break; }
+      }
+      if (!bad){
+        var scScore = target ? -(Math.abs(target.x-tx) + Math.abs(target.y-ty)) : Math.random();
+        safeMoves.push({ d:dn, x:tx, y:ty, sc:scScore + (dn===rv.dir ? 0.25 : 0) });
+      }
+    }
+    if (!safeMoves.length){
+      eliminateRival(rv, 'بن‌بست');
+      continue;
+    }
+    safeMoves.sort(function(a,b){ return b.sc - a.sc; });
+    var chosen = safeMoves[0];
+    rv.dir = chosen.d;
+    rv.body.unshift({x:chosen.x, y:chosen.y});
+    var ate = false;
+    for (var itk=items.length-1; itk>=0; itk--){
+      var itm = items[itk];
+      if (itm.x===chosen.x && itm.y===chosen.y){
+        if (itm.type==='apple' || itm.type==='gold' || itm.type==='coin_drop'){
+          items.splice(itk,1); ate = true; burst(chosen.x, chosen.y, rv.sk.body, 8);
+          break;
+        } else if (itm.type==='bomb'){
+          items.splice(itk,1); rv.body.pop(); eliminateRival(rv, 'بمب'); ate = true; break;
+        }
+      }
+    }
+    if (rv.alive && !ate) rv.body.pop();
+    /* برخورد رقیب با ردپای فعال بازیکن */
+    for (var tr=0; tr<trailCells.length && rv.alive; tr++){
+      if (trailCells[tr].x===chosen.x && trailCells[tr].y===chosen.y){
+        eliminateRival(rv, 'تله انرژی');
+        break;
+      }
+    }
+  }
+}
+
+function stepAllies(){
+  for (var a=allies.length-1; a>=0; a--){
+    var al = allies[a];
+    if (al.life <= 0){ allies.splice(a,1); continue; }
+    al.prev = al.body.map(function(p){ return {x:p.x,y:p.y}; });
+    var ah = al.body[0], target = null, bestD = 1e9;
+    for (var ii=0; ii<items.length; ii++){
+      var it = items[ii];
+      if (it.type!=='apple' && it.type!=='coin_drop' && it.type!=='gold') continue;
+      var d = Math.abs(it.x-ah.x)+Math.abs(it.y-ah.y);
+      if (d<bestD){ bestD=d; target=it; }
+    }
+    var moves = ['up','down','left','right'].filter(function(dn){
+      var v = DIRS[dn], tx = ah.x+v.x, ty = ah.y+v.y;
+      return tx>=0&&ty>=0&&tx<COLS&&ty<ROWS&&!hasWall(tx,ty);
+    });
+    if (moves.length){
+      moves.sort(function(d1,d2){
+        if (!target) return Math.random()-0.5;
+        var v1=DIRS[d1], v2=DIRS[d2];
+        return (Math.abs(target.x-(ah.x+v1.x))+Math.abs(target.y-(ah.y+v1.y))) -
+               (Math.abs(target.x-(ah.x+v2.x))+Math.abs(target.y-(ah.y+v2.y)));
+      });
+      var m = DIRS[moves[0]];
+      al.dir = moves[0];
+      al.body.unshift({x:ah.x+m.x, y:ah.y+m.y});
+      al.body.pop();
+      for (var k=items.length-1; k>=0; k--){
+        var itm = items[k];
+        if (itm.x===al.body[0].x && itm.y===al.body[0].y && (itm.type==='apple'||itm.type==='coin_drop'||itm.type==='gold')){
+          score += (itm.type==='gold'?40:15); $('#hScore').textContent = faNum(score);
+          if (itm.type==='apple'){ applesEaten++; save.stats.totalApples++; updateGoalChip(); }
+          if (itm.type==='coin_drop'){ save.gold += 3; }
+          burst(itm.x, itm.y, '#68c962', 10);
+          items.splice(k,1);
+        }
+      }
+    }
+  }
+}
+
+function updateEnvEvents(dt){
+  if (isReplay || world !== 'out' || mode === 'puzzle' || mode === 'custom') return;
+  if (reverseCtrlMs > 0) reverseCtrlMs = Math.max(0, reverseCtrlMs - dt);
+  if (fogActiveMs > 0) fogActiveMs = Math.max(0, fogActiveMs - dt);
+
+  if (envEvent){
+    envEvent.t += dt;
+    if (envEvent.type === 'meteor' && envEvent.t >= envEvent.dur){
+      discover('meteor');
+      var mx = envEvent.x, my = envEvent.y;
+      addShockwave(mx, my, '#ff7d1a', cell*2.6);
+      burst(mx, my, '#ff7d1a', 20); sfx.bomb(); addShake(6);
+      if (!hasWall(mx,my) && (!doorCell || doorCell.x!==mx || doorCell.y!==my)) walls.push({x:mx,y:my});
+      if (snake.length && snake[0].x===mx && snake[0].y===my && fx.shield<=0 && fx.ghost<=0 && invulnT<=0){
+        gameOver('برخورد شهاب‌سنگ!');
+      }
+      envEvent = null;
+    }
+  } else {
+    envCd -= dt;
+    if (envCd <= 0){
+      envCd = mode==='arena60' ? 6000 : 9500;
+      var evPick = pick(['meteor','frost','fog','reverse']);
+      if (evPick === 'meteor'){
+        var tx = 2 + Math.floor(Math.random()*(COLS-4)), ty = 2 + Math.floor(Math.random()*(ROWS-4));
+        if (!hasWall(tx,ty)){
+          envEvent = { type:'meteor', x:tx, y:ty, t:0, dur:2200 };
+          banner('هشدار برخورد شهاب‌سنگ!', 1600);
+        }
+      } else if (evPick === 'frost'){
+        discover('frost');
+        for (var fi=0; fi<3; fi++){
+          var fxX = 2+Math.floor(Math.random()*(COLS-4)), fxY = 2+Math.floor(Math.random()*(ROWS-4));
+          if (!hasWall(fxX,fxY)) iceTiles.push({x:fxX,y:fxY});
+        }
+        banner('موج سرمای یخی در نقشه!', 1600);
+      } else if (evPick === 'fog'){
+        fogActiveMs = 6000;
+        banner('طوفان شن و مه تاریک!', 1800);
+      } else if (evPick === 'reverse'){
+        reverseCtrlMs = 4500;
+        banner('جاذبه معکوس شد! جهت‌ها برعکس شدند', 1800);
+      }
+    }
+  }
+}
+
+function openRogueDraft(){
+  state = 'draft';
+  var pool = ROGUE_CARDS.slice().sort(function(){ return Math.random()-0.5; }).slice(0, 3);
+  var html = '';
+  pool.forEach(function(c){
+    html += '<button class="draft-card" data-rogue="'+c.id+'">'
+          + pxImgTag(c.ico, 38)
+          + '<div style="flex:1"><div style="font-size:13px;font-weight:bold;color:#85f27e;">'+c.title+'</div>'
+          + '<div style="font-size:10.5px;color:#cde4f5;margin-top:2px;">'+c.desc+'</div></div>'
+          + '</button>';
+  });
+  $('#draftOptions').innerHTML = html;
+  $('#draftModal').classList.add('show');
+  document.querySelectorAll('[data-rogue]').forEach(function(b){
+    b.onclick = function(){
+      var cid = b.dataset.rogue;
+      roguePerks[cid] = true;
+      if (cid === 'rg_hp'){ maxPlayerHp++; playerHp++; }
+      if (cid === 'rg_rewind'){ rewindsLeft += 2; }
+      if (cid === 'rg_bolt'){ skillCd = 0; }
+      sfx.gold(); vibrate(40);
+      $('#draftModal').classList.remove('show');
+      dungeonFloor++;
+      setupDungeonFloor();
+      state = 'playing'; tickAcc = 0; lastT = performance.now();
+      updateGoalChip(); updateActionBtnsUI();
+    };
+  });
+}
+
 function queueDir(d){
-  if (state !== 'playing') return;
+  if (state !== 'playing' || isReplay) return;
+  if (reverseCtrlMs > 0) d = OPPO[d];
   var last = dirQueue.length ? dirQueue[dirQueue.length-1] : dir;
   if (d === last || d === OPPO[last]) return;
   if (dirQueue.length >= 2) return;
   dirQueue.push(d);
 }
-function getTickMs(){ return fx.slow > 0 ? tickMs * 1.75 : tickMs; }
+function getTickMs(){
+  var base = fx.slow > 0 ? tickMs * 1.75 : tickMs;
+  if (onIce) base *= 0.72;
+  return base;
+}
 function grow(){ snake.push({x:snake[snake.length-1].x, y:snake[snake.length-1].y}); }
 
 function step(){
+  if (isReplay){
+    if (!replayTrace || replayIdx >= replayTrace.length){
+      state = 'over';
+      banner('پایان بازپخش!', 1800);
+      setTimeout(function(){ if (state==='over') showMenu(); }, 900);
+      return;
+    }
+    var pt = replayTrace[replayIdx++];
+    prevSnake = snake.map(function(s){ return {x:s.x,y:s.y}; });
+    dir = pt[2] || dir;
+    snake.unshift({x:pt[0], y:pt[1]});
+    if (snake.length > (pt[3]||4)) snake.pop();
+    return;
+  }
+
+  if (historyBuf.length >= 20) historyBuf.shift();
+  historyBuf.push({
+    snake: snake.map(function(s){ return {x:s.x,y:s.y}; }),
+    dir: dir,
+    applesEaten: applesEaten
+  });
+
   if (dirQueue.length){
     var nextD = dirQueue.shift();
     if (nextD !== OPPO[dir]) dir = nextD;
@@ -2674,15 +3787,74 @@ function step(){
     nx = h.x + d.x; ny = h.y + d.y;
   }
 
+  /* اثر ردپای مهارت فعال پشت سر مار */
+  if (fx.trailMs > 0 && fx.trailType){
+    trailCells.push({ x:h.x, y:h.y, type:fx.trailType, life:2600 });
+  }
+
+  /* تله کاشی سست که قبلاً از رویش رد شده‌ایم به دیوار تبدیل می‌شود */
+  for (var ct=crumbleTiles.length-1; ct>=0; ct--){
+    if (crumbleTiles[ct].stepped){
+      var cr = crumbleTiles[ct];
+      var stillOn = false;
+      for (var si2=0; si2<snake.length; si2++) if (snake[si2].x===cr.x && snake[si2].y===cr.y){ stillOn=true; break; }
+      if (!stillOn){
+        walls.push({x:cr.x, y:cr.y});
+        burst(cr.x, cr.y, '#94a3b8', 8);
+        crumbleTiles.splice(ct,1);
+      }
+    }
+  }
+
   if (nx<0 || ny<0 || nx>=COLS || ny>=ROWS){
-    if (fx.ghost > 0 || world === 'boss'){
+    if (fx.ghost > 0 || world === 'boss' || (mode === 'arena60' && shrinkBorder === 0)){
       nx = (nx+COLS)%COLS; ny = (ny+ROWS)%ROWS;
       if (fx.ghost > 0){ floatText(nx,ny,'عبور','#b8cfff'); addShockwave(nx,ny,'#b8cfff',cell*1.4); }
+    } else if (fx.shield > 0){
+      fx.shield = 0; invulnT = 900; addShake(7); sfx.hit();
+      nx = Math.max(0, Math.min(COLS-1, h.x)); ny = Math.max(0, Math.min(ROWS-1, h.y));
+      dir = OPPO[dir];
     } else {
       gameOver('به دیوار خوردی!'); return;
     }
   }
+
+  if (hasWall(nx, ny) && fx.ghost <= 0){
+    if (fx.shield > 0){
+      fx.shield = 0; invulnT = 1000; addShake(6); sfx.hit();
+      for (var wi=walls.length-1; wi>=0; wi--) if (walls[wi].x===nx && walls[wi].y===ny) walls.splice(wi,1);
+      burst(nx, ny, '#94a3b8', 14); floatText(nx,ny,'شکندن مانع','#60a5fa');
+    } else {
+      addShake(8); addFlash('#ff4757', 0.3);
+      gameOver('به مانع سنگی برخورد کردی!'); return;
+    }
+  }
+
   snake.unshift({x:nx,y:ny});
+
+  if (runTrace.length < 1800) runTrace.push([nx, ny, dir, snake.length]);
+
+  /* بررسی یخ و کاشی سست */
+  onIce = false;
+  for (var ii=0; ii<iceTiles.length; ii++) if (iceTiles[ii].x===nx && iceTiles[ii].y===ny){ onIce=true; break; }
+  for (var ci=0; ci<crumbleTiles.length; ci++) if (crumbleTiles[ci].x===nx && crumbleTiles[ci].y===ny){ crumbleTiles[ci].stepped = true; }
+
+  /* بررسی دروازه خروج سیاهچال و معما */
+  if (doorCell && doorCell.open && nx === doorCell.x && ny === doorCell.y){
+    snake.pop();
+    sfx.warp(); addFlash('#68c962', 0.35);
+    if (mode === 'puzzle'){
+      save.puzzleIdx = (save.puzzleIdx + 1) % PUZZLE_LEVELS.length;
+      save.gold += 18;
+      winGame(); return;
+    } else if (mode === 'dungeon'){
+      score += 250; $('#hScore').textContent = faNum(score);
+      if (dungeonFloor >= 4){ winGame(); return; }
+      openRogueDraft(); return;
+    } else if (mode === 'custom'){
+      winGame(); return;
+    }
+  }
 
   if (world === 'belly'){
     for (var a=0; a<items.length; a++){
@@ -2719,19 +3891,58 @@ function step(){
       addShockwave(nx,ny,'#ff4757',cell*1.9);
       applesEaten++; save.stats.totalApples++; updateGoalChip();
       items.splice(k,1);
-      if (applesEaten >= LEVELS[level].goal && world === 'out') triggerDragon = true;
+      if (mode === 'adventure' && applesEaten >= LEVELS[level].goal && world === 'out') triggerDragon = true;
       continue;
     } else if (it.type === 'gold'){
       addScore(50,it,'+۵۰'); grow(); sfx.gold(); vibrate([40,40,60]); bumpCombo();
       addShockwave(nx,ny,'#ffd43b',cell*2.6); addFlash('#ffd43b', 0.16);
+    } else if (it.type === 'coin_drop'){
+      save.gold += 3; addScore(15,it,'+۳ سکه'); sfx.gold(); vibrate(25);
+    } else if (it.type === 'key'){
+      items.splice(k,1);
+      addScore(30,it,'کلید!'); sfx.gold(); vibrate(35);
+      addShockwave(nx,ny,'#ffd43b',cell*2.4);
+      updateGoalChip();
+      if (countType('key') === 0 && doorCell){
+        doorCell.open = true;
+        sfx.warp(); addFlash('#68c962', 0.28);
+        banner('تمام کلیدها جمع شد! دروازه خروج باز است!', 2200);
+      }
+      continue;
+    } else if (it.type === 'mimic'){
+      discover('mimic');
+      items.splice(k,1);
+      if (Math.random() < 0.58){
+        save.gold += 14; sfx.gold(); addScore(45,it,'گنج +۱۴ سکه');
+        addShockwave(nx,ny,'#ffd43b',cell*2.8);
+      } else {
+        sfx.bomb(); addShake(7); addFlash('#ef4444', 0.25);
+        floatText(nx,ny,'تله صندوق!','#ef4444');
+        var adj = [[1,0],[-1,0],[0,1],[0,-1]];
+        adj.forEach(function(off){
+          var wx = nx+off[0], wy = ny+off[1];
+          if (wx>1&&wy>1&&wx<COLS-2&&wy<ROWS-2 && !occupied(wx,wy) && Math.random()<0.55) walls.push({x:wx,y:wy});
+        });
+      }
+      continue;
+    } else if (it.type === 'divide'){
+      allies.push({ body:[{x:nx,y:ny},{x:nx,y:ny}], prev:[{x:nx,y:ny},{x:nx,y:ny}], dir:dir, life:8500 });
+      floatText(nx,ny,'همراه تکثیر شد!','#68c962'); sfx.power();
+      addShockwave(nx,ny,'#68c962',cell*2.4);
     } else if (it.type === 'bomb'){
-      items.splice(k,1); sfx.bomb(); vibrate([80,50,80]);
+      items.splice(k,1);
+      if (fx.shield > 0){
+        fx.shield = 0; invulnT = 800; sfx.hit(); floatText(nx,ny,'سپر شکست','#60a5fa');
+        continue;
+      }
+      sfx.bomb(); vibrate([80,50,80]);
       burst(nx,ny,'#ff4757', 22); addShake(10); addFlash('#ff4757', 0.35);
       snake.pop();
       gameOver('بمب منفجر شد!'); return;
     } else if (it.type === 'ghost'){
       var extraG = getSkinObj(save.skin).ghostExtra || 0;
-      fx.ghost = 8000 + extraG; floatText(nx,ny,'روح دیوار','#93c5fd');
+      fx.ghost = (8000 + extraG) * (roguePerks.rg_ghost?2:1);
+      floatText(nx,ny,'روح دیوار','#93c5fd');
       burst(nx,ny,'#93c5fd',14); addShockwave(nx,ny,'#93c5fd',cell*2.2); sfx.power(); grow();
     } else if (it.type === 'slow'){
       fx.slow=7000; floatText(nx,ny,'آهسته','#38bdf8');
@@ -2777,19 +3988,48 @@ function step(){
   if (triggerDragon){ startDragonScene(); return; }
   if (triggerEscape){ escapeBelly(); return; }
 
+  /* برخورد با مارهای رقیب */
+  for (var ri=0; ri<rivals.length; ri++){
+    var rv = rivals[ri];
+    if (!rv.alive) continue;
+    for (var rb=0; rb<rv.body.length; rb++){
+      if (rv.body[rb].x === nx && rv.body[rb].y === ny){
+        if (fx.ghost > 0 || fx.shield > 0 || invulnT > 0){
+          if (fx.shield > 0) fx.shield = 0;
+          eliminateRival(rv, 'ضربه مستقیم');
+          break;
+        } else {
+          addShake(8); addFlash('#ff4757', 0.3);
+          gameOver('با مار رقیب برخورد کردی!'); return;
+        }
+      }
+    }
+    /* برخورد سر رقیب با بدن بازیکن */
+    if (rv.alive){
+      for (var sb=1; sb<snake.length; sb++){
+        if (rv.body[0].x === snake[sb].x && rv.body[0].y === snake[sb].y){
+          eliminateRival(rv, 'مسدود کردن مسیر');
+          break;
+        }
+      }
+    }
+  }
+
   for (var c=1; c<snake.length; c++){
     if (snake[c].x===nx && snake[c].y===ny){
-      if (world === 'boss') continue;
+      if (world === 'boss' || invulnT > 0) continue;
+      if (fx.shield > 0){ fx.shield = 0; invulnT = 800; floatText(nx,ny,'سپر شکست','#60a5fa'); continue; }
       addShake(8); addFlash('#ff4757', 0.3);
       gameOver('به خودت برخورد کردی!'); return;
     }
   }
 
-  if (world === 'out' && !hasType('apple')) spawnItem('apple');
+  if (world === 'out' && mode !== 'puzzle' && mode !== 'custom' && !hasType('apple')) spawnItem('apple');
 }
 
 function addScore(base, item, label){
-  var mult = (fx.double>0?2:1) * (1+combo*0.25) * (getSkinObj(save.skin).bonusScore || 1);
+  var rg = roguePerks.rg_combo ? 1.5 : 1;
+  var mult = (fx.double>0?2:1) * (1+combo*0.25) * (getSkinObj(save.skin).bonusScore || 1) * rg;
   score += Math.round(base*mult);
   $('#hScore').textContent = faNum(score);
   burst(item.x,item.y,TYPES[item.type].color, 14);
@@ -2816,6 +4056,7 @@ function banner(text, ms){
 /* ═══ سکانس اژدها ═══ */
 function startDragonScene(){
   state = 'cutscene';
+  discover('d'+level);
   var size = cell*COLS;
   ds = {
     t:0, stage:'flyin', x:-size*0.5, y:size*0.3,
@@ -2868,6 +4109,7 @@ function enterBelly(){
   world='belly'; orbsEaten=0;
   save.stats.bellyVisits++;
   items=[]; particles=[]; floatTexts=[]; fireParticles=[]; shockwaves=[]; pShots=[]; bossShots=[];
+  walls=[]; iceTiles=[]; crumbleTiles=[]; rivals=[]; allies=[]; trailCells=[]; doorCell=null;
   combo=0; comboTimer=0; fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0;
   makeSnake();
   spawnItem('orb'); spawnItem('orb');
@@ -2881,7 +4123,7 @@ function escapeBelly(){
   score += 200;
   $('#hScore').textContent = faNum(score);
   dragonVisits++;
-  if (dragonVisits >= 3){ startBossFight(); return; }
+  if (dragonVisits >= 3){ startBossFight(4); return; }
   level++;
   resetOutside();
   state='playing'; tickAcc=0;
@@ -2890,32 +4132,37 @@ function escapeBelly(){
   sfx.start();
 }
 
-/* ═══ نبرد نهایی با اژدها ═══ */
+/* ═══ نبرد با اژدها و باس‌راش ═══ */
 var DIR_SHOTS = {
   E: { vx: 1, vy: 0, col:'#ff7d1a', col2:'#ffe0b0', f:660 },
   S: { vx: 0, vy: 1, col:'#ffd83e', col2:'#fff6c8', f:520 },
   W: { vx:-1, vy: 0, col:'#ff4d9e', col2:'#ffc9e2', f:400 },
   N: { vx: 0, vy:-1, col:'#a34dff', col2:'#ddb8ff', f:300 }
 };
-function startBossFight(){
-  world = 'boss'; level = 4; state = 'playing'; tickAcc = 0;
+function startBossFight(rushKey){
+  var bKey = rushKey || 4;
+  discover('d'+bKey);
+  world = 'boss'; level = bKey; state = 'playing'; tickAcc = 0;
   reachedFinalThisRun = true;
+  walls = []; iceTiles = []; crumbleTiles = []; rivals = []; allies = []; doorCell = null; shrinkBorder = 0;
   items = []; fireParticles = []; pShots = []; bossShots = []; shockwaves = [];
   fx.ghost=0; fx.slow=0; fx.double=0; fx.shield=0;
-  playerHp = maxPlayerHp; invulnT = 0;
+  if (bKey === 1 || mode !== 'bossrush') playerHp = maxPlayerHp;
+  invulnT = 0;
   makeSnake();
   for (var si=0; si<snake.length; si++){
     snake[si].y = Math.min(ROWS-1, snake[si].y + 6);
     prevSnake[si].y = snake[si].y;
   }
+  var hpVal = (mode === 'bossrush') ? (6 + bossRushStage * 2) : 12;
   boss = {
     x: cell*COLS*0.5, y: cell*ROWS*0.42,
-    hp: 12, maxHp: 12,
-    vx: cell*0.075, vy: cell*0.045,
-    fireT: 0, fireCd: 2300,
+    hp: hpVal, maxHp: hpVal,
+    vx: cell*(0.065 + bKey*0.008), vy: cell*(0.04 + bKey*0.005),
+    fireT: 0, fireCd: Math.max(1550, 2500 - bKey*180),
     seq: [], seqT: 0,
     enraged: false, hitFlash: 0,
-    S: cell*DRAGON_STYLE[4].size, key: 4, face: 1
+    S: cell*DRAGON_STYLE[bKey].size, key: bKey, face: 1
   };
   spawnItem('fireball'); spawnItem('superfire');
   $('#hpbar').style.display='block';
@@ -2925,7 +4172,10 @@ function startBossFight(){
   updateHeartsUI();
   updateGoalChip();
   addShake(10); addFlash('#ff9800', 0.25);
-  banner('نبرد نهایی! با ۳ قلب به اژدها شلیک کن!<br>گلوله آتشین بخور تا شلیک شود', 3400);
+  var bTitle = mode==='bossrush'
+    ? 'باس‌راش — اژدهای '+faNum(bossRushStage)+' از ۴!'
+    : 'نبرد نهایی! با '+faNum(maxPlayerHp)+' قلب به اژدها شلیک کن!';
+  banner(bTitle+'<br>گلوله آتشین بخور تا شلیک شود', 3000);
   sfx.roar(); vibrate([250,100,250]);
 }
 function updateBoss(dt){
@@ -3036,6 +4286,13 @@ function updateBoss(dt){
         for (var ex=0; ex<28; ex++)
           burst(boss.x/cell-.5+(Math.random()-.5)*3, boss.y/cell-.5+(Math.random()-.5)*3,
                 pick(['#ff4757','#ffd43b','#ff9800','#68c962']), 8);
+        if (mode === 'bossrush' && bossRushStage < 4){
+          bossRushStage++;
+          score += 300; $('#hScore').textContent = faNum(score);
+          if (playerHp < maxPlayerHp) playerHp++;
+          startBossFight(bossRushStage);
+          return;
+        }
         winGame(); return;
       }
     }
@@ -3054,19 +4311,30 @@ function rollFinalStageChest(won){
   }
 }
 function rewardAfterRun(won){
+  if (isReplay) return { gold:0, gems:0, chest:null };
   var sk = getSkinObj(save.skin);
-  var baseGold = won ? 60 : (reachedFinalThisRun ? 15 : Math.floor(score / 95));
+  var baseGold = won ? 55 : (reachedFinalThisRun ? 15 : Math.floor(score / 95));
   var goldGain = Math.round(baseGold * (sk.bonusGold || 1));
-  var gemGain = won ? 4 : (reachedFinalThisRun ? 1 : 0);
-  var trophyGain = won ? 25 : (reachedFinalThisRun ? 8 : Math.min(5, Math.floor(score / 120)));
+  var gemGain = won ? 3 : (reachedFinalThisRun ? 1 : 0);
+  var trophyGain = won ? 22 : (reachedFinalThisRun ? 8 : Math.min(5, Math.floor(score / 120)));
 
   save.gold += goldGain;
   save.gems += gemGain;
   save.trophies += trophyGain;
   addXP(won ? 75 : Math.max(10, Math.floor(score / 40)));
   save.stats.gamesPlayed++;
-  if (won) save.stats.bossWins++;
-  if (score > save.best) save.best = score;
+  if (won && (mode === 'adventure' || mode === 'bossrush')) save.stats.bossWins++;
+
+  if (runTrace.length > 5) lastRunTrace = runTrace.slice();
+  if (score >= save.best){
+    save.best = score;
+    if (runTrace.length > 5) save.bestGhost = runTrace.slice(0, 900);
+  }
+  if (mode === 'dailyseed'){
+    var td = todayKey();
+    if (save.dailySeedKey !== td){ save.dailySeedKey = td; save.dailySeedBest = 0; }
+    if (score > save.dailySeedBest) save.dailySeedBest = score;
+  }
 
   var droppedChest = null;
   if (won || reachedFinalThisRun){
@@ -3087,6 +4355,7 @@ function rewardAfterRun(won){
 
 function winGame(){
   if (state !== 'playing') return;
+  if (isReplay){ showMenu(); return; }
   score += 1000;
   $('#hScore').textContent = faNum(score);
   state = 'won';
@@ -3110,6 +4379,7 @@ function winGame(){
 
 function gameOver(reason){
   if (state !== 'playing') return;
+  if (isReplay){ showMenu(); return; }
   state = 'over';
   sfx.die(); vibrate([120,60,120]);
   if (snake.length) burst(snake[0].x, snake[0].y, '#ff4757', 20);
@@ -3129,10 +4399,11 @@ function gameOver(reason){
   } else {
     $('#ovChestNotice').textContent = '';
   }
+  $('#btnReplayLast').style.display = (lastRunTrace && lastRunTrace.length > 5) ? 'inline-block' : 'none';
   setTimeout(function(){ if (state==='over') $('#ovOver').classList.add('show'); }, 420);
 }
 
-/* ═══ افکت‌ها و رسم زمین پیکسلی شطرنجی + مار پیکسلی چرخان ═══ */
+/* ═══ افکت‌ها و رسم زمین پیکسلی شطرنجی + مارهای رقیب + محیط ═══ */
 function burst(gx,gy,color, count){
   var n = count || 12;
   for (var i=0;i<n;i++){
@@ -3151,6 +4422,33 @@ function dirAngle(dx, dy){
   if (dy > 0.2) return Math.PI/2;
   if (dy < -0.2) return -Math.PI/2;
   return 0;
+}
+
+function buildInterpPts(bodyArr, prevArr, alpha){
+  var pts = [];
+  for (var s=0; s<bodyArr.length; s++){
+    var cur = bodyArr[s];
+    var prv = prevArr[s] || cur;
+    var dxg = cur.x - prv.x, dyg = cur.y - prv.y;
+    var ix, iy;
+    if (Math.abs(dxg) > 1 || Math.abs(dyg) > 1){ ix = cur.x; iy = cur.y; }
+    else { ix = prv.x + dxg*alpha; iy = prv.y + dyg*alpha; }
+    pts.push({ x:(ix+.5)*cell, y:(iy+.5)*cell, pivot:null, wrapNext:false });
+  }
+  for (var sLink=0; sLink<bodyArr.length-1; sLink++){
+    var aCell = bodyArr[sLink], bCell = bodyArr[sLink+1];
+    if (Math.abs(aCell.x - bCell.x) > 1 || Math.abs(aCell.y - bCell.y) > 1 ||
+        Math.abs(pts[sLink].x - pts[sLink+1].x) > cell*1.7 || Math.abs(pts[sLink].y - pts[sLink+1].y) > cell*1.7){
+      pts[sLink].wrapNext = true;
+    } else if (Math.abs(pts[sLink].x - pts[sLink+1].x) > 0.5 && Math.abs(pts[sLink].y - pts[sLink+1].y) > 0.5 && prevArr[sLink]){
+      var piv = prevArr[sLink];
+      if (Math.abs(piv.x - aCell.x) <= 1 && Math.abs(piv.y - aCell.y) <= 1 &&
+          Math.abs(piv.x - bCell.x) <= 1 && Math.abs(piv.y - bCell.y) <= 1){
+        pts[sLink].pivot = { x:(piv.x+.5)*cell, y:(piv.y+.5)*cell };
+      }
+    }
+  }
+  return pts;
 }
 
 function draw(t, alpha){
@@ -3177,8 +4475,8 @@ function draw(t, alpha){
     ctx.strokeStyle = 'rgba(255,84,112,'+(0.4+beat*0.3)+')'; ctx.lineWidth = 4;
     ctx.strokeRect(2,2,size-4,size-4);
   } else {
-    var c1 = world==='boss' ? '#1c0b04' : L.bg;
-    var c2 = world==='boss' ? '#240f06' : L.bg2;
+    var c1 = world==='boss' ? '#1c0b04' : (mode==='dungeon'?'#151424':(mode==='puzzle'?'#101b29':L.bg));
+    var c2 = world==='boss' ? '#240f06' : (mode==='dungeon'?'#1c1a30':(mode==='puzzle'?'#152336':L.bg2));
     ctx.fillStyle = c1;
     ctx.fillRect(0,0,size,size);
     ctx.fillStyle = c2;
@@ -3187,6 +4485,73 @@ function draw(t, alpha){
     ctx.strokeStyle = (world==='boss' || fx.ghost>0) ? 'rgba(147,197,253,'+(.4+.2*Math.sin(t/150))+')' : L.wall;
     ctx.lineWidth = 3;
     ctx.strokeRect(1.5,1.5,size-3,size-3);
+  }
+
+  /* محدوده کوچک‌شونده (حالت ۶۰ ثانیه) */
+  if (shrinkBorder > 0){
+    ctx.fillStyle = 'rgba(220,38,38,0.28)';
+    for (var sy=0; sy<ROWS; sy++) for (var sx=0; sx<COLS; sx++){
+      if (sx < shrinkBorder || sy < shrinkBorder || sx >= COLS-shrinkBorder || sy >= ROWS-shrinkBorder){
+        ctx.fillRect(sx*cell, sy*cell, cell, cell);
+      }
+    }
+  }
+
+  /* کاشی‌های یخی */
+  for (var iI=0; iI<iceTiles.length; iI++){
+    var icl = iceTiles[iI], ix = Math.round(icl.x*cell), iy = Math.round(icl.y*cell), csz = Math.ceil(cell);
+    ctx.fillStyle = '#0ea5e9'; ctx.fillRect(ix, iy, csz, csz);
+    ctx.fillStyle = '#7dd3fc'; ctx.fillRect(ix+2, iy+2, Math.max(2,csz-4), Math.max(2,csz-4));
+    ctx.fillStyle = '#e0f2fe'; ctx.fillRect(ix+3, iy+3, Math.max(2,Math.round(csz*0.3)), 2);
+  }
+
+  /* کاشی‌های سست (تله) */
+  for (var iC=0; iC<crumbleTiles.length; iC++){
+    var cr = crumbleTiles[iC], cx = Math.round(cr.x*cell), cy = Math.round(cr.y*cell), csz2 = Math.ceil(cell);
+    ctx.fillStyle = cr.stepped ? '#a855f7' : '#581c87';
+    ctx.fillRect(cx, cy, csz2, csz2);
+    ctx.fillStyle = '#d8b4fe';
+    ctx.fillRect(cx+2, cy+Math.round(csz2/2), csz2-4, 2);
+    ctx.fillRect(cx+Math.round(csz2/2), cy+2, 2, csz2-4);
+  }
+
+  /* دیوارها و سنگ‌های شهاب‌سنگ */
+  for (var iW=0; iW<walls.length; iW++){
+    var wl = walls[iW], wx = Math.round(wl.x*cell), wy = Math.round(wl.y*cell), wsz = Math.ceil(cell);
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(wx, wy, wsz, wsz);
+    ctx.fillStyle = '#64748b'; ctx.fillRect(wx+1, wy+1, wsz-2, wsz-3);
+    ctx.fillStyle = '#94a3b8'; ctx.fillRect(wx+2, wy+2, wsz-4, 3);
+  }
+
+  /* ردپای مهارت فعال (آتش، برق، سم) */
+  for (var tr=0; tr<trailCells.length; tr++){
+    var tc = trailCells[tr], txp = Math.round(tc.x*cell), typ = Math.round(tc.y*cell), tsz = Math.ceil(cell);
+    ctx.globalAlpha = Math.max(0.25, Math.min(0.9, tc.life / 2600));
+    ctx.fillStyle = tc.type==='fire' ? '#ff6b2b' : (tc.type==='elec' ? '#fde047' : '#84cc16');
+    ctx.fillRect(txp+3, typ+3, Math.max(2,tsz-6), Math.max(2,tsz-6));
+  }
+  ctx.globalAlpha = 1;
+
+  /* دروازه خروج (معما و سیاهچال) */
+  if (doorCell){
+    var dxp = Math.round(doorCell.x*cell), dyp = Math.round(doorCell.y*cell), dsz = Math.ceil(cell);
+    ctx.fillStyle = doorCell.open ? '#16a34a' : '#334155';
+    ctx.fillRect(dxp, dyp, dsz, dsz);
+    ctx.fillStyle = doorCell.open ? '#86efac' : '#94a3b8';
+    ctx.fillRect(dxp+3, dyp+2, dsz-6, dsz-4);
+    if (doorCell.open){
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(dxp+Math.round(dsz/2)-2, dyp+Math.round(dsz/2)-2, 4, 4);
+    }
+  }
+
+  /* هشدار برخورد شهاب‌سنگ */
+  if (envEvent && envEvent.type === 'meteor'){
+    var mxp = (envEvent.x+.5)*cell, myp = (envEvent.y+.5)*cell;
+    ctx.strokeStyle = Math.floor(t/110)%2===0 ? '#ff7d1a' : '#fde047';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(Math.round(envEvent.x*cell+2), Math.round(envEvent.y*cell+2), Math.round(cell-4), Math.round(cell-4));
+    ctx.beginPath(); ctx.arc(mxp, myp, cell*0.8*(1 - envEvent.t/envEvent.dur), 0, Math.PI*2); ctx.stroke();
   }
 
   /* موج‌های شوک */
@@ -3208,7 +4573,7 @@ function draw(t, alpha){
   }
   ctx.globalAlpha = 1;
 
-  /* آیتم‌های ۲۰×۲۰ شفاف و پرنور */
+  /* آیتم‌های پیکسلی ۲۰×۲۰ شفاف و پرنور */
   for (var i=0;i<items.length;i++){
     var it = items[i];
     var px=(it.x+.5)*cell, py=(it.y+.5)*cell;
@@ -3224,41 +4589,57 @@ function draw(t, alpha){
     ctx.restore();
   }
 
-  /* مار پیکسلی یکپارچه و پیوسته با خال‌های جنگلی، شکم کرم و سر زیبا */
+  /* شبح رکورد قبلی (در صورت روشن بودن) */
+  if (save.ghostEnabled && save.bestGhost && save.bestGhost.length > 3 && !isReplay && world === 'out'){
+    var gi = Math.min(save.bestGhost.length - 1, runTrace.length);
+    var gBody = [];
+    var gLen = save.bestGhost[gi][3] || 3;
+    for (var gs=0; gs<gLen && (gi-gs)>=0; gs++){
+      gBody.push({ x:save.bestGhost[gi-gs][0], y:save.bestGhost[gi-gs][1] });
+    }
+    if (gBody.length){
+      ctx.save();
+      ctx.globalAlpha = 0.28;
+      var gPts = buildInterpPts(gBody, gBody, 1);
+      drawSeamlessSnake(ctx, gPts, save.bestGhost[gi][2]||'right', SKINS[0], cell, t, { overrideBody:'#38bdf8', overrideBelly:'#e0f2fe' });
+      ctx.restore();
+    }
+  }
+
+  /* مارهای رقیب هوش مصنوعی */
+  for (var rIdx=0; rIdx<rivals.length; rIdx++){
+    var rv = rivals[rIdx];
+    if (!rv.alive || !rv.body.length) continue;
+    var rPts = buildInterpPts(rv.body, rv.prevBody || rv.body, rv.stunT > 0 ? 1 : alpha);
+    drawSeamlessSnake(ctx, rPts, rv.dir, rv.sk, cell, t, {
+      overrideBody: rv.stunT > 0 ? '#38bdf8' : null
+    });
+  }
+
+  /* مارهای همراه (تکثیرشده) */
+  for (var aIdx=0; aIdx<allies.length; aIdx++){
+    var al = allies[aIdx];
+    if (!al.body.length) continue;
+    var aPts = buildInterpPts(al.body, al.prev || al.body, alpha);
+    drawSeamlessSnake(ctx, aPts, al.dir, SKINS[0], cell*0.8, t, { overrideBody:'#85f27e' });
+  }
+
+  /* مار اصلی بازیکن */
   var sk = getSkinObj(save.skin);
   var rainbow = combo >= 5 || sk.body === 'rainbow';
   var ovBody = belly ? '#ff6b81' : (fx.double>0 ? '#ffd43b' : (fx.slow>0 ? '#38bdf8' : (fx.ghost>0 ? '#93c5fd' : null)));
   var blinkHide = invulnT > 0 && Math.floor(t/90)%2 === 0;
   if (!blinkHide && snake.length){
-    var pts = [];
-    for (var s=0; s<snake.length; s++){
-      var cur = snake[s];
-      var prv = prevSnake[s] || cur;
-      var dxg = cur.x - prv.x, dyg = cur.y - prv.y;
-      var ix, iy;
-      if (Math.abs(dxg) > 1 || Math.abs(dyg) > 1){ ix = cur.x; iy = cur.y; }
-      else { ix = prv.x + dxg*alpha; iy = prv.y + dyg*alpha; }
-      pts.push({ x:(ix+.5)*cell, y:(iy+.5)*cell, pivot:null, wrapNext:false });
-    }
-    for (var sLink=0; sLink<snake.length-1; sLink++){
-      var aCell = snake[sLink], bCell = snake[sLink+1];
-      if (Math.abs(aCell.x - bCell.x) > 1 || Math.abs(aCell.y - bCell.y) > 1 ||
-          Math.abs(pts[sLink].x - pts[sLink+1].x) > cell*1.7 || Math.abs(pts[sLink].y - pts[sLink+1].y) > cell*1.7){
-        pts[sLink].wrapNext = true;
-      } else if (Math.abs(pts[sLink].x - pts[sLink+1].x) > 0.5 && Math.abs(pts[sLink].y - pts[sLink+1].y) > 0.5 && prevSnake[sLink]){
-        var piv = prevSnake[sLink];
-        if (Math.abs(piv.x - aCell.x) <= 1 && Math.abs(piv.y - aCell.y) <= 1 &&
-            Math.abs(piv.x - bCell.x) <= 1 && Math.abs(piv.y - bCell.y) <= 1){
-          pts[sLink].pivot = { x:(piv.x+.5)*cell, y:(piv.y+.5)*cell };
-        }
-      }
-    }
+    var pts = buildInterpPts(snake, prevSnake, alpha);
+    ctx.save();
+    if (isReplay) ctx.globalAlpha = 0.8;
     drawSeamlessSnake(ctx, pts, dir, sk, cell, t, {
       rainbow: rainbow,
       overrideBody: ovBody,
       overrideBelly: sk.belly,
       accId: save.acc
     });
+    ctx.restore();
     if (fx.shield > 0){
       ctx.strokeStyle = 'rgba(96,165,250,'+(.6+.3*Math.sin(t/100))+')';
       ctx.lineWidth = 2.5;
@@ -3297,6 +4678,16 @@ function draw(t, alpha){
   }
   ctx.globalAlpha = 1;
 
+  /* مه / طوفان شن (نورافکن دور سر مار) */
+  if (fogActiveMs > 0 && snake.length){
+    var fhx = (snake[0].x+.5)*cell, fhy = (snake[0].y+.5)*cell;
+    var fg = ctx.createRadialGradient(fhx, fhy, cell*2.5, fhx, fhy, cell*6.2);
+    fg.addColorStop(0, 'rgba(6,11,16,0)');
+    fg.addColorStop(1, 'rgba(6,11,16,0.88)');
+    ctx.fillStyle = fg;
+    ctx.fillRect(0,0,size,size);
+  }
+
   for (var p=0;p<particles.length;p++){
     var pt=particles[p];
     ctx.globalAlpha=Math.max(0,pt.life); ctx.fillStyle=pt.color;
@@ -3315,12 +4706,14 @@ function draw(t, alpha){
   }
   ctx.globalAlpha=1;
 
-  if (state === 'playing' && snake.length && (fx.ghost>0 || fx.slow>0 || fx.double>0 || fx.shield>0)){
+  if (state === 'playing' && snake.length && (fx.ghost>0 || fx.slow>0 || fx.double>0 || fx.shield>0 || fx.magnet>0 || reverseCtrlMs>0)){
     var bparts = [];
     if (fx.shield>0) bparts.push('سپر '+faNum(Math.ceil(fx.shield/1000)));
     if (fx.ghost>0)  bparts.push('روح '+faNum(Math.ceil(fx.ghost/1000)));
     if (fx.slow>0)   bparts.push('آهسته '+faNum(Math.ceil(fx.slow/1000)));
     if (fx.double>0) bparts.push('×۲ '+faNum(Math.ceil(fx.double/1000)));
+    if (fx.magnet>0) bparts.push('جذب '+faNum(Math.ceil(fx.magnet/1000)));
+    if (reverseCtrlMs>0) bparts.push('معکوس');
     var btxt = bparts.join(' | ');
     var bx = Math.max(cell*2.5, Math.min(size-cell*2.5, (snake[0].x+.5)*cell));
     var by = Math.max(cell*.9, (snake[0].y-.7)*cell);
@@ -3340,6 +4733,7 @@ function draw(t, alpha){
 }
 
 /* ═══ حلقه اصلی ═══ */
+var magnetTickAcc = 0, arenaSecShown = 60;
 function loop(t){
   try {
     var dt = Math.min(50, Math.max(0, t-lastT)); lastT = t;
@@ -3350,20 +4744,77 @@ function loop(t){
       while (tickAcc >= tm2){
         tickAcc -= tm2;
         step();
+        if (state === 'playing' && !isReplay){
+          if (rivals.length) stepRivals();
+          if (allies.length) stepAllies();
+        }
         if (state !== 'playing') break;
       }
     }
     var alpha = (state === 'playing') ? clamp01(tickAcc / getTickMs()) : 1;
 
     if (state === 'playing'){
-      ['ghost','slow','double','shield'].forEach(function(k){
+      var uiChg = false;
+      ['ghost','slow','double','shield','magnet'].forEach(function(k){
         if (fx[k] > 0){ fx[k] -= dt; if (fx[k] <= 0) fx[k] = 0; }
       });
+      if (fx.trailMs > 0){ fx.trailMs = Math.max(0, fx.trailMs - dt); }
+      if (skillCd > 0){
+        var prevSec = Math.ceil(skillCd/1000);
+        skillCd = Math.max(0, skillCd - dt);
+        if (Math.ceil(skillCd/1000) !== prevSec) uiChg = true;
+      }
+      if (uiChg) updateActionBtnsUI();
+
+      for (var tr=trailCells.length-1; tr>=0; tr--){
+        trailCells[tr].life -= dt;
+        if (trailCells[tr].life <= 0) trailCells.splice(tr,1);
+      }
+      for (var ri=0; ri<rivals.length; ri++){
+        if (rivals[ri].stunT > 0) rivals[ri].stunT = Math.max(0, rivals[ri].stunT - dt);
+      }
+      for (var ai=0; ai<allies.length; ai++) allies[ai].life -= dt;
+
+      /* جذب مغناطیسی آیتم‌ها */
+      if (!isReplay && snake.length && (fx.magnet > 0 || roguePerks.rg_magnet || (save.skills.greed||1) >= 3)){
+        magnetTickAcc += dt;
+        if (magnetTickAcc >= 380){
+          magnetTickAcc = 0;
+          var rad = (fx.magnet > 0 || roguePerks.rg_magnet) ? (3 + (save.skills.greed||1)) : 2;
+          var hx = snake[0].x, hy = snake[0].y;
+          for (var mi=0; mi<items.length; mi++){
+            var mit = items[mi];
+            if (mit.type==='bomb' || mit.type==='acid' || mit.type==='mimic') continue;
+            var md = Math.abs(mit.x-hx)+Math.abs(mit.y-hy);
+            if (md > 0 && md <= rad){
+              var nmx = mit.x + (mit.x < hx ? 1 : (mit.x > hx ? -1 : 0));
+              var nmy = mit.y + (mit.y < hy ? 1 : (mit.y > hy ? -1 : 0));
+              if (!hasWall(nmx, nmy)){ mit.x = nmx; mit.y = nmy; }
+            }
+          }
+        }
+      }
+
+      /* تایمر حالت ۶۰ ثانیه و کوچک شدن میدان */
+      if (mode === 'arena60' && !isReplay){
+        arenaTimeLeft = Math.max(0, arenaTimeLeft - dt);
+        var curS = Math.ceil(arenaTimeLeft/1000);
+        if (curS !== arenaSecShown){ arenaSecShown = curS; updateGoalChip(); }
+        if (arenaTimeLeft < 36000 && shrinkBorder < 1){
+          shrinkBorder = 1; banner('میدان بازی کوچک‌تر شد!', 1600); addShake(4);
+        } else if (arenaTimeLeft < 18000 && shrinkBorder < 2){
+          shrinkBorder = 2; banner('هشدار! دیوارها نزدیک شدند!', 1600); addShake(5);
+        }
+        if (arenaTimeLeft <= 0){
+          winGame();
+        }
+      }
+
       if (comboTimer > 0){
         comboTimer -= dt;
         if (comboTimer <= 0){ comboTimer = 0; combo = 0; updateComboBadge(); }
       }
-      if (world === 'out') randomSpawnOut(dt);
+      if (world === 'out'){ randomSpawnOut(dt); updateEnvEvents(dt); }
       else if (world === 'belly') randomSpawnBelly(dt);
       else if (world === 'boss'){ randomSpawnBoss(dt); updateBoss(dt); }
     }
@@ -3403,13 +4854,20 @@ function loop(t){
 
 function hideAll(){ document.querySelectorAll('.overlay').forEach(function(o){o.classList.remove('show');}); }
 function showMenu(){
+  isReplay = false; isCustomRun = false;
   state = 'menu';
   hideAll();
+  $('#draftModal').classList.remove('show');
   $('#game-screen').classList.remove('active');
   $('#menu-screen').classList.add('active');
   renderAllMenu();
 }
-function startGame(){
+function startGame(opts){
+  opts = (opts && !opts.target) ? opts : {};
+  isReplay = !!opts.replay;
+  isCustomRun = !!opts.custom;
+  replayTrace = opts.trace || null;
+
   $('#menu-screen').classList.remove('active');
   $('#game-screen').classList.add('active');
   resize();
@@ -3419,7 +4877,15 @@ function startGame(){
   $('#hBest').textContent = faNum(save.best);
   hideAll();
   state = 'playing';
-  banner('مرحله ۱ — '+faNum(LEVELS[1].goal)+' سیب بخور تا اژدها بیدار شود!', 2400);
+  if (isReplay){
+    banner('بازپخش حرکت مار فعال است...', 2000);
+  } else if (mode === 'adventure'){
+    banner('مرحله ۱ — '+faNum(LEVELS[1].goal)+' سیب بخور تا اژدها بیدار شود!', 2400);
+  } else if (mode === 'arena60'){
+    banner('۶۰ ثانیه دوام بیاور و سیب‌ها را بدزد!', 2400);
+  } else if (mode === 'dailyseed'){
+    banner('چالش بذر روزانه '+faNum(todayKey())+' آغاز شد!', 2400);
+  }
   sfx.start();
 }
 function togglePause(){
@@ -3427,14 +4893,86 @@ function togglePause(){
   else if (state==='paused'){ state='playing'; lastT=performance.now(); hideAll(); sfx.click(); }
 }
 
- $('#btnBattle').onclick = startGame;
- $('#btnRetry').onclick = startGame;
- $('#btnAgain').onclick = startGame;
+ $('#btnBattle').onclick = function(){ startGame({}); };
+ $('#btnRetry').onclick = function(){ startGame({ custom: isCustomRun }); };
+ $('#btnAgain').onclick = function(){ startGame({ custom: isCustomRun }); };
  $('#btnBackMenuOver').onclick = showMenu;
  $('#btnBackMenuWin').onclick = showMenu;
  $('#btnQuitMenu').onclick = showMenu;
  $('#btnResume').onclick = togglePause;
  $('#btnPause').onclick = togglePause;
+ $('#btnSkill').onclick = triggerSkill;
+ $('#btnRewind').onclick = triggerRewind;
+
+ $('#btnToggleGhost').onclick = function(){
+  save.ghostEnabled = !save.ghostEnabled;
+  sfx.click(); persist(); renderModes();
+};
+ $('#btnWatchReplay').onclick = function(){
+  if (!save.bestGhost || !save.bestGhost.length){
+    showToast('ابتدا یک بازی انجام بده تا رکورد ضبط شود!'); return;
+  }
+  startGame({ replay:true, trace:save.bestGhost });
+};
+ $('#btnReplayLast').onclick = function(){
+  var tr = (lastRunTrace && lastRunTrace.length > 5) ? lastRunTrace : save.bestGhost;
+  if (!tr || !tr.length){ showToast('داده بازپخش موجود نیست!'); return; }
+  startGame({ replay:true, trace:tr });
+};
+
+/* ═══ سازنده نقشه پیکسلی ═══ */
+var editorTool = 'w', edPainting = false;
+function ensureCustomMap(){
+  if (!Array.isArray(save.customMap) || save.customMap.length !== COLS*ROWS){
+    save.customMap = new Array(COLS*ROWS).fill('');
+  }
+}
+function renderEditorGrid(){
+  ensureCustomMap();
+  var html = '';
+  for (var i=0; i<COLS*ROWS; i++){
+    var v = save.customMap[i] || '';
+    html += '<div class="ed-cell '+v+'" data-ed="'+i+'"></div>';
+  }
+  $('#editorGrid').innerHTML = html;
+  document.querySelectorAll('[data-ed]').forEach(function(cellEl){
+    var apply = function(){
+      var idx = Number(cellEl.dataset.ed);
+      var x = idx % COLS, y = Math.floor(idx / COLS);
+      if (Math.abs(x-3)<=2 && y===9) return;
+      save.customMap[idx] = (editorTool==='e') ? '' : editorTool;
+      cellEl.className = 'ed-cell ' + save.customMap[idx];
+    };
+    cellEl.addEventListener('pointerdown', function(e){ e.preventDefault(); edPainting=true; apply(); });
+    cellEl.addEventListener('pointerenter', function(){ if (edPainting) apply(); });
+  });
+}
+window.addEventListener('pointerup', function(){ edPainting = false; });
+ $('#btnOpenEditor').onclick = function(){
+  sfx.click();
+  renderEditorGrid();
+  $('#editorModal').classList.add('show');
+};
+document.querySelectorAll('#editorTools [data-tool]').forEach(function(b){
+  b.onclick = function(){
+    editorTool = b.dataset.tool;
+    document.querySelectorAll('#editorTools [data-tool]').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    sfx.click();
+  };
+});
+ $('#btnClearEditor').onclick = function(){
+  save.customMap = new Array(COLS*ROWS).fill('');
+  sfx.click(); renderEditorGrid();
+};
+ $('#btnCloseEditor').onclick = function(){
+  persist(); $('#editorModal').classList.remove('show'); sfx.click();
+};
+ $('#btnPlayCustom').onclick = function(){
+  persist(); $('#editorModal').classList.remove('show');
+  startGame({ custom:true });
+};
+
 function toggleSound(){
   soundOn = !soundOn;
   save.soundOn = soundOn;
@@ -3474,6 +5012,8 @@ document.querySelectorAll('.dpad-btn').forEach(function(btn){
 window.addEventListener('keydown', function(e){
   var m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
   if (m[e.key]){ e.preventDefault(); queueDir(m[e.key]); }
+  else if (e.key === ' '){ e.preventDefault(); triggerSkill(); }
+  else if (e.key === 'r' || e.key === 'R'){ triggerRewind(); }
 });
 document.addEventListener('visibilitychange', function(){
   if (document.hidden && state==='playing'){ state='paused'; $('#ovPause').classList.add('show'); }
@@ -3487,6 +5027,13 @@ window.handleAndroidBack = function(){
   if ($('#chestModal').classList.contains('show')){
     $('#chestModal').classList.remove('show');
     renderAllMenu();
+    return 'handled';
+  }
+  if ($('#editorModal').classList.contains('show')){
+    persist(); $('#editorModal').classList.remove('show');
+    return 'handled';
+  }
+  if ($('#draftModal').classList.contains('show')){
     return 'handled';
   }
   if (state === 'playing'){
