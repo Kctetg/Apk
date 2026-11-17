@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>SNAKE: PIXEL RUSH</title>
+<style>
+  :root{
+    --bg:#0b1117; --surface:#121b24; --card:#17222e; --border:#273748;
+    --emerald:#46f88f; --gold:#ffd43b; --cyan:#38bdf8; --crimson:#ff4757; --purple:#a855f7;
+    --text:#eef4f8; --muted:#94a3b8;
+    --scale:1;
+  }
+  html[data-uisize="sm"]{ --scale:0.92; }
+  html[data-uisize="lg"]{ --scale:1.08; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:Tahoma,system-ui,-apple-system,sans-serif;overflow:hidden;touch-action:none;font-size:calc(14px * var(--scale))}
+  .px-img{image-rendering:pixelated;display:inline-block;vertical-align:middle;flex-shrink:0}
+  .screen{position:fixed;inset:0;display:none;flex-direction:column;background:var(--bg)}
+  .screen.active{display:flex}
+
+  /* نوار بالا */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;background:#0e161f;border-bottom:2px solid var(--border)}
+  .lv-wrap{display:flex;align-items:center;gap:6px}
+  .lv-badge{background:var(--cyan);color:#06121f;font-weight:900;padding:3px 7px;border-radius:6px;font-size:12px}
+  .xp-track{width:54px;height:7px;background:#1e293b;border-radius:4px;overflow:hidden}
+  .xp-fill{height:100%;background:var(--emerald);width:0%;transition:width .25s}
+  .currencies{display:flex;align-items:center;gap:6px}
+  .cur-pill{display:flex;align-items:center;gap:4px;background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:3px 7px;font-weight:bold;font-size:12px}
+  .top-btns{display:flex;align-items:center;gap:4px}
+  .icon-btn{background:var(--card);border:1.5px solid var(--border);border-radius:8px;min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+
+  /* محتوای تب‌ها */
+  .menu-body{flex:1;overflow-y:auto;padding:10px 12px 14px;display:flex;flex-direction:column;gap:10px}
+  .tab-page{display:none;flex-direction:column;gap:10px}
+  .tab-page.active{display:flex}
+
+  /* کارت قهرمان خانه */
+  .hero-box{background:linear-gradient(160deg,#111d28,#0b131b);border:2px solid var(--border);border-radius:14px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .brand-title{font-size:16px;font-weight:900;letter-spacing:.8px;color:var(--emerald)}
+  .brand-sub{font-size:11px;color:var(--muted)}
+  #previewCanvas{border:2px solid #1f3342;border-radius:10px;background:#091512;image-rendering:pixelated;width:140px;height:96px}
+  .world-pill{font-size:12px;color:var(--text);display:flex;align-items:center;gap:5px}
+  .record-line{font-size:11px;color:var(--gold)}
+
+  /* انتخاب ۵ حالت */
+  .mode-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .mode-pill{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:7px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:bold;cursor:pointer;color:var(--muted)}
+  .mode-pill.active{border-color:var(--emerald);background:#122920;color:var(--emerald)}
+  .mode-opts{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;text-align:center}
+  .mode-hint{font-size:11px;color:var(--muted)}
+  .opt-row{display:flex;justify-content:center;gap:6px;margin-top:6px}
+
+  .cta-row{display:flex;gap:8px;align-items:stretch}
+  .play-btn{flex:1;background:linear-gradient(180deg,#46f88f,#16a34a);border:2px solid #052e16;border-radius:12px;color:#052e16;font-weight:900;font-size:16px;padding:12px;cursor:pointer;box-shadow:0 4px 0 #14532d}
+  .play-btn:active{transform:translateY(2px)}
+  .replay-btn{background:var(--card);border:2px solid var(--cyan);color:var(--cyan);border-radius:12px;padding:0 12px;font-weight:bold;font-size:12px;display:none;align-items:center;cursor:pointer}
+
+  /* تک‌جایگاه صندوق */
+  .chest-card{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--border);border-radius:12px;padding:9px 11px;cursor:pointer}
+  .chest-card.empty{opacity:.75;cursor:default}
+  .chest-card.ready{border-color:var(--gold);background:#261f0b}
+  .chest-meta{flex:1;display:flex;flex-direction:column;gap:2px;font-size:12px}
+  .chest-meta span{font-size:11px;color:var(--muted)}
+  .chest-cta{background:var(--cyan);color:#06121f;font-weight:bold;font-size:11px;padding:5px 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px}
+  .chest-cta.gold{background:var(--gold);color:#2b1603}
+  .chest-cta.crystal{background:var(--purple);color:#fff}
+
+  /* کارت‌های جهان، تکامل، مجموعه و مأموریت */
+  .world-card,.evo-card,.item-card,.mis-card,.skill-row{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px}
+  .world-card{display:flex;flex-direction:column;gap:7px}
+  .world-card.active{background:#12232c}
+  .wc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .wc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .wc-boss{font-size:10px;background:#2b1117;color:#fda4af;padding:3px 7px;border-radius:6px;white-space:nowrap}
+  .wc-rules{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#cbd5e1}
+  .wc-badges{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .mbadge{font-size:10px;background:#0f172a;border:1px solid var(--border);padding:2px 6px;border-radius:6px;color:var(--muted);display:inline-flex;align-items:center;gap:3px}
+  .mbadge.on{border-color:var(--gold);color:var(--gold);background:#251c08}
+  .wc-best{margin-right:auto;font-size:11px;color:var(--emerald);font-weight:bold}
+  .wc-actions{display:flex;gap:6px}
+
+  .evo-banner{background:#161e2e;border:1.5px solid var(--cyan);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+  .fus-row{display:flex;align-items:center;justify-content:center;gap:10px}
+  .fus-slot{display:flex;align-items:center;gap:5px;background:var(--card);padding:5px 9px;border-radius:8px;font-size:12px;font-weight:bold}
+  .fus-plus{color:var(--gold);font-weight:900}
+  .fus-res{text-align:center;font-size:11px;display:flex;flex-direction:column;gap:2px}
+  .fus-res b{color:var(--gold);font-size:12px}
+
+  .evo-card,.item-card,.mis-card,.skill-row{display:flex;align-items:center;gap:10px}
+  .evo-card.active,.item-card.eq,.mis-card.eq{border-color:var(--emerald);background:#12251d}
+  .evo-card.locked{opacity:.62}
+  .evo-info,.ic-info,.mis-meta{flex:1;display:flex;flex-direction:column;gap:2px;font-size:12px}
+  .evo-info span,.ic-info span,.mis-meta span,.skill-row span{font-size:11px;color:var(--muted);display:block}
+  .req-tag{font-size:10px;color:var(--gold)}
+  .req-tag.ok{color:var(--emerald)}
+  .swatch{width:26px;height:26px;border-radius:7px;border:2px solid #09120e;flex-shrink:0}
+  .ach-rew{font-size:11px;color:var(--purple);font-weight:bold}
+
+  .sub-tabs{display:flex;gap:6px}
+  .sub-pill,.mini-pill-btn{background:var(--card);border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:bold;cursor:pointer}
+  .sub-pill.on,.mini-pill-btn.on{border-color:var(--cyan);color:var(--cyan);background:#0f2433}
+  .sec-hdr{font-size:12px;font-weight:bold;color:var(--gold);margin-top:4px}
+
+  .btn-sm{background:var(--card);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap}
+  .btn-sm.on{background:var(--emerald);border-color:#052e16;color:#052e16}
+  .btn-sm.chall{border-color:var(--gold);color:var(--gold)}
+  .btn-sm.chall.done{border-color:var(--emerald);color:var(--emerald)}
+  .btn-sm:disabled{opacity:.45;cursor:default}
+
+  /* ناوبری ۵ تبه پایین */
+  .bottom-nav{display:grid;grid-template-columns:repeat(5,1fr);background:#0d141c;border-top:2px solid var(--border);padding:4px 4px env(safe-area-inset-bottom)}
+  .nav-tab{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:10px;font-weight:bold;cursor:pointer;min-height:48px}
+  .nav-tab.active{color:var(--emerald)}
+
+  /* صفحه بازی */
+  .hud{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;background:#0e161f;border-bottom:2px solid var(--border)}
+  .hud-block{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:bold}
+  .stage-badge{background:var(--card);border:1.5px solid var(--cyan);color:var(--cyan);padding:3px 8px;border-radius:8px;font-size:11px;cursor:pointer}
+  .energy-bar-wrap{width:50px;height:7px;background:#1e293b;border-radius:4px;overflow:hidden}
+  .energy-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--emerald));width:0%}
+  #stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden}
+  #stage{position:relative;border:2px solid var(--border);border-radius:10px;overflow:hidden;background:#09110e}
+  canvas#game{display:block}
+
+  /* نوار کنترل پایین بازی */
+  .controls-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 10px;background:#0c131b;border-top:2px solid var(--border);gap:8px}
+  .action-col{display:flex;flex-direction:column;gap:5px}
+  .act-btn{display:flex;align-items:center;justify-content:center;gap:4px;background:var(--card);border:2px solid var(--border);color:var(--text);border-radius:10px;padding:5px 8px;font-size:11px;font-weight:bold;min-width:74px;min-height:38px;cursor:pointer}
+  .act-btn.ready{border-color:var(--emerald);color:var(--emerald)}
+  .act-btn.cyan.ready{border-color:var(--cyan);color:var(--cyan)}
+  .act-btn.gold.ready{border-color:var(--gold);color:var(--gold)}
+  .act-btn:disabled{opacity:.48}
+  #controls{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,42px);gap:4px;direction:ltr}
+  .dpad-btn{background:var(--card);border:2px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--text);cursor:pointer;font-size:15px}
+  .dpad-btn:active{background:var(--emerald);color:#052e16}
+  .dp-up{grid-column:2;grid-row:1}.dp-left{grid-column:1;grid-row:2}.dp-down{grid-column:2;grid-row:2}.dp-right{grid-column:3;grid-row:2}
+
+  /* اورلی و مودال‌ها */
+  .overlay{position:absolute;inset:0;background:rgba(7,12,17,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;text-align:center;z-index:10}
+  .overlay.show{display:flex}
+  .ov-title{font-size:22px;font-weight:900;color:var(--crimson)}
+  .ov-stats{display:flex;gap:14px}
+  .ov-stat{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:2px}
+  .ov-stat span{font-size:10px;color:var(--muted)}
+  .btn{background:var(--emerald);color:#052e16;border:none;border-radius:10px;padding:10px 20px;font-weight:900;font-size:14px;cursor:pointer;min-height:44px}
+  .btn.sec{background:var(--card);color:var(--text);border:1.5px solid var(--border)}
+  .btn.gold{background:var(--gold);color:#2b1603}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(4,8,12,.84);display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
+  .modal-backdrop.show{display:flex}
+  .modal-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:14px;width:100%;max-width:360px;max-height:86vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;text-align:center}
+  .loot-list{display:flex;flex-direction:column;gap:6px}
+  .loot-row{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card);padding:7px;border-radius:8px;font-weight:bold}
+  .draft-grid{display:flex;flex-direction:column;gap:8px}
+  .draft-card{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:2px solid var(--emerald);border-radius:12px;padding:10px;cursor:pointer}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);padding:8px 10px;border-radius:10px;font-size:12px}
+  .set-row textarea{background:#091117;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;font-size:10px;direction:ltr}
+  .cr-toast{position:fixed;top:58px;left:50%;transform:translateX(-50%) translateY(-10px);background:#12251d;border:1.5px solid var(--emerald);color:var(--emerald);padding:7px 14px;border-radius:10px;font-size:12px;font-weight:bold;opacity:0;pointer-events:none;transition:all .2s;z-index:80}
+  .cr-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="screen active" id="menuScreen">
+  <header class="topbar">
+    <div class="lv-wrap">
+      <span class="lv-badge">LV <b id="tbLevel">۱</b></span>
+      <div class="xp-track"><div class="xp-fill" id="tbXpBar"></div></div>
+    </div>
+    <div class="currencies">
+      <div class="cur-pill"><span id="tbCoinIco"></span><b id="tbGold">۰</b></div>
+      <div class="cur-pill"><span id="tbCryIco"></span><b id="tbCrystals">۰</b></div>
+    </div>
+    <div class="top-btns">
+      <button class="icon-btn" id="btnMute" aria-label="صدا"></button>
+      <button class="icon-btn" id="btnGuide" aria-label="راهنما"></button>
+      <button class="icon-btn" id="btnSettings" aria-label="تنظیمات"></button>
+    </div>
+  </header>
+
+  <main class="menu-body">
+    <!-- تب ۱: بازی -->
+    <section class="tab-page active" id="tabPlay">
+      <div class="hero-box">
+        <div class="brand-title">SNAKE: PIXEL RUSH</div>
+        <div class="brand-sub">یک مار، هزاران مسیر، رکوردهای بی‌پایان</div>
+        <canvas id="previewCanvas" width="140" height="96"></canvas>
+        <div class="world-pill" id="homeWorldTitle"></div>
+        <div class="record-line" id="homeRecordTxt"></div>
+      </div>
+
+      <div class="mode-grid" id="homeModeGrid"></div>
+      <div class="mode-opts" id="homeModeOpts"></div>
+
+      <div class="cta-row">
+        <button class="play-btn" id="btnQuickPlay">شروع فوری بازی</button>
+        <button class="replay-btn" id="btnLastReplay">بازپخش</button>
+      </div>
+
+      <div class="chest-card" id="singleChestSlot"></div>
+    </section>
+
+    <!-- تب ۲: جهان‌ها -->
+    <section class="tab-page" id="tabWorlds">
+      <div id="worldsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </section>
+
+    <!-- تب ۳: تکامل -->
+    <section class="tab-page" id="tabEvo">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b style="font-size:13px;color:var(--cyan);">ژن‌ها و ترکیب ۲تایی</b>
+        <span class="lv-badge" id="evoPointsBadge">امتیاز تکامل: ۰</span>
+      </div>
+      <div class="evo-banner" id="activeFusionBox"></div>
+      <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div class="sec-hdr">مهارت‌های پایه</div>
+      <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+    </section>
+
+    <!-- تب ۴: مجموعه -->
+    <section class="tab-page" id="tabCollection">
+      <div class="sub-tabs" id="colSubTabs">
+        <button class="sub-pill on" data-sub="skins">اسکین‌ها</button>
+        <button class="sub-pill" data-sub="acc">اکسسوری</button>
+        <button class="sub-pill" data-sub="bestiary">آلبوم</button>
+        <button class="sub-pill" data-sub="ach">دستاوردها</button>
+      </div>
+      <div id="colContent" style="display:flex;flex-direction:column;gap:7px;"></div>
+    </section>
+
+    <!-- تب ۵: مأموریت‌ها -->
+    <section class="tab-page" id="tabMissions">
+      <div class="sub-tabs" id="misSubTabs">
+        <button class="sub-pill on" data-sub="missions">مأموریت‌ها</button>
+        <button class="sub-pill" data-sub="daily">جایزه روزانه</button>
+        <button class="sub-pill" data-sub="shop">فروشگاه</button>
+      </div>
+      <div id="misContent" style="display:flex;flex-direction:column;gap:7px;"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-tab active" data-tab="tabPlay"><span id="navIcoPlay"></span><span>بازی</span></button>
+    <button class="nav-tab" data-tab="tabWorlds"><span id="navIcoWorlds"></span><span>جهان‌ها</span></button>
+    <button class="nav-tab" data-tab="tabEvo"><span id="navIcoEvo"></span><span>تکامل</span></button>
+    <button class="nav-tab" data-tab="tabCollection"><span id="navIcoCol"></span><span>مجموعه</span></button>
+    <button class="nav-tab" data-tab="tabMissions"><span id="navIcoMis"></span><span>مأموریت‌ها</span></button>
+  </nav>
+</div>
+
+<div class="screen" id="gameScreen">
+  <header class="hud">
+    <div class="hud-block">
+      <div id="hudHearts" style="display:flex;gap:3px;"></div>
+      <span class="stage-badge" id="hudStageBadge">رکوردزنی</span>
+    </div>
+    <div class="hud-block">
+      <span id="icoHudCombo"></span><b id="hudCombo">×۱</b>
+      <div class="energy-bar-wrap"><div class="energy-bar" id="hudEnergyBar"></div></div>
+      <b id="hudScore" style="color:var(--gold);min-width:26px;text-align:left;">۰</b>
+      <button class="icon-btn" id="btnPause" aria-label="توقف"></button>
+    </div>
+  </header>
+
+  <main id="stage-wrap">
+    <div id="stage">
+      <canvas id="game"></canvas>
+
+      <div class="overlay" id="ovOver">
+        <div class="ov-title">پایان نبرد!</div>
+        <div class="ov-stats">
+          <div class="ov-stat"><b id="ovS">۰</b><span>امتیاز</span></div>
+          <div class="ov-stat"><b id="ovB" style="color:var(--gold)">۰</b><span>بهترین رکورد</span></div>
+          <div class="ov-stat"><b id="ovOverGold" style="color:var(--gold)">+۰</b><span>سکه</span></div>
+          <div class="ov-stat"><b id="ovOverCrystals" style="color:var(--purple)">+۰</b><span>کریستال</span></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="btnRetry">تلاش دوباره</button>
+          <button class="btn sec" id="btnReplayLast">بازپخش</button>
+        </div>
+        <button class="btn sec" id="btnBackMenuOver">بازگشت به منو</button>
+      </div>
+
+      <div class="overlay" id="ovWin">
+        <div class="ov-title" style="color:var(--gold)">پیروزی باشکوه!</div>
+        <div class="ov-stats">
+          <div class="ov-stat"><b id="ovWS">۰</b><span>امتیاز نهایی</span></div>
+          <div class="ov-stat"><b id="ovWinGold" style="color:var(--gold)">+۰</b><span>سکه</span></div>
+          <div class="ov-stat"><b id="ovWinCrystals" style="color:var(--purple)">+۰</b><span>کریستال</span></div>
+        </div>
+        <div id="ovWinChestNotice" style="font-size:12px;color:var(--gold);font-weight:bold;"></div>
+        <button class="btn gold" id="btnAgain">بازی مجدد</button>
+        <button class="btn sec" id="btnBackMenuWin">بازگشت به منو</button>
+      </div>
+
+      <div class="overlay" id="ovPause">
+        <div class="ov-title" style="color:var(--emerald)">متوقف شد</div>
+        <button class="btn" id="btnResume">ادامه</button>
+        <button class="btn sec" id="btnQuitMenu">خروج به منو</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="controls-bar">
+    <div class="action-col">
+      <button class="act-btn cyan" id="btnDash"><span id="icoDashBtn"></span><span id="txtDashBtn">دش</span></button>
+      <div style="display:flex;gap:5px;">
+        <button class="act-btn" id="btnSkill"><span id="icoSkillBtn"></span><span id="txtSkillBtn">مهارت</span></button>
+        <button class="act-btn gold" id="btnRewind"><span id="icoRewindBtn"></span><span id="txtRewindBtn">زمان</span></button>
+      </div>
+    </div>
+    <nav id="controls">
+      <div class="dpad-btn dp-up" data-dir="up">▲</div>
+      <div class="dpad-btn dp-left" data-dir="left">◀</div>
+      <div class="dpad-btn dp-down" data-dir="down">▼</div>
+      <div class="dpad-btn dp-right" data-dir="right">▶</div>
+    </nav>
+  </footer>
+</div>
+
+<div class="cr-toast" id="crToast"></div>
+
+<div class="modal-backdrop" id="chestModal">
+  <div class="modal-card">
+    <div id="modalChestArt"></div>
+    <b id="modalChestTitle" style="color:var(--gold);font-size:16px;">صندوق باز شد!</b>
+    <div class="loot-list" id="modalLootList"></div>
+    <button class="btn gold" id="btnCloseChestModal">جمع‌آوری</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="draftModal">
+  <div class="modal-card" style="border-color:var(--emerald);">
+    <b style="color:var(--emerald);font-size:15px;">تکامل سیاهچال — ۱ قدرت انتخاب کن!</b>
+    <div class="draft-grid" id="draftOptions"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal-card">
+    <b style="font-size:16px;color:var(--cyan);">تنظیمات و پشتیبان‌گیری</b>
+    <div id="settingsBody" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <button class="btn sec" id="btnCloseSettings">بستن</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="guideModal">
+  <div class="modal-card">
+    <b style="font-size:16px;color:var(--emerald);">راهنمای SNAKE: PIXEL RUSH</b>
+    <div style="font-size:12px;text-align:right;line-height:1.7;color:#cbd5e1;" id="guideBody">
+      <b>۱. حرکت و دش:</b> با کشیدن انگشت روی صفحه یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> سرعتت را لحظه‌ای زیاد می‌کند و بلوک‌های ترک‌خورده را می‌شکند!<br>
+      <b>۲. نوار انرژی و ژن‌ها:</b> با حرکت و خوردن سیب نوار انرژی پر می‌شود. دکمه <b>مهارت (E)</b> ترکیب ۲ ژن را فعال می‌کند.<br>
+      <b>۳. زنجیره کمبو و فرار میلی‌متری:</b> خوردن سریع غذا کمبو می‌سازد و آیتم‌ها را به سمتت می‌کشد. عبور نزدیک از خطر پاداش اضافه دارد.<br>
+      <b>۴. بازگشت زمان (R):</b> در لحظه خطر مار را به موقعیت آبی‌رنگ قبلی برمی‌گرداند.<br>
+      <b>۵. نسخه کاملاً آفلاین:</b> بدون نیاز به اینترنت و همراه با پشتیبان‌گیری دستی کد ذخیره.
+    </div>
+    <button class="btn" id="btnCloseGuide">فهمیدم!</button>
+  </div>
+</div>
+
+<!-- MODULES_BUNDLE -->
+</body>
+</html>
