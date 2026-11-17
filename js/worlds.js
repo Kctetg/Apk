@@ -8,6 +8,8 @@ var WORLDS_ORDER = ['forest', 'lava', 'ice', 'shadow', 'desert', 'digital'];
 var WORLDS = {
   forest: {
     id: 'forest',
+    arenaNum: 1,
+    lvRange: 'سطح ۱ تا ۴',
     name: 'جنگل سبز',
     subtitle: 'آغاز ماجراجویی با موانع سنگی و میوه‌های نئونی',
     bg: '#0c1f17',
@@ -25,6 +27,8 @@ var WORLDS = {
   },
   lava: {
     id: 'lava',
+    arenaNum: 2,
+    lvRange: 'سطح ۵ تا ۸',
     name: 'غار مذاب',
     subtitle: 'کاشی‌های گداخته و شهاب‌سنگ‌های آتشین',
     bg: '#230c0a',
@@ -42,6 +46,8 @@ var WORLDS = {
   },
   ice: {
     id: 'ice',
+    arenaNum: 3,
+    lvRange: 'سطح ۹ تا ۱۲',
     name: 'قلمرو یخ',
     subtitle: 'مسیرهای لغزنده پرسرعت و پل‌های شکننده',
     bg: '#091b2c',
@@ -59,8 +65,10 @@ var WORLDS = {
   },
   shadow: {
     id: 'shadow',
+    arenaNum: 4,
+    lvRange: 'سطح ۱۳ تا ۱۶',
     name: 'جهان سایه',
-    subtitle: 'دید محدود با نور مار و همزاد تاریکی',
+    subtitle: 'مه تاریک هزارتو با نور مار و همزاد سایه',
     bg: '#110a21',
     bg2: '#170f2e',
     wall: '#4c2882',
@@ -69,13 +77,15 @@ var WORLDS = {
     bossKey: 3,
     bossName: 'اژدهای برقی سایه',
     speedMult: 0.90,
-    hazards: ['سایه تاریک محدودکننده دید', 'مار همزاد تعقیب‌گر'],
+    hazards: ['مه هزارتو و دید محدود', 'مار همزاد تعقیب‌گر'],
     specialItem: 'روح عبور از دیوار',
     eventDesc: 'کسوف سایه: تاریکی کوتاه با امتیاز دو برابر',
     challenge: { title: 'چالش سایه: ۷۰۰ امتیاز در تاریکی', targetScore: 700, minCombo: 5, rewardGold: 100, rewardCrystals: 5 }
   },
   desert: {
     id: 'desert',
+    arenaNum: 5,
+    lvRange: 'سطح ۱۷ تا ۲۰',
     name: 'بیابان طلایی',
     subtitle: 'شن‌های روان کُندکننده و توفان شن دوره‌ای',
     bg: '#241a08',
@@ -93,7 +103,9 @@ var WORLDS = {
   },
   digital: {
     id: 'digital',
-    name: 'جهان دیجیتال',
+    arenaNum: 6,
+    lvRange: 'سطح ۲۱ به بالا',
+    name: 'دژ دیجیتال',
     subtitle: 'پورتال‌های انتقال دوقلو و بلوک‌های تخریب‌پذیر',
     bg: '#07141f',
     bg2: '#0b1d2c',
@@ -154,6 +166,8 @@ function generateWorldLayout(worldId, stageNum, rand){
   var layout = {
     walls: [],
     dWalls: [],
+    secretWalls: [],
+    switches: [],
     hotTiles: [],
     iceTiles: [],
     sandTiles: [],
@@ -256,8 +270,26 @@ function generateWorldLayout(worldId, stageNum, rand){
     }
   }
 
+  /* دیوارهای مخفی شکننده با دش (شبیه دیوار عادی ولی دارای درخشش خفیف) */
+  for (var swi=0; swi<10 && layout.secretWalls.length<2; swi++){
+    var swx = 2 + Math.floor(rand() * (COLS - 4));
+    var swy = 2 + Math.floor(rand() * (ROWS - 4));
+    if (!canPlace(swx, swy)) continue;
+    used[keyOf(swx, swy)] = true;
+    layout.secretWalls.push({ x:swx, y:swy, reward: swi === 0 ? 'crystal' : 'map_piece' });
+  }
+
+  /* معمای محیطی کلیدهای زمینی به ترتیب (۱ -> ۲) برای پاداش گنج */
+  for (var pzi=0; pzi<20 && layout.switches.length<2; pzi++){
+    var pzx = 2 + Math.floor(rand() * (COLS - 4));
+    var pzy = 2 + Math.floor(rand() * (ROWS - 4));
+    if (!canPlace(pzx, pzy)) continue;
+    used[keyOf(pzx, pzy)] = true;
+    layout.switches.push({ x:pzx, y:pzy, order:layout.switches.length + 1, active:false });
+  }
+
   layout.secretEntrance = null;
-  if (rand() < 0.65){
+  if (rand() < 0.7){
     for (var sei=0; sei<40; sei++){
       var sx2 = 2 + Math.floor(rand() * (COLS - 4));
       var sy2 = 2 + Math.floor(rand() * (ROWS - 4));
@@ -272,11 +304,11 @@ function generateWorldLayout(worldId, stageNum, rand){
   return layout;
 }
 
-/* تولید ۳ نوع اتاق مخفی (گنج، نگهبان، خزانه ۱۵ ثانیه‌ای) */
+/* تولید ۶ نوع اتاق مخفی (گنج، نگهبان، خزانه ۱۵ث، محراب رلیک، فروشگاه، باس مخفی) */
 function generateSecretRoom(rand){
   rand = rand || Math.random;
-  var roll = rand();
-  var kind = roll < 0.36 ? 'treasure' : (roll < 0.7 ? 'guardian' : 'vault');
+  var kinds = ['treasure', 'guardian', 'vault', 'shrine', 'merchant', 'secret_boss'];
+  var kind = kinds[Math.min(kinds.length - 1, Math.floor(rand() * kinds.length))];
   var sr = {
     kind: kind,
     walls: [],
@@ -284,7 +316,8 @@ function generateSecretRoom(rand){
     items: [],
     exit: { x: 16, y: 9 },
     timerMs: kind === 'vault' ? 15000 : 0,
-    enemy: kind === 'guardian' ? { type:'guardian', x:14, y:5 } : null
+    enemy: kind === 'guardian' ? { type:'guardian', x:14, y:5 } : null,
+    bossKey: kind === 'secret_boss' ? 3 : 0
   };
 
   for (var x=3; x<=15; x++){
@@ -298,13 +331,13 @@ function generateSecretRoom(rand){
     sr.items.push({x:8, y:7, type:'gold'});
     sr.items.push({x:10, y:7, type:'gold'});
     sr.items.push({x:9, y:11, type:'crystal'});
-    sr.items.push({x:12, y:9, type:'gold'});
+    sr.items.push({x:12, y:9, type:'map_piece'});
   } else if (kind === 'guardian'){
     sr.items.push({x:11, y:9, type:'relic_orb'});
     sr.items.push({x:10, y:6, type:'crystal'});
     sr.items.push({x:10, y:12, type:'gold'});
     sr.items.push({x:7, y:9, type:'apple'});
-  } else {
+  } else if (kind === 'vault'){
     sr.dWalls.push({x:8, y:9, hp:1, maxHp:1});
     sr.dWalls.push({x:11, y:7, hp:1, maxHp:1});
     sr.dWalls.push({x:11, y:11, hp:1, maxHp:1});
@@ -313,6 +346,18 @@ function generateSecretRoom(rand){
     sr.items.push({x:12, y:12, type:'gold'});
     sr.items.push({x:13, y:9, type:'crystal'});
     sr.items.push({x:9, y:5, type:'relic_orb'});
+  } else if (kind === 'shrine'){
+    sr.items.push({x:9, y:9, type:'relic_orb'});
+    sr.items.push({x:11, y:7, type:'heart'});
+    sr.items.push({x:11, y:11, type:'map_piece'});
+  } else if (kind === 'merchant'){
+    sr.items.push({x:9, y:7, type:'shop_heart'});
+    sr.items.push({x:11, y:9, type:'shop_shield'});
+    sr.items.push({x:9, y:11, type:'shop_relic'});
+  } else {
+    sr.items.push({x:7, y:7, type:'fireball'});
+    sr.items.push({x:7, y:11, type:'superfire'});
+    sr.items.push({x:10, y:9, type:'crystal'});
   }
   return sr;
 }

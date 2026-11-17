@@ -87,6 +87,14 @@ function defaultSave(){
     bestTraces: {},
     rivalGhostEnabled: true,
     activeEvoForm: 'basic',
+    deck: ['fire_dash', 'ice_trap', 'magnet_storm'],
+    ownedCards: ['fire_dash', 'ice_trap', 'magnet_storm'],
+    cardLevels: { fire_dash: 1, ice_trap: 1, magnet_storm: 1 },
+    mapPieces: 0,
+    arenaTrophies: 0,
+    fogEnabled: false,
+    chestMeter: 0,
+    pendingRun: null,
     levelRushIdx: 0,
     dailySeedKey: '',
     dailySeedBest: 0,
@@ -158,6 +166,13 @@ var save = (function(){
     if (!parsed.bestTraces) parsed.bestTraces = {};
     if (!parsed.activeEvoForm) parsed.activeEvoForm = 'basic';
     if (parsed.rivalGhostEnabled === undefined) parsed.rivalGhostEnabled = true;
+    if (!Array.isArray(parsed.deck) || parsed.deck.length !== 3) parsed.deck = def.deck.slice();
+    if (!Array.isArray(parsed.ownedCards)) parsed.ownedCards = def.ownedCards.slice();
+    if (!parsed.cardLevels) parsed.cardLevels = def.cardLevels;
+    if (parsed.mapPieces === undefined) parsed.mapPieces = 0;
+    if (parsed.arenaTrophies === undefined) parsed.arenaTrophies = 0;
+    if (parsed.fogEnabled === undefined) parsed.fogEnabled = false;
+    if (parsed.chestMeter === undefined) parsed.chestMeter = 0;
     if (!parsed.dailyProgress) parsed.dailyProgress = def.dailyProgress;
     if (!parsed.weeklyProgress) parsed.weeklyProgress = def.weeklyProgress;
     if (parsed.missionDayKey !== todayKey()){

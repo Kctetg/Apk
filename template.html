@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>SNAKE: PIXEL RUSH</title>
+<title>SNAKE: MAZE ROYALE</title>
 <style>
   :root{
     --bg:#0b1117; --surface:#121b24; --card:#17222e; --border:#273748;
@@ -56,6 +56,19 @@
   .play-btn:active{transform:translateY(2px)}
   .replay-btn{background:var(--card);border:2px solid var(--cyan);color:var(--cyan);border-radius:12px;padding:0 12px;font-weight:bold;font-size:12px;display:none;align-items:center;cursor:pointer}
 
+  /* نوار دک ۳تایی و متر صندوق اکتشاف در خانه */
+  .home-deck{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .deck-mini{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;cursor:pointer}
+  .deck-mini b{color:var(--text);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .deck-mini span{color:var(--cyan);font-size:9px;font-weight:bold}
+  .meter-box{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;gap:5px}
+  .meter-head{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+  .meter-track{width:100%;height:7px;background:#1e293b;border-radius:5px;overflow:hidden}
+  .meter-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));width:0%;transition:width .25s}
+  .tier-pill{font-size:10px;font-weight:bold;padding:2px 7px;border-radius:6px;border:1px solid currentColor;background:rgba(15,23,42,.7)}
+  .deck-slot-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#121d2b;border:1.5px solid var(--cyan);border-radius:12px;padding:8px}
+  .deck-slot-pill{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:10px}
+
   /* تک‌جایگاه صندوق */
   .chest-card{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--border);border-radius:12px;padding:9px 11px;cursor:pointer}
   .chest-card.empty{opacity:.75;cursor:default}
@@ -97,7 +110,7 @@
   .swatch{width:26px;height:26px;border-radius:7px;border:2px solid #09120e;flex-shrink:0}
   .ach-rew{font-size:11px;color:var(--purple);font-weight:bold}
 
-  .sub-tabs{display:flex;gap:6px}
+  .sub-tabs{display:flex;gap:5px;flex-wrap:wrap}
   .sub-pill,.mini-pill-btn{background:var(--card);border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:bold;cursor:pointer}
   .sub-pill.on,.mini-pill-btn.on{border-color:var(--cyan);color:var(--cyan);background:#0f2433}
   .sec-hdr{font-size:12px;font-weight:bold;color:var(--gold);margin-top:4px}
@@ -187,12 +200,14 @@
     <!-- تب ۱: بازی -->
     <section class="tab-page active" id="tabPlay">
       <div class="hero-box">
-        <div class="brand-title">SNAKE: PIXEL RUSH</div>
-        <div class="brand-sub">یک مار، هزاران مسیر، رکوردهای بی‌پایان</div>
+        <div class="brand-title">SNAKE: MAZE ROYALE</div>
+        <div class="brand-sub">هزارتوی پیکسلی، کارت‌های تاکتیکی و رقابت با شبح</div>
         <canvas id="previewCanvas" width="140" height="96"></canvas>
         <div class="world-pill" id="homeWorldTitle"></div>
         <div class="record-line" id="homeRecordTxt"></div>
       </div>
+
+      <div class="home-deck" id="homeDeckRow"></div>
 
       <div class="mode-grid" id="homeModeGrid"></div>
       <div class="mode-opts" id="homeModeOpts"></div>
@@ -202,56 +217,77 @@
         <button class="replay-btn" id="btnLastReplay">بازپخش</button>
       </div>
 
+      <div class="meter-box" id="homeChestMeter">
+        <div class="meter-head">
+          <span style="color:var(--cyan);font-weight:bold;">پیشرفت صندوق طلایی اکتشاف</span>
+          <b id="chestMeterPct" style="color:var(--gold);">۰٪</b>
+        </div>
+        <div class="meter-track"><div class="meter-fill" id="chestMeterFill"></div></div>
+      </div>
+
       <div class="chest-card" id="singleChestSlot"></div>
     </section>
 
-    <!-- تب ۲: جهان‌ها -->
+    <!-- تب ۲: آرناها -->
     <section class="tab-page" id="tabWorlds">
       <div id="worldsList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </section>
 
-    <!-- تب ۳: تکامل -->
-    <section class="tab-page" id="tabEvo">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <b style="font-size:13px;color:var(--cyan);">ژن‌ها و ترکیب ۲تایی</b>
-        <span class="lv-badge" id="evoPointsBadge">امتیاز تکامل: ۰</span>
+    <!-- تب ۳: کارت‌ها و ژن‌ها -->
+    <section class="tab-page" id="tabCards">
+      <div class="sub-tabs" id="cardsSubTabs">
+        <button class="sub-pill on" data-sub="deck">دک ۳ کارت تاکتیکی</button>
+        <button class="sub-pill" data-sub="genes">ژن‌ها و مهارت</button>
       </div>
-      <div class="evo-banner" id="activeFusionBox"></div>
-      <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
-      <div class="sec-hdr">فرم ظاهری مار (تکامل بصری)</div>
-      <div id="evoFormsList" class="evo-form-grid"></div>
-      <div class="sec-hdr">مهارت‌های پایه</div>
-      <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div id="cardsDeckPane" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="deck-slot-bar" id="activeDeckBar"></div>
+        <div id="cardsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+      <div id="cardsGenesPane" style="display:none;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b style="font-size:13px;color:var(--cyan);">ژن‌ها و ترکیب ۲تایی</b>
+          <span class="lv-badge" id="evoPointsBadge">امتیاز تکامل: ۰</span>
+        </div>
+        <div class="evo-banner" id="activeFusionBox"></div>
+        <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
+        <div class="sec-hdr">مهارت‌های پایه</div>
+        <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
     </section>
 
-    <!-- تب ۴: مجموعه -->
+    <!-- تب ۴: تکامل ظاهری و شخصی‌سازی -->
+    <section class="tab-page" id="tabEvo">
+      <div class="sub-tabs" id="evoSubTabs">
+        <button class="sub-pill on" data-sub="forms">فرم تکامل</button>
+        <button class="sub-pill" data-sub="skins">اسکین‌ها</button>
+        <button class="sub-pill" data-sub="acc">اکسسوری</button>
+      </div>
+      <div id="evoFormsPane" style="display:flex;flex-direction:column;gap:7px;">
+        <div class="sec-hdr">فرم ظاهری مار (تکامل بصری)</div>
+        <div id="evoFormsList" class="evo-form-grid"></div>
+      </div>
+      <div id="evoCosmeticsPane" style="display:none;flex-direction:column;gap:7px;"></div>
+    </section>
+
+    <!-- تب ۵: گنجینه (مأموریت، روزانه، آلبوم، دستاورد، فروشگاه) -->
     <section class="tab-page" id="tabCollection">
       <div class="sub-tabs" id="colSubTabs">
-        <button class="sub-pill on" data-sub="skins">اسکین‌ها</button>
-        <button class="sub-pill" data-sub="acc">اکسسوری</button>
+        <button class="sub-pill on" data-sub="missions">مأموریت‌ها</button>
+        <button class="sub-pill" data-sub="daily">روزانه</button>
         <button class="sub-pill" data-sub="bestiary">آلبوم</button>
         <button class="sub-pill" data-sub="ach">دستاوردها</button>
-      </div>
-      <div id="colContent" style="display:flex;flex-direction:column;gap:7px;"></div>
-    </section>
-
-    <!-- تب ۵: مأموریت‌ها -->
-    <section class="tab-page" id="tabMissions">
-      <div class="sub-tabs" id="misSubTabs">
-        <button class="sub-pill on" data-sub="missions">مأموریت‌ها</button>
-        <button class="sub-pill" data-sub="daily">جایزه روزانه</button>
         <button class="sub-pill" data-sub="shop">فروشگاه</button>
       </div>
-      <div id="misContent" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div id="colContent" style="display:flex;flex-direction:column;gap:7px;"></div>
     </section>
   </main>
 
   <nav class="bottom-nav">
     <button class="nav-tab active" data-tab="tabPlay"><span id="navIcoPlay"></span><span>بازی</span></button>
-    <button class="nav-tab" data-tab="tabWorlds"><span id="navIcoWorlds"></span><span>جهان‌ها</span></button>
+    <button class="nav-tab" data-tab="tabWorlds"><span id="navIcoWorlds"></span><span>آرناها</span></button>
+    <button class="nav-tab" data-tab="tabCards"><span id="navIcoCards"></span><span>کارت‌ها</span></button>
     <button class="nav-tab" data-tab="tabEvo"><span id="navIcoEvo"></span><span>تکامل</span></button>
-    <button class="nav-tab" data-tab="tabCollection"><span id="navIcoCol"></span><span>مجموعه</span></button>
-    <button class="nav-tab" data-tab="tabMissions"><span id="navIcoMis"></span><span>مأموریت‌ها</span></button>
+    <button class="nav-tab" data-tab="tabCollection"><span id="navIcoCol"></span><span>گنجینه</span></button>
   </nav>
 </div>
 
@@ -355,13 +391,13 @@
 
 <div class="modal-backdrop" id="guideModal">
   <div class="modal-card">
-    <b style="font-size:16px;color:var(--emerald);">راهنمای SNAKE: PIXEL RUSH</b>
+    <b style="font-size:16px;color:var(--emerald);">راهنمای SNAKE: MAZE ROYALE</b>
     <div style="font-size:12px;text-align:right;line-height:1.7;color:#cbd5e1;" id="guideBody">
-      <b>۱. حرکت و دش:</b> با کشیدن انگشت روی صفحه یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> سرعتت را لحظه‌ای زیاد می‌کند و بلوک‌های ترک‌خورده را می‌شکند!<br>
-      <b>۲. نوار انرژی و ژن‌ها:</b> با حرکت و خوردن سیب نوار انرژی پر می‌شود. دکمه <b>مهارت (E)</b> ترکیب ۲ ژن را فعال می‌کند.<br>
-      <b>۳. کمبوی بحرانی (×۲ / ×۵ جنون / ×۱۰ طلایی):</b> خوردن سریع غذا و فرار میلی‌متری کمبو می‌سازد؛ در ×۳ جاذبه، در ×۵ حالت جنون و در ×۱۰ حالت طلایی با سکه اضافه فعال می‌شود!<br>
-      <b>۴. رلیک‌ها و اتاق‌های مخفی:</b> گوی‌های بنفش یا دروازه مخفی نقشه را پیدا کن تا رلیک دائمی آن دست و گنج ویژه بگیری.<br>
-      <b>۵. شبح رقیب و بازگشت زمان (R):</b> شبح بهترین رکوردت در هر جهان با تو مسابقه می‌دهد و سبقت از آن جایزه دارد. دکمه زمان در خطر مار را به موقعیت آبی برمی‌گرداند.
+      <b>۱. حرکت، دش و دیوارهای مخفی:</b> با سوایپ یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> هم بلوک‌های ترک‌خورده را می‌شکند و هم دیوارهای مخفی درخشان را باز می‌کند!<br>
+      <b>۲. دک ۳ کارت تاکتیکی و ژن‌ها:</b> در تب «کارت‌ها» ۳ کارت تاکتیکی بچین و با طلا ارتقا بده (سطح ۱ تا ۳). دکمه <b>مهارت (E)</b> ترکیب ۲ ژن + کارت یخی/سایه/رعد را فعال می‌کند.<br>
+      <b>۳. مه هزارتو، معما و قطعات نقشه:</b> در مه هزارتو مسیرها تاریک‌اند؛ کلیدهای شماره‌دار (۱ ثم ۲) را به ترتیب بفشار و با جمع‌آوری ۳ قطعه نقشه تمام مه را کنار بزن!<br>
+      <b>۴. کمبوی بحرانی و ۶ اتاق مخفی:</b> کمبوی ×۳ جاذبه، ×۵ جنون و ×۱۰ طلایی فعال می‌کند. دروازه‌های مخفی تو را به گنج، نگهبان، خزانه ۱۵ث، محراب، فروشگاه و باس مخفی می‌برند.<br>
+      <b>۵. شبح رقیب و آرناهای رتبه‌بندی‌شده:</b> شبح بهترین رکوردت از ثانیه اول با تو مسابقه می‌دهد. با کسب مدال و کاپ در آرناها رتبه‌ات را به برنز، نقره و طلا برسان.
     </div>
     <button class="btn" id="btnCloseGuide">فهمیدم!</button>
   </div>

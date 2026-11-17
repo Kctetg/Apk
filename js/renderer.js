@@ -26,9 +26,13 @@ var TYPES = {
   shield:    { ico:'shield',     color:'#60a5fa' },
   key:       { ico:'key',        color:'#ffd43b' },
   mimic:     { ico:'mimic',      color:'#ef4444' },
-  coin_drop: { ico:'coin',       color:'#ffd43b' },
-  timer:     { ico:'timer',      color:'#46f88f' },
-  relic_orb: { ico:'relic_eye',  color:'#a855f7' }
+  coin_drop:   { ico:'coin',       color:'#ffd43b' },
+  timer:       { ico:'timer',      color:'#46f88f' },
+  relic_orb:   { ico:'relic_eye',  color:'#a855f7' },
+  map_piece:   { ico:'map_piece',  color:'#fde68a' },
+  shop_heart:  { ico:'heart_full', color:'#ff4757' },
+  shop_shield: { ico:'shield',     color:'#38bdf8' },
+  shop_relic:  { ico:'merchant',   color:'#a855f7' }
 };
 
 function drawBoard(t){
@@ -117,6 +121,25 @@ function drawBoard(t){
     ctx.fillRect(wx+2, wy+2, cell-4, Math.max(2, Math.round(cell*0.16)));
     ctx.strokeStyle = '#09120e'; ctx.lineWidth = 2;
     ctx.strokeRect(wx+1, wy+1, cell-2, cell-2);
+  });
+
+  /* دیوارهای مخفی (ظاهری شبیه دیوار ولی با درخشش ریز قابل کشف) */
+  secretWalls.forEach(function(sw){
+    var wx = sw.x*cell, wy = sw.y*cell;
+    ctx.fillStyle = wo.wall;
+    ctx.fillRect(wx+1, wy+1, cell-2, cell-2);
+    ctx.fillStyle = 'rgba(168,85,247,'+(0.25 + 0.25*Math.sin(t/180))+')';
+    ctx.fillRect(wx+Math.round(cell*0.3), wy+Math.round(cell*0.3), Math.max(2, Math.round(cell*0.4)), 2);
+    ctx.strokeStyle = '#09120e'; ctx.lineWidth = 2;
+    ctx.strokeRect(wx+1, wy+1, cell-2, cell-2);
+  });
+
+  /* کلیدهای زمینی معمای محیطی */
+  switches.forEach(function(pz){
+    var px = pz.x*cell, py = pz.y*cell;
+    if (PX_ICONS.switch_pad) ctx.drawImage(PX_ICONS.switch_pad, px+1, py+1, cell-2, cell-2);
+    ctx.fillStyle = pz.active ? '#46f88f' : '#ffd43b';
+    ctx.fillRect(px+Math.round(cell*0.36), py+Math.round(cell*0.36), Math.max(3, Math.round(cell*0.28)), Math.max(3, Math.round(cell*0.28)));
   });
 
   /* دیوارهای تخریب‌پذیر با نمایش ترک */
@@ -212,12 +235,15 @@ function drawBoard(t){
 }
 
 function drawItems(t){
+  var fogOn = isFogActive();
+  var fastFx = isLowFx() || perfLowMode || particles.length > 26;
   items.forEach(function(it){
+    if (fogOn && !fogRevealAll && !isCellExplored(it.x, it.y)) return;
     var def = TYPES[it.type] || TYPES.apple;
     var bob = Math.sin(t/190 + it.x) * (cell * 0.08);
     var cx = (it.x + 0.5) * cell;
     var cy = (it.y + 0.5) * cell + bob;
-    if (!isLowFx()){
+    if (!fastFx){
       var g = ctx.createRadialGradient(cx, cy, cell*0.06, cx, cy, cell*0.58);
       g.addColorStop(0, def.color + '44'); g.addColorStop(1, 'transparent');
       ctx.fillStyle = g;
@@ -251,12 +277,22 @@ function interpolateBodyPts(currBody, prevBody, interp){
 }
 
 function drawWorldEffects(t){
-  /* کاهش دید در جهان سایه */
-  if (world === 'shadow' || fogActiveMs > 0){
-    var hx = snake.length ? (snake[0].x + 0.5) * cell : canvas.width * 0.5;
-    var hy = snake.length ? (snake[0].y + 0.5) * cell : canvas.height * 0.5;
-    var rSpot = (fogActiveMs > 0) ? cell * 3.8 : cell * 5.6;
-    var rad = ctx.createRadialGradient(hx, hy, cell * 1.4, hx, hy, rSpot);
+  /* مه جنگ هزارتو (Fog of War) */
+  if (isFogActive() && !fogRevealAll && snake.length){
+    var hxG = snake[0].x, hyG = snake[0].y;
+    var visR = hasRelic('phantom_eye') ? 5.2 : 3.6;
+    for (var fy=0; fy<ROWS; fy++){
+      for (var fx2=0; fx2<COLS; fx2++){
+        var d = Math.abs(fx2 - hxG) + Math.abs(fy - hyG);
+        if (d <= visR) continue;
+        ctx.fillStyle = isCellExplored(fx2, fy) ? 'rgba(8,6,18,0.48)' : 'rgba(6,8,16,0.90)';
+        ctx.fillRect(fx2*cell, fy*cell, cell, cell);
+      }
+    }
+  } else if (fogActiveMs > 0 && snake.length){
+    var hx = (snake[0].x + 0.5) * cell;
+    var hy = (snake[0].y + 0.5) * cell;
+    var rad = ctx.createRadialGradient(hx, hy, cell * 1.4, hx, hy, cell * 4.0);
     rad.addColorStop(0, 'rgba(10,5,24,0)');
     rad.addColorStop(0.65, 'rgba(10,5,24,0.45)');
     rad.addColorStop(1, 'rgba(8,4,18,0.88)');
@@ -264,11 +300,11 @@ function drawWorldEffects(t){
     ctx.fillRect(0, 0, COLS * cell, ROWS * cell);
   }
   /* طوفان شن در بیابان */
-  if (world === 'desert' && sandstormMs > 0 && !isLowFx()){
+  if (world === 'desert' && sandstormMs > 0 && !isLowFx() && !perfLowMode){
     ctx.fillStyle = 'rgba(245,158,11,0.16)';
     ctx.fillRect(0, 0, COLS*cell, ROWS*cell);
     ctx.fillStyle = 'rgba(254,243,199,0.45)';
-    for (var i=0;i<18;i++){
+    for (var i=0;i<14;i++){
       var sx = ((t*0.35 + i*47) % (COLS*cell));
       var sy = ((i*31 + Math.sin(t/200+i)*8) % (ROWS*cell));
       ctx.fillRect(sx, sy, 8, 2);

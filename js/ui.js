@@ -1,9 +1,10 @@
 'use strict';
-/* ═══════════════ رابط کاربری ۵ تبه SNAKE: PIXEL RUSH ═══════════════ */
+/* ═══════════════ رابط کاربری ۵ تبه SNAKE: MAZE ROYALE ═══════════════ */
 var toastTimer = null;
 var activeTab = 'tabPlay';
-var colSubTab = 'skins';
-var misSubTab = 'missions';
+var cardsSubTab = 'deck';
+var evoSubTab = 'forms';
+var colSubTab = 'missions';
 
 function showToast(msg){
   var el = $('#crToast');
@@ -36,6 +37,35 @@ function applyUiScale(){
   document.documentElement.setAttribute('data-uisize', sz);
 }
 
+function switchTab(tabId){
+  activeTab = tabId;
+  $$('.nav-tab').forEach(function(x){
+    x.classList.toggle('active', x.getAttribute('data-tab') === tabId);
+  });
+  $$('.tab-page').forEach(function(p){
+    p.classList.toggle('active', p.id === tabId);
+  });
+  renderMenu();
+}
+
+function recoverPendingRunIfAny(){
+  if (!save.pendingRun || !save.pendingRun.score || save.pendingRun.score < 30){
+    if (save.pendingRun){ save.pendingRun = null; persist(); }
+    return;
+  }
+  var sc = save.pendingRun.score;
+  var bonusG = Math.max(2, Math.floor(sc / 30));
+  var bonusXp = Math.max(5, Math.floor(sc / 16));
+  save.gold += bonusG;
+  addXP(bonusXp);
+  save.pendingRun = null;
+  checkCardUnlocks();
+  persist();
+  setTimeout(function(){
+    showToast('امتیاز دست ناتمام بازیابی شد: +' + faNum(bonusG) + ' سکه و +' + faNum(bonusXp) + ' XP');
+  }, 350);
+}
+
 function renderTopBar(){
   var needXp = save.level * 100;
   if ($('#tbLevel')) $('#tbLevel').textContent = faNum(save.level);
@@ -48,17 +78,36 @@ function renderTopBar(){
   }
 }
 
-/* ═══════════════ تب ۱: بازی و شروع سریع ═══════════════ */
+/* ═══════════════ تب ۱: بازی، دک فعال و متر صندوق ═══════════════ */
 function renderHomeTab(){
   var wo = getWorldObj(save.world);
   var rec = getModeRecord(save.world, save.mode);
+  var tier = getArenaRankTier(save.world);
   if ($('#homeWorldTitle')){
-    $('#homeWorldTitle').innerHTML = pxImgTag('badge', 16) + ' جهان فعال: <b>' + wo.name + '</b>';
+    $('#homeWorldTitle').innerHTML =
+      pxImgTag('badge', 15) + ' آرنا ' + faNum(wo.arenaNum || 1) + ': <b>' + wo.name + '</b>' +
+      ' <span class="tier-pill" style="color:'+tier.color+'">' + tier.name + '</span>';
   }
   if ($('#homeRecordTxt')){
-    $('#homeRecordTxt').textContent = 'بهترین رکورد: ' + faNum(rec.bestScore) +
-      '  •  کمبو: ×' + faNum(rec.maxCombo || 0) +
+    $('#homeRecordTxt').textContent = 'رکورد: ' + faNum(rec.bestScore) +
+      '  •  کاپ: ' + faNum(save.arenaTrophies || 0) +
       '  •  زمان: ' + fmtDuration(rec.bestTimeMs);
+  }
+
+  /* پیش‌نمایش دک ۳ کارت روی خانه */
+  var deckRow = $('#homeDeckRow');
+  if (deckRow){
+    deckRow.innerHTML = '';
+    var dk = save.deck || ['fire_dash','ice_trap','magnet_storm'];
+    dk.forEach(function(cid){
+      var c = getCardObj(cid);
+      var lv = getCardLevel(cid);
+      var cardEl = document.createElement('div');
+      cardEl.className = 'deck-mini';
+      cardEl.innerHTML = pxImgTag(c.ico, 20) + '<b>' + c.name + '</b><span>سطح ' + faNum(lv) + '</span>';
+      cardEl.onclick = function(){ sfx.click(); cardsSubTab = 'deck'; switchTab('tabCards'); };
+      deckRow.appendChild(cardEl);
+    });
   }
 
   /* گرید ۵ حالت */
@@ -79,32 +128,35 @@ function renderHomeTab(){
     });
   }
 
-  /* گزینه‌های سریع حالت انتخاب‌شده */
+  /* گزینه‌های سریع حالت انتخاب‌شده + تاگل مه هزارتو */
   var optBox = $('#homeModeOpts');
   if (optBox){
     var mObj = getModeObj(save.mode);
-    var html = '<div class="mode-hint">' + mObj.hint + '</div>';
+    var html = '<div class="mode-hint">' + mObj.hint + '</div><div class="opt-row">';
     if (save.mode === 'timeattack'){
-      html += '<div class="opt-row">' +
-        '<button class="mini-pill-btn'+(save.timeAttackSec===60?' on':'')+'" id="btnTa60">۶۰ ثانیه</button>' +
-        '<button class="mini-pill-btn'+(save.timeAttackSec===120?' on':'')+'" id="btnTa120">۱۲۰ ثانیه</button>' +
-        '</div>';
+      html += '<button class="mini-pill-btn'+(save.timeAttackSec===60?' on':'')+'" id="btnTa60">۶۰ ثانیه</button>' +
+              '<button class="mini-pill-btn'+(save.timeAttackSec===120?' on':'')+'" id="btnTa120">۱۲۰ ثانیه</button>';
     } else if (save.mode === 'endless'){
-      html += '<div class="opt-row">' +
-        '<button class="mini-pill-btn'+(!save.dailySeedMode?' on':'')+'" id="btnEndFree">آزاد</button>' +
-        '<button class="mini-pill-btn'+(save.dailySeedMode?' on':'')+'" id="btnEndDaily">بذر روزانه ('+faNum(save.dailySeedBest||0)+')</button>' +
-        '</div>';
+      html += '<button class="mini-pill-btn'+(!save.dailySeedMode?' on':'')+'" id="btnEndFree">آزاد</button>' +
+              '<button class="mini-pill-btn'+(save.dailySeedMode?' on':'')+'" id="btnEndDaily">بذر روزانه ('+faNum(save.dailySeedBest||0)+')</button>';
     }
+    html += '<button class="mini-pill-btn'+(save.fogEnabled?' on':'')+'" id="btnToggleFog">مه هزارتو: '+(save.fogEnabled?'روشن':'خاموش')+'</button>';
+    html += '</div>';
     optBox.innerHTML = html;
     if ($('#btnTa60')) $('#btnTa60').onclick = function(){ sfx.click(); save.timeAttackSec = 60; persist(); renderHomeTab(); };
     if ($('#btnTa120')) $('#btnTa120').onclick = function(){ sfx.click(); save.timeAttackSec = 120; persist(); renderHomeTab(); };
     if ($('#btnEndFree')) $('#btnEndFree').onclick = function(){ sfx.click(); save.dailySeedMode = false; persist(); renderHomeTab(); };
     if ($('#btnEndDaily')) $('#btnEndDaily').onclick = function(){ sfx.click(); save.dailySeedMode = true; persist(); renderHomeTab(); };
+    if ($('#btnToggleFog')) $('#btnToggleFog').onclick = function(){ sfx.click(); save.fogEnabled = !save.fogEnabled; persist(); renderHomeTab(); };
   }
 
   if ($('#btnLastReplay')){
     $('#btnLastReplay').style.display = lastRunTrace ? 'inline-flex' : 'none';
   }
+
+  var pct = Math.min(100, Math.max(0, save.chestMeter || 0));
+  if ($('#chestMeterPct')) $('#chestMeterPct').textContent = faNum(pct) + '٪';
+  if ($('#chestMeterFill')) $('#chestMeterFill').style.width = pct + '%';
 
   renderSingleChestSlot();
 }
@@ -114,7 +166,7 @@ function renderSingleChestSlot(){
   if (!box) return;
   if (!save.slot){
     box.className = 'chest-card empty';
-    box.innerHTML = '<div class="chest-meta"><b>جایگاه صندوق خالی است</b><span>با پیروزی یا ثبت امتیاز بالا صندوق بگیر!</span></div>';
+    box.innerHTML = '<div class="chest-meta"><b>جایگاه صندوق خالی است</b><span>با پیروزی یا پر کردن نوار اکتشاف صندوق طلایی بگیر!</span></div>';
     box.onclick = null;
     return;
   }
@@ -164,6 +216,7 @@ function openActiveChest(){
   save.stats.chestsOpened++;
   save.weeklyProgress.chests++;
   addXP(cDef.xp);
+  checkCardUnlocks();
   save.slot = null;
   evaluateAchievements();
   persist();
@@ -182,7 +235,7 @@ function openActiveChest(){
   renderMenu();
 }
 
-/* ═══════════════ تب ۲: جهان‌ها و استادی نقشه ═══════════════ */
+/* ═══════════════ تب ۲: آرناهای رتبه‌بندی‌شده و استادی نقشه ═══════════════ */
 function renderWorldsTab(){
   var box = $('#worldsList');
   if (!box) return;
@@ -190,6 +243,7 @@ function renderWorldsTab(){
   WORLDS_ORDER.forEach(function(wid){
     var wo = WORLDS[wid];
     var mast = getWorldMastery(wid);
+    var tier = getArenaRankTier(wid);
     var rec = getModeRecord(wid, save.mode);
     var selected = (save.world === wid);
     var card = document.createElement('div');
@@ -197,8 +251,12 @@ function renderWorldsTab(){
     card.style.borderColor = selected ? wo.accent : 'rgba(255,255,255,0.12)';
     card.innerHTML =
       '<div class="wc-head">' +
-        '<div><b>' + wo.name + '</b><div class="wc-sub">' + wo.subtitle + '</div></div>' +
-        '<span class="wc-boss">' + wo.bossName + '</span>' +
+        '<div><b>آرنا ' + faNum(wo.arenaNum || 1) + ': ' + wo.name + '</b>' +
+        '<div class="wc-sub">' + wo.lvRange + ' • ' + wo.subtitle + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
+          '<span class="tier-pill" style="color:'+tier.color+'">رتبه ' + tier.name + ' ('+faNum(tier.count)+'/۴)</span>' +
+          '<span class="wc-boss">' + wo.bossName + '</span>' +
+        '</div>' +
       '</div>' +
       '<div class="wc-rules">' +
         '<span>خطرها: ' + wo.hazards.join(' • ') + '</span>' +
@@ -212,7 +270,7 @@ function renderWorldsTab(){
         '<span class="wc-best">رکورد: ' + faNum(rec.bestScore) + '</span>' +
       '</div>' +
       '<div class="wc-actions">' +
-        '<button class="btn-sm'+(selected?' on':'')+'" data-sel="'+wid+'">'+(selected?'جهان انتخاب‌شده':'انتخاب جهان')+'</button>' +
+        '<button class="btn-sm'+(selected?' on':'')+'" data-sel="'+wid+'">'+(selected?'آرنای انتخاب‌شده':'انتخاب آرنا')+'</button>' +
         '<button class="btn-sm chall'+(mast.challengeDone?' done':'')+'" data-ch="'+wid+'">'+(mast.challengeDone?'چالش تکمیل شد':'شروع چالش')+'</button>' +
       '</div>';
 
@@ -221,7 +279,7 @@ function renderWorldsTab(){
       save.world = wid;
       persist();
       renderMenu();
-      showToast('جهان فعال: ' + wo.name);
+      showToast('آرنای فعال: ' + wo.name);
     };
     card.querySelector('[data-ch]').onclick = function(){
       sfx.click();
@@ -233,8 +291,85 @@ function renderWorldsTab(){
   });
 }
 
-/* ═══════════════ تب ۳: تکامل، ژن‌ها و ترکیب ۲ ژن ═══════════════ */
-function renderEvoTab(){
+/* ═══════════════ تب ۳: کارت‌های تاکتیکی + ژن‌ها و مهارت ═══════════════ */
+function renderCardsTab(){
+  $$('#cardsSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === cardsSubTab);
+  });
+  var deckPane = $('#cardsDeckPane');
+  var genesPane = $('#cardsGenesPane');
+  if (deckPane) deckPane.style.display = (cardsSubTab === 'deck') ? 'flex' : 'none';
+  if (genesPane) genesPane.style.display = (cardsSubTab === 'genes') ? 'flex' : 'none';
+
+  if (cardsSubTab === 'deck'){
+    var bar = $('#activeDeckBar');
+    if (bar){
+      bar.innerHTML = '';
+      (save.deck || []).forEach(function(cid, idx){
+        var c = getCardObj(cid);
+        var lv = getCardLevel(cid);
+        var slotEl = document.createElement('div');
+        slotEl.className = 'deck-slot-pill';
+        slotEl.innerHTML = pxImgTag(c.ico, 22) + '<b>' + c.name + '</b><span style="color:var(--gold)">اسلات ' + faNum(idx+1) + ' • س' + faNum(lv) + '</span>';
+        bar.appendChild(slotEl);
+      });
+    }
+
+    var cl = $('#cardsList');
+    if (cl){
+      cl.innerHTML = '';
+      TACTICAL_CARDS.forEach(function(c){
+        var unlocked = (save.ownedCards || []).indexOf(c.id) !== -1;
+        var inDeck = (save.deck || []).indexOf(c.id) !== -1;
+        var lv = getCardLevel(c.id);
+        var upgCost = lv === 1 ? 120 : (lv === 2 ? 240 : 0);
+        var card = document.createElement('div');
+        card.className = 'evo-card' + (inDeck ? ' active' : '') + (!unlocked ? ' locked' : '');
+        card.innerHTML =
+          pxImgTag(c.ico, 28) +
+          '<div class="evo-info">' +
+            '<b>' + c.name + (unlocked ? ' (سطح ' + faNum(lv) + '/۳)' : '') + '</b>' +
+            '<span>' + c.desc + '</span>' +
+            '<small class="req-tag ' + (unlocked ? 'ok' : '') + '">' +
+              (unlocked ? (c.slotHint + (inDeck ? ' • در دک فعال' : ' • آماده نصب')) : ('باز شدن در سطح ' + faNum(c.needLv))) +
+            '</small>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:4px;">' +
+            (unlocked ? '<button class="btn-sm'+(inDeck?' on':'')+'" data-eq="'+c.id+'">'+(inDeck?'در دک':'چیدمان')+'</button>' : '') +
+            (unlocked && upgCost > 0 ? '<button class="btn-sm chall" data-up="'+c.id+'">ارتقا ('+faNum(upgCost)+'س)</button>' : '') +
+          '</div>';
+
+        if (unlocked){
+          var eqBtn = card.querySelector('[data-eq]');
+          if (eqBtn) eqBtn.onclick = function(){
+            sfx.click();
+            if (!save.deck || save.deck.length !== 3) save.deck = ['fire_dash','ice_trap','magnet_storm'];
+            if (save.deck.indexOf(c.id) !== -1) return;
+            save.deck = [c.id, save.deck[0], save.deck[1]];
+            persist();
+            renderCardsTab();
+            showToast(c.name + ' در دک قرار گرفت!');
+          };
+          var upBtn = card.querySelector('[data-up]');
+          if (upBtn) upBtn.onclick = function(){
+            if (save.gold < upgCost){ showToast('سکه کافی نیست!'); return; }
+            sfx.power();
+            save.gold -= upgCost;
+            if (!save.cardLevels) save.cardLevels = {};
+            save.cardLevels[c.id] = Math.min(3, lv + 1);
+            persist();
+            renderTopBar();
+            renderCardsTab();
+            showToast(c.name + ' به سطح ' + faNum(save.cardLevels[c.id]) + ' ارتقا یافت!');
+          };
+        }
+        cl.appendChild(card);
+      });
+    }
+    return;
+  }
+
+  /* زیرتب ژن‌ها، ترکیب ۲تایی و مهارت‌های پایه */
   if ($('#evoPointsBadge')) $('#evoPointsBadge').textContent = 'امتیاز تکامل: ' + faNum(save.evoPoints || 0);
   var fusBox = $('#activeFusionBox');
   if (fusBox){
@@ -270,37 +405,11 @@ function renderEvoTab(){
           if (save.genes[0] === g.id || save.genes[1] === g.id) return;
           save.genes = [g.id, save.genes[0]];
           persist();
-          renderEvoTab();
+          renderCardsTab();
           showToast(g.name + ' نصب شد!');
         };
       }
       gList.appendChild(card);
-    });
-  }
-
-  var efList = $('#evoFormsList');
-  if (efList){
-    efList.innerHTML = '';
-    if (!save.activeEvoForm) save.activeEvoForm = 'basic';
-    EVO_FORMS.forEach(function(ef){
-      var unlocked = save.level >= ef.needLv;
-      var active = getEffectiveEvoForm() === ef.id;
-      var btn = document.createElement('button');
-      btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
-      btn.innerHTML =
-        '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
-        '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
-        '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
-      if (unlocked){
-        btn.onclick = function(){
-          sfx.click();
-          save.activeEvoForm = ef.id;
-          persist();
-          renderEvoTab();
-          showToast('فرم ظاهری: ' + ef.name);
-        };
-      }
-      efList.appendChild(btn);
     });
   }
 
@@ -321,23 +430,55 @@ function renderEvoTab(){
         save.evoPoints--;
         save.skills[sk.id] = lv + 1;
         persist();
-        renderEvoTab();
+        renderCardsTab();
       };
       sList.appendChild(card);
     });
   }
 }
 
-/* ═══════════════ تب ۴: مجموعه (اسکین، اکسسوری، آلبوم، دستاوردها) ═══════════════ */
-function renderCollectionTab(){
-  $$('#colSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === colSubTab);
+/* ═══════════════ تب ۴: تکامل ظاهری، اسکین و اکسسوری ═══════════════ */
+function renderEvoTab(){
+  $$('#evoSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === evoSubTab);
   });
-  var box = $('#colContent');
-  if (!box) return;
-  box.innerHTML = '';
+  var formsPane = $('#evoFormsPane');
+  var cosPane = $('#evoCosmeticsPane');
+  if (formsPane) formsPane.style.display = (evoSubTab === 'forms') ? 'flex' : 'none';
+  if (cosPane) cosPane.style.display = (evoSubTab !== 'forms') ? 'flex' : 'none';
 
-  if (colSubTab === 'skins'){
+  if (evoSubTab === 'forms'){
+    var efList = $('#evoFormsList');
+    if (efList){
+      efList.innerHTML = '';
+      if (!save.activeEvoForm) save.activeEvoForm = 'basic';
+      EVO_FORMS.forEach(function(ef){
+        var unlocked = save.level >= ef.needLv;
+        var active = getEffectiveEvoForm() === ef.id;
+        var btn = document.createElement('button');
+        btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
+        btn.innerHTML =
+          '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
+          '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
+          '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
+        if (unlocked){
+          btn.onclick = function(){
+            sfx.click();
+            save.activeEvoForm = ef.id;
+            persist();
+            renderEvoTab();
+            showToast('فرم ظاهری: ' + ef.name);
+          };
+        }
+        efList.appendChild(btn);
+      });
+    }
+    return;
+  }
+
+  if (!cosPane) return;
+  cosPane.innerHTML = '';
+  if (evoSubTab === 'skins'){
     SKINS.forEach(function(sk){
       var owned = save.ownedSkins.indexOf(sk.id) !== -1;
       var eq = save.skin === sk.id;
@@ -359,9 +500,9 @@ function renderCollectionTab(){
         }
         sfx.chest(); save.ownedSkins.push(sk.id); save.skin = sk.id; persist(); renderMenu();
       };
-      box.appendChild(card);
+      cosPane.appendChild(card);
     });
-  } else if (colSubTab === 'acc'){
+  } else {
     ACCESSORIES.forEach(function(ac){
       var owned = save.ownedAcc.indexOf(ac.id) !== -1;
       var eq = save.acc === ac.id;
@@ -383,42 +524,21 @@ function renderCollectionTab(){
         }
         sfx.chest(); save.ownedAcc.push(ac.id); save.acc = ac.id; persist(); renderMenu();
       };
-      box.appendChild(card);
-    });
-  } else if (colSubTab === 'bestiary'){
-    BESTIARY.forEach(function(b){
-      var seen = save.discovered.indexOf(b.id) !== -1;
-      var card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML =
-        pxImgTag(b.ico, 28) +
-        '<div class="ic-info"><b>'+(seen?b.name:'مورد ناشناخته')+'</b><span>'+(seen?b.desc:'در طول بازی با آن روبه‌رو شو تا ثبت شود!')+'</span></div>';
-      box.appendChild(card);
-    });
-  } else {
-    ACHIEVEMENTS.forEach(function(a){
-      var done = save.achievements.indexOf(a.id) !== -1;
-      var card = document.createElement('div');
-      card.className = 'item-card' + (done ? ' eq' : '');
-      card.innerHTML =
-        pxImgTag(done ? 'badge' : 'trophy', 26) +
-        '<div class="ic-info"><b>'+a.name+'</b><span>'+a.desc+'</span></div>' +
-        '<span class="ach-rew">'+(done?'دریافت‌شده':'+'+faNum(a.rewardCrystals)+' کریستال')+'</span>';
-      box.appendChild(card);
+      cosPane.appendChild(card);
     });
   }
 }
 
-/* ═══════════════ تب ۵: مأموریت‌ها، جایزه روزانه و فروشگاه ═══════════════ */
-function renderMissionsTab(){
-  $$('#misSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === misSubTab);
+/* ═══════════════ تب ۵: گنجینه (مأموریت، روزانه، آلبوم، دستاورد، فروشگاه) ═══════════════ */
+function renderCollectionTab(){
+  $$('#colSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === colSubTab);
   });
-  var box = $('#misContent');
+  var box = $('#colContent');
   if (!box) return;
   box.innerHTML = '';
 
-  if (misSubTab === 'missions'){
+  if (colSubTab === 'missions'){
     function addSection(title, list, srcObj, claimedArr){
       var h = document.createElement('div');
       h.className = 'sec-hdr'; h.textContent = title;
@@ -447,7 +567,7 @@ function renderMissionsTab(){
     addSection('مأموریت‌های روزانه', DAILY_MISSIONS, save.dailyProgress, save.claimedDailyMissions);
     addSection('مأموریت‌های هفتگی', WEEKLY_MISSIONS, save.weeklyProgress, save.claimedWeeklyMissions);
     addSection('مأموریت‌های مخفی', SECRET_MISSIONS, save.stats, save.claimedSecretMissions);
-  } else if (misSubTab === 'daily'){
+  } else if (colSubTab === 'daily'){
     var now = Date.now();
     var canClaim = (now - (save.lastDailyTs || 0)) >= 20 * 3600 * 1000;
     DAILY_REWARDS.forEach(function(d){
@@ -471,8 +591,28 @@ function renderMissionsTab(){
       };
       box.appendChild(row);
     });
+  } else if (colSubTab === 'bestiary'){
+    BESTIARY.forEach(function(b){
+      var seen = save.discovered.indexOf(b.id) !== -1;
+      var card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML =
+        pxImgTag(b.ico, 28) +
+        '<div class="ic-info"><b>'+(seen?b.name:'مورد ناشناخته')+'</b><span>'+(seen?b.desc:'در طول بازی با آن روبه‌رو شو تا ثبت شود!')+'</span></div>';
+      box.appendChild(card);
+    });
+  } else if (colSubTab === 'ach'){
+    ACHIEVEMENTS.forEach(function(a){
+      var done = save.achievements.indexOf(a.id) !== -1;
+      var card = document.createElement('div');
+      card.className = 'item-card' + (done ? ' eq' : '');
+      card.innerHTML =
+        pxImgTag(done ? 'badge' : 'trophy', 26) +
+        '<div class="ic-info"><b>'+a.name+'</b><span>'+a.desc+'</span></div>' +
+        '<span class="ach-rew">'+(done?'دریافت‌شده':'+'+faNum(a.rewardCrystals)+' کریستال')+'</span>';
+      box.appendChild(card);
+    });
   } else {
-    /* فروشگاه صندوق‌ها و هدیه روزانه */
     ['bronze','silver','gold'].forEach(function(cid){
       var c = CHEST_TYPES[cid];
       var isCrys = c.shopCrystals > 0;
@@ -566,9 +706,9 @@ function renderMenu(){
   renderTopBar();
   if (activeTab === 'tabPlay') renderHomeTab();
   else if (activeTab === 'tabWorlds') renderWorldsTab();
+  else if (activeTab === 'tabCards') renderCardsTab();
   else if (activeTab === 'tabEvo') renderEvoTab();
   else if (activeTab === 'tabCollection') renderCollectionTab();
-  else if (activeTab === 'tabMissions') renderMissionsTab();
 }
 
 /* تایمر زنده تک‌جایگاه صندوق در پس‌زمینه */
@@ -583,19 +723,17 @@ function wireEvents(){
   $$('.nav-tab').forEach(function(btn){
     btn.onclick = function(){
       sfx.click();
-      activeTab = btn.getAttribute('data-tab');
-      $$('.nav-tab').forEach(function(x){ x.classList.remove('active'); });
-      btn.classList.add('active');
-      $$('.tab-page').forEach(function(p){ p.classList.remove('active'); });
-      if ($('#'+activeTab)) $('#'+activeTab).classList.add('active');
-      renderMenu();
+      switchTab(btn.getAttribute('data-tab'));
     };
+  });
+  $$('#cardsSubTabs .sub-pill').forEach(function(b){
+    b.onclick = function(){ sfx.click(); cardsSubTab = b.getAttribute('data-sub'); renderCardsTab(); };
+  });
+  $$('#evoSubTabs .sub-pill').forEach(function(b){
+    b.onclick = function(){ sfx.click(); evoSubTab = b.getAttribute('data-sub'); renderEvoTab(); };
   });
   $$('#colSubTabs .sub-pill').forEach(function(b){
     b.onclick = function(){ sfx.click(); colSubTab = b.getAttribute('data-sub'); renderCollectionTab(); };
-  });
-  $$('#misSubTabs .sub-pill').forEach(function(b){
-    b.onclick = function(){ sfx.click(); misSubTab = b.getAttribute('data-sub'); renderMissionsTab(); };
   });
 
   if ($('#btnQuickPlay')) $('#btnQuickPlay').onclick = function(){ startGame(save.mode, save.world); };
@@ -622,7 +760,7 @@ function wireEvents(){
   if ($('#btnCloseGuide')) $('#btnCloseGuide').onclick = function(){ $('#guideModal').classList.remove('show'); };
   if ($('#btnCloseChestModal')) $('#btnCloseChestModal').onclick = function(){ $('#chestModal').classList.remove('show'); };
 
-  /* آیکون‌های پیکسلی HUD */
+  /* آیکون‌های پیکسلی HUD و نوار ناوبری */
   if ($('#icoDashBtn')) $('#icoDashBtn').innerHTML = pxImgTag('dash_ico', 18);
   if ($('#icoSkillBtn')) $('#icoSkillBtn').innerHTML = pxImgTag('dna', 18);
   if ($('#icoRewindBtn')) $('#icoRewindBtn').innerHTML = pxImgTag('rewind', 18);
@@ -634,11 +772,13 @@ function wireEvents(){
   if ($('#tbCryIco')) $('#tbCryIco').innerHTML = pxImgTag('crystal', 15);
   if ($('#navIcoPlay')) $('#navIcoPlay').innerHTML = pxImgTag('snake_ico', 20);
   if ($('#navIcoWorlds')) $('#navIcoWorlds').innerHTML = pxImgTag('portal', 20);
+  if ($('#navIcoCards')) $('#navIcoCards').innerHTML = pxImgTag('card_ico', 20);
   if ($('#navIcoEvo')) $('#navIcoEvo').innerHTML = pxImgTag('dna', 20);
   if ($('#navIcoCol')) $('#navIcoCol').innerHTML = pxImgTag('trophy', 20);
-  if ($('#navIcoMis')) $('#navIcoMis').innerHTML = pxImgTag('gift', 20);
 }
 
 wireEvents();
+checkCardUnlocks();
+recoverPendingRunIfAny();
 applyUiScale();
 renderMenu();

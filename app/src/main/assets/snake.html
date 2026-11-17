@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>SNAKE: PIXEL RUSH</title>
+<title>SNAKE: MAZE ROYALE</title>
 <style>
   :root{
     --bg:#0b1117; --surface:#121b24; --card:#17222e; --border:#273748;
@@ -56,6 +56,19 @@
   .play-btn:active{transform:translateY(2px)}
   .replay-btn{background:var(--card);border:2px solid var(--cyan);color:var(--cyan);border-radius:12px;padding:0 12px;font-weight:bold;font-size:12px;display:none;align-items:center;cursor:pointer}
 
+  /* نوار دک ۳تایی و متر صندوق اکتشاف در خانه */
+  .home-deck{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .deck-mini{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;cursor:pointer}
+  .deck-mini b{color:var(--text);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .deck-mini span{color:var(--cyan);font-size:9px;font-weight:bold}
+  .meter-box{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;gap:5px}
+  .meter-head{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+  .meter-track{width:100%;height:7px;background:#1e293b;border-radius:5px;overflow:hidden}
+  .meter-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));width:0%;transition:width .25s}
+  .tier-pill{font-size:10px;font-weight:bold;padding:2px 7px;border-radius:6px;border:1px solid currentColor;background:rgba(15,23,42,.7)}
+  .deck-slot-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#121d2b;border:1.5px solid var(--cyan);border-radius:12px;padding:8px}
+  .deck-slot-pill{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:10px}
+
   /* تک‌جایگاه صندوق */
   .chest-card{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--border);border-radius:12px;padding:9px 11px;cursor:pointer}
   .chest-card.empty{opacity:.75;cursor:default}
@@ -97,7 +110,7 @@
   .swatch{width:26px;height:26px;border-radius:7px;border:2px solid #09120e;flex-shrink:0}
   .ach-rew{font-size:11px;color:var(--purple);font-weight:bold}
 
-  .sub-tabs{display:flex;gap:6px}
+  .sub-tabs{display:flex;gap:5px;flex-wrap:wrap}
   .sub-pill,.mini-pill-btn{background:var(--card);border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:bold;cursor:pointer}
   .sub-pill.on,.mini-pill-btn.on{border-color:var(--cyan);color:var(--cyan);background:#0f2433}
   .sec-hdr{font-size:12px;font-weight:bold;color:var(--gold);margin-top:4px}
@@ -187,12 +200,14 @@
     <!-- تب ۱: بازی -->
     <section class="tab-page active" id="tabPlay">
       <div class="hero-box">
-        <div class="brand-title">SNAKE: PIXEL RUSH</div>
-        <div class="brand-sub">یک مار، هزاران مسیر، رکوردهای بی‌پایان</div>
+        <div class="brand-title">SNAKE: MAZE ROYALE</div>
+        <div class="brand-sub">هزارتوی پیکسلی، کارت‌های تاکتیکی و رقابت با شبح</div>
         <canvas id="previewCanvas" width="140" height="96"></canvas>
         <div class="world-pill" id="homeWorldTitle"></div>
         <div class="record-line" id="homeRecordTxt"></div>
       </div>
+
+      <div class="home-deck" id="homeDeckRow"></div>
 
       <div class="mode-grid" id="homeModeGrid"></div>
       <div class="mode-opts" id="homeModeOpts"></div>
@@ -202,56 +217,77 @@
         <button class="replay-btn" id="btnLastReplay">بازپخش</button>
       </div>
 
+      <div class="meter-box" id="homeChestMeter">
+        <div class="meter-head">
+          <span style="color:var(--cyan);font-weight:bold;">پیشرفت صندوق طلایی اکتشاف</span>
+          <b id="chestMeterPct" style="color:var(--gold);">۰٪</b>
+        </div>
+        <div class="meter-track"><div class="meter-fill" id="chestMeterFill"></div></div>
+      </div>
+
       <div class="chest-card" id="singleChestSlot"></div>
     </section>
 
-    <!-- تب ۲: جهان‌ها -->
+    <!-- تب ۲: آرناها -->
     <section class="tab-page" id="tabWorlds">
       <div id="worldsList" style="display:flex;flex-direction:column;gap:8px;"></div>
     </section>
 
-    <!-- تب ۳: تکامل -->
-    <section class="tab-page" id="tabEvo">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <b style="font-size:13px;color:var(--cyan);">ژن‌ها و ترکیب ۲تایی</b>
-        <span class="lv-badge" id="evoPointsBadge">امتیاز تکامل: ۰</span>
+    <!-- تب ۳: کارت‌ها و ژن‌ها -->
+    <section class="tab-page" id="tabCards">
+      <div class="sub-tabs" id="cardsSubTabs">
+        <button class="sub-pill on" data-sub="deck">دک ۳ کارت تاکتیکی</button>
+        <button class="sub-pill" data-sub="genes">ژن‌ها و مهارت</button>
       </div>
-      <div class="evo-banner" id="activeFusionBox"></div>
-      <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
-      <div class="sec-hdr">فرم ظاهری مار (تکامل بصری)</div>
-      <div id="evoFormsList" class="evo-form-grid"></div>
-      <div class="sec-hdr">مهارت‌های پایه</div>
-      <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div id="cardsDeckPane" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="deck-slot-bar" id="activeDeckBar"></div>
+        <div id="cardsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+      <div id="cardsGenesPane" style="display:none;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b style="font-size:13px;color:var(--cyan);">ژن‌ها و ترکیب ۲تایی</b>
+          <span class="lv-badge" id="evoPointsBadge">امتیاز تکامل: ۰</span>
+        </div>
+        <div class="evo-banner" id="activeFusionBox"></div>
+        <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
+        <div class="sec-hdr">مهارت‌های پایه</div>
+        <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
     </section>
 
-    <!-- تب ۴: مجموعه -->
+    <!-- تب ۴: تکامل ظاهری و شخصی‌سازی -->
+    <section class="tab-page" id="tabEvo">
+      <div class="sub-tabs" id="evoSubTabs">
+        <button class="sub-pill on" data-sub="forms">فرم تکامل</button>
+        <button class="sub-pill" data-sub="skins">اسکین‌ها</button>
+        <button class="sub-pill" data-sub="acc">اکسسوری</button>
+      </div>
+      <div id="evoFormsPane" style="display:flex;flex-direction:column;gap:7px;">
+        <div class="sec-hdr">فرم ظاهری مار (تکامل بصری)</div>
+        <div id="evoFormsList" class="evo-form-grid"></div>
+      </div>
+      <div id="evoCosmeticsPane" style="display:none;flex-direction:column;gap:7px;"></div>
+    </section>
+
+    <!-- تب ۵: گنجینه (مأموریت، روزانه، آلبوم، دستاورد، فروشگاه) -->
     <section class="tab-page" id="tabCollection">
       <div class="sub-tabs" id="colSubTabs">
-        <button class="sub-pill on" data-sub="skins">اسکین‌ها</button>
-        <button class="sub-pill" data-sub="acc">اکسسوری</button>
+        <button class="sub-pill on" data-sub="missions">مأموریت‌ها</button>
+        <button class="sub-pill" data-sub="daily">روزانه</button>
         <button class="sub-pill" data-sub="bestiary">آلبوم</button>
         <button class="sub-pill" data-sub="ach">دستاوردها</button>
-      </div>
-      <div id="colContent" style="display:flex;flex-direction:column;gap:7px;"></div>
-    </section>
-
-    <!-- تب ۵: مأموریت‌ها -->
-    <section class="tab-page" id="tabMissions">
-      <div class="sub-tabs" id="misSubTabs">
-        <button class="sub-pill on" data-sub="missions">مأموریت‌ها</button>
-        <button class="sub-pill" data-sub="daily">جایزه روزانه</button>
         <button class="sub-pill" data-sub="shop">فروشگاه</button>
       </div>
-      <div id="misContent" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div id="colContent" style="display:flex;flex-direction:column;gap:7px;"></div>
     </section>
   </main>
 
   <nav class="bottom-nav">
     <button class="nav-tab active" data-tab="tabPlay"><span id="navIcoPlay"></span><span>بازی</span></button>
-    <button class="nav-tab" data-tab="tabWorlds"><span id="navIcoWorlds"></span><span>جهان‌ها</span></button>
+    <button class="nav-tab" data-tab="tabWorlds"><span id="navIcoWorlds"></span><span>آرناها</span></button>
+    <button class="nav-tab" data-tab="tabCards"><span id="navIcoCards"></span><span>کارت‌ها</span></button>
     <button class="nav-tab" data-tab="tabEvo"><span id="navIcoEvo"></span><span>تکامل</span></button>
-    <button class="nav-tab" data-tab="tabCollection"><span id="navIcoCol"></span><span>مجموعه</span></button>
-    <button class="nav-tab" data-tab="tabMissions"><span id="navIcoMis"></span><span>مأموریت‌ها</span></button>
+    <button class="nav-tab" data-tab="tabCollection"><span id="navIcoCol"></span><span>گنجینه</span></button>
   </nav>
 </div>
 
@@ -355,13 +391,13 @@
 
 <div class="modal-backdrop" id="guideModal">
   <div class="modal-card">
-    <b style="font-size:16px;color:var(--emerald);">راهنمای SNAKE: PIXEL RUSH</b>
+    <b style="font-size:16px;color:var(--emerald);">راهنمای SNAKE: MAZE ROYALE</b>
     <div style="font-size:12px;text-align:right;line-height:1.7;color:#cbd5e1;" id="guideBody">
-      <b>۱. حرکت و دش:</b> با کشیدن انگشت روی صفحه یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> سرعتت را لحظه‌ای زیاد می‌کند و بلوک‌های ترک‌خورده را می‌شکند!<br>
-      <b>۲. نوار انرژی و ژن‌ها:</b> با حرکت و خوردن سیب نوار انرژی پر می‌شود. دکمه <b>مهارت (E)</b> ترکیب ۲ ژن را فعال می‌کند.<br>
-      <b>۳. کمبوی بحرانی (×۲ / ×۵ جنون / ×۱۰ طلایی):</b> خوردن سریع غذا و فرار میلی‌متری کمبو می‌سازد؛ در ×۳ جاذبه، در ×۵ حالت جنون و در ×۱۰ حالت طلایی با سکه اضافه فعال می‌شود!<br>
-      <b>۴. رلیک‌ها و اتاق‌های مخفی:</b> گوی‌های بنفش یا دروازه مخفی نقشه را پیدا کن تا رلیک دائمی آن دست و گنج ویژه بگیری.<br>
-      <b>۵. شبح رقیب و بازگشت زمان (R):</b> شبح بهترین رکوردت در هر جهان با تو مسابقه می‌دهد و سبقت از آن جایزه دارد. دکمه زمان در خطر مار را به موقعیت آبی برمی‌گرداند.
+      <b>۱. حرکت، دش و دیوارهای مخفی:</b> با سوایپ یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> هم بلوک‌های ترک‌خورده را می‌شکند و هم دیوارهای مخفی درخشان را باز می‌کند!<br>
+      <b>۲. دک ۳ کارت تاکتیکی و ژن‌ها:</b> در تب «کارت‌ها» ۳ کارت تاکتیکی بچین و با طلا ارتقا بده (سطح ۱ تا ۳). دکمه <b>مهارت (E)</b> ترکیب ۲ ژن + کارت یخی/سایه/رعد را فعال می‌کند.<br>
+      <b>۳. مه هزارتو، معما و قطعات نقشه:</b> در مه هزارتو مسیرها تاریک‌اند؛ کلیدهای شماره‌دار (۱ ثم ۲) را به ترتیب بفشار و با جمع‌آوری ۳ قطعه نقشه تمام مه را کنار بزن!<br>
+      <b>۴. کمبوی بحرانی و ۶ اتاق مخفی:</b> کمبوی ×۳ جاذبه، ×۵ جنون و ×۱۰ طلایی فعال می‌کند. دروازه‌های مخفی تو را به گنج، نگهبان، خزانه ۱۵ث، محراب، فروشگاه و باس مخفی می‌برند.<br>
+      <b>۵. شبح رقیب و آرناهای رتبه‌بندی‌شده:</b> شبح بهترین رکوردت از ثانیه اول با تو مسابقه می‌دهد. با کسب مدال و کاپ در آرناها رتبه‌ات را به برنز، نقره و طلا برسان.
     </div>
     <button class="btn" id="btnCloseGuide">فهمیدم!</button>
   </div>
@@ -458,6 +494,14 @@ function defaultSave(){
     bestTraces: {},
     rivalGhostEnabled: true,
     activeEvoForm: 'basic',
+    deck: ['fire_dash', 'ice_trap', 'magnet_storm'],
+    ownedCards: ['fire_dash', 'ice_trap', 'magnet_storm'],
+    cardLevels: { fire_dash: 1, ice_trap: 1, magnet_storm: 1 },
+    mapPieces: 0,
+    arenaTrophies: 0,
+    fogEnabled: false,
+    chestMeter: 0,
+    pendingRun: null,
     levelRushIdx: 0,
     dailySeedKey: '',
     dailySeedBest: 0,
@@ -529,6 +573,13 @@ var save = (function(){
     if (!parsed.bestTraces) parsed.bestTraces = {};
     if (!parsed.activeEvoForm) parsed.activeEvoForm = 'basic';
     if (parsed.rivalGhostEnabled === undefined) parsed.rivalGhostEnabled = true;
+    if (!Array.isArray(parsed.deck) || parsed.deck.length !== 3) parsed.deck = def.deck.slice();
+    if (!Array.isArray(parsed.ownedCards)) parsed.ownedCards = def.ownedCards.slice();
+    if (!parsed.cardLevels) parsed.cardLevels = def.cardLevels;
+    if (parsed.mapPieces === undefined) parsed.mapPieces = 0;
+    if (parsed.arenaTrophies === undefined) parsed.arenaTrophies = 0;
+    if (parsed.fogEnabled === undefined) parsed.fogEnabled = false;
+    if (parsed.chestMeter === undefined) parsed.chestMeter = 0;
     if (!parsed.dailyProgress) parsed.dailyProgress = def.dailyProgress;
     if (!parsed.weeklyProgress) parsed.weeklyProgress = def.weeklyProgress;
     if (parsed.missionDayKey !== todayKey()){
@@ -1191,7 +1242,39 @@ function initPixelIcons(){
       '..oPPWCPWWWWPCWPPO..','..oPPWCCCCCCCCWPPO..','..oPPWWWWWWWWWWPPO..','..oooooooooooooooo..',
       '....................','....................','....................','....................',
       '....................','....................','....................','....................'
-    ], { o:'#1e1b4b', P:'#9333ea', W:'#f3e8ff', C:'#38bdf8', Y:'#ffd43b', O:'#1e1b4b' }]
+    ], { o:'#1e1b4b', P:'#9333ea', W:'#f3e8ff', C:'#38bdf8', Y:'#ffd43b', O:'#1e1b4b' }],
+
+    map_piece: [20, 20, [
+      '....................','...oooooooooooo.....','..oYYYYYYYYYYYYo....','..oYWWWWddWWWWYo....',
+      '..oYWWoWWWWoWWYo....','..oYWWWRWWWRWWYo....','..oYWWWWddWWWWYo....','..oYddWWWWWWddYo....',
+      '..oYYYYYYYYYYYYo....','...oooooooooooo.....','....................','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#422006', Y:'#fde68a', W:'#fefce8', d:'#b45309', R:'#ef4444' }],
+
+    switch_pad: [20, 20, [
+      '....................','..oooooooooooooooo..','.oSSSSSSSSSSSSSSSSo.','.oSSCCCCCCCCCCCCSSo.',
+      '.oSSCWWWWWWWWWWCSSo.','.oSSCWCCCCCCCCWCSSo.','.oSSCWWWWWWWWWWCSSo.','.oSSCCCCCCCCCCCCSSo.',
+      '.oSSSSSSSSSSSSSSSSo.','..oooooooooooooooo..','....................','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#0f172a', S:'#64748b', C:'#38bdf8', W:'#e0f2fe' }],
+
+    card_ico: [20, 20, [
+      '....................','....oooooooooooo....','...oPPPPPPPPPPPPo...','...oPPWWWWWWWWPPo...',
+      '...oPPWCCCCCCWPPo...','...oPPWCYYYYCWPPo...','...oPPWCYYYYCWPPo...','...oPPWCCCCCCWPPo...',
+      '...oPPWWWWWWWWPPo...','...oPPPPPPPPPPPPo...','....oooooooooooo....','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#1e1b4b', P:'#6366f1', W:'#e0e7ff', C:'#38bdf8', Y:'#ffd43b' }],
+
+    merchant: [20, 20, [
+      '....................','......oooooooo......','....ooPPPPPPPPoo....','...oPPPPWWWWPPPPo...',
+      '...oPPCCCCCCCCPPo...','..ooPPPPPPPPPPPPoo..','..oYYYYYYYYYYYYYYo..','..oYYRYYYYYYYYRYYo..',
+      '...oYYYYYYYYYYYYo...','....oooooooooooo....','....................','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#1e1b4b', P:'#7c3aed', W:'#f5f3ff', C:'#22d3ee', Y:'#ffd43b', R:'#ef4444' }]
   };
 
   for (var key in defs){
@@ -1475,6 +1558,8 @@ var WORLDS_ORDER = ['forest', 'lava', 'ice', 'shadow', 'desert', 'digital'];
 var WORLDS = {
   forest: {
     id: 'forest',
+    arenaNum: 1,
+    lvRange: 'سطح ۱ تا ۴',
     name: 'جنگل سبز',
     subtitle: 'آغاز ماجراجویی با موانع سنگی و میوه‌های نئونی',
     bg: '#0c1f17',
@@ -1492,6 +1577,8 @@ var WORLDS = {
   },
   lava: {
     id: 'lava',
+    arenaNum: 2,
+    lvRange: 'سطح ۵ تا ۸',
     name: 'غار مذاب',
     subtitle: 'کاشی‌های گداخته و شهاب‌سنگ‌های آتشین',
     bg: '#230c0a',
@@ -1509,6 +1596,8 @@ var WORLDS = {
   },
   ice: {
     id: 'ice',
+    arenaNum: 3,
+    lvRange: 'سطح ۹ تا ۱۲',
     name: 'قلمرو یخ',
     subtitle: 'مسیرهای لغزنده پرسرعت و پل‌های شکننده',
     bg: '#091b2c',
@@ -1526,8 +1615,10 @@ var WORLDS = {
   },
   shadow: {
     id: 'shadow',
+    arenaNum: 4,
+    lvRange: 'سطح ۱۳ تا ۱۶',
     name: 'جهان سایه',
-    subtitle: 'دید محدود با نور مار و همزاد تاریکی',
+    subtitle: 'مه تاریک هزارتو با نور مار و همزاد سایه',
     bg: '#110a21',
     bg2: '#170f2e',
     wall: '#4c2882',
@@ -1536,13 +1627,15 @@ var WORLDS = {
     bossKey: 3,
     bossName: 'اژدهای برقی سایه',
     speedMult: 0.90,
-    hazards: ['سایه تاریک محدودکننده دید', 'مار همزاد تعقیب‌گر'],
+    hazards: ['مه هزارتو و دید محدود', 'مار همزاد تعقیب‌گر'],
     specialItem: 'روح عبور از دیوار',
     eventDesc: 'کسوف سایه: تاریکی کوتاه با امتیاز دو برابر',
     challenge: { title: 'چالش سایه: ۷۰۰ امتیاز در تاریکی', targetScore: 700, minCombo: 5, rewardGold: 100, rewardCrystals: 5 }
   },
   desert: {
     id: 'desert',
+    arenaNum: 5,
+    lvRange: 'سطح ۱۷ تا ۲۰',
     name: 'بیابان طلایی',
     subtitle: 'شن‌های روان کُندکننده و توفان شن دوره‌ای',
     bg: '#241a08',
@@ -1560,7 +1653,9 @@ var WORLDS = {
   },
   digital: {
     id: 'digital',
-    name: 'جهان دیجیتال',
+    arenaNum: 6,
+    lvRange: 'سطح ۲۱ به بالا',
+    name: 'دژ دیجیتال',
     subtitle: 'پورتال‌های انتقال دوقلو و بلوک‌های تخریب‌پذیر',
     bg: '#07141f',
     bg2: '#0b1d2c',
@@ -1621,6 +1716,8 @@ function generateWorldLayout(worldId, stageNum, rand){
   var layout = {
     walls: [],
     dWalls: [],
+    secretWalls: [],
+    switches: [],
     hotTiles: [],
     iceTiles: [],
     sandTiles: [],
@@ -1723,8 +1820,26 @@ function generateWorldLayout(worldId, stageNum, rand){
     }
   }
 
+  /* دیوارهای مخفی شکننده با دش (شبیه دیوار عادی ولی دارای درخشش خفیف) */
+  for (var swi=0; swi<10 && layout.secretWalls.length<2; swi++){
+    var swx = 2 + Math.floor(rand() * (COLS - 4));
+    var swy = 2 + Math.floor(rand() * (ROWS - 4));
+    if (!canPlace(swx, swy)) continue;
+    used[keyOf(swx, swy)] = true;
+    layout.secretWalls.push({ x:swx, y:swy, reward: swi === 0 ? 'crystal' : 'map_piece' });
+  }
+
+  /* معمای محیطی کلیدهای زمینی به ترتیب (۱ -> ۲) برای پاداش گنج */
+  for (var pzi=0; pzi<20 && layout.switches.length<2; pzi++){
+    var pzx = 2 + Math.floor(rand() * (COLS - 4));
+    var pzy = 2 + Math.floor(rand() * (ROWS - 4));
+    if (!canPlace(pzx, pzy)) continue;
+    used[keyOf(pzx, pzy)] = true;
+    layout.switches.push({ x:pzx, y:pzy, order:layout.switches.length + 1, active:false });
+  }
+
   layout.secretEntrance = null;
-  if (rand() < 0.65){
+  if (rand() < 0.7){
     for (var sei=0; sei<40; sei++){
       var sx2 = 2 + Math.floor(rand() * (COLS - 4));
       var sy2 = 2 + Math.floor(rand() * (ROWS - 4));
@@ -1739,11 +1854,11 @@ function generateWorldLayout(worldId, stageNum, rand){
   return layout;
 }
 
-/* تولید ۳ نوع اتاق مخفی (گنج، نگهبان، خزانه ۱۵ ثانیه‌ای) */
+/* تولید ۶ نوع اتاق مخفی (گنج، نگهبان، خزانه ۱۵ث، محراب رلیک، فروشگاه، باس مخفی) */
 function generateSecretRoom(rand){
   rand = rand || Math.random;
-  var roll = rand();
-  var kind = roll < 0.36 ? 'treasure' : (roll < 0.7 ? 'guardian' : 'vault');
+  var kinds = ['treasure', 'guardian', 'vault', 'shrine', 'merchant', 'secret_boss'];
+  var kind = kinds[Math.min(kinds.length - 1, Math.floor(rand() * kinds.length))];
   var sr = {
     kind: kind,
     walls: [],
@@ -1751,7 +1866,8 @@ function generateSecretRoom(rand){
     items: [],
     exit: { x: 16, y: 9 },
     timerMs: kind === 'vault' ? 15000 : 0,
-    enemy: kind === 'guardian' ? { type:'guardian', x:14, y:5 } : null
+    enemy: kind === 'guardian' ? { type:'guardian', x:14, y:5 } : null,
+    bossKey: kind === 'secret_boss' ? 3 : 0
   };
 
   for (var x=3; x<=15; x++){
@@ -1765,13 +1881,13 @@ function generateSecretRoom(rand){
     sr.items.push({x:8, y:7, type:'gold'});
     sr.items.push({x:10, y:7, type:'gold'});
     sr.items.push({x:9, y:11, type:'crystal'});
-    sr.items.push({x:12, y:9, type:'gold'});
+    sr.items.push({x:12, y:9, type:'map_piece'});
   } else if (kind === 'guardian'){
     sr.items.push({x:11, y:9, type:'relic_orb'});
     sr.items.push({x:10, y:6, type:'crystal'});
     sr.items.push({x:10, y:12, type:'gold'});
     sr.items.push({x:7, y:9, type:'apple'});
-  } else {
+  } else if (kind === 'vault'){
     sr.dWalls.push({x:8, y:9, hp:1, maxHp:1});
     sr.dWalls.push({x:11, y:7, hp:1, maxHp:1});
     sr.dWalls.push({x:11, y:11, hp:1, maxHp:1});
@@ -1780,6 +1896,18 @@ function generateSecretRoom(rand){
     sr.items.push({x:12, y:12, type:'gold'});
     sr.items.push({x:13, y:9, type:'crystal'});
     sr.items.push({x:9, y:5, type:'relic_orb'});
+  } else if (kind === 'shrine'){
+    sr.items.push({x:9, y:9, type:'relic_orb'});
+    sr.items.push({x:11, y:7, type:'heart'});
+    sr.items.push({x:11, y:11, type:'map_piece'});
+  } else if (kind === 'merchant'){
+    sr.items.push({x:9, y:7, type:'shop_heart'});
+    sr.items.push({x:11, y:9, type:'shop_shield'});
+    sr.items.push({x:9, y:11, type:'shop_relic'});
+  } else {
+    sr.items.push({x:7, y:7, type:'fireball'});
+    sr.items.push({x:7, y:11, type:'superfire'});
+    sr.items.push({x:10, y:9, type:'crystal'});
   }
   return sr;
 }
@@ -2250,8 +2378,51 @@ var ACHIEVEMENTS = [
   { id:'ach_portal',  name:'مسافر بعد',       desc:'۱۰ بار از پورتال عبور کن',         check:function(s){ return s.stats.portalsUsed >= 10; }, rewardCrystals:2 },
   { id:'ach_master',  name:'فاتح جهان‌ها',     desc:'حداقل ۳ مدال استادی جهان بگیر',   check:function(s){ return countMasteryBadges() >= 3; }, rewardCrystals:5 },
   { id:'ach_secret',  name:'کاشف اتاق مخفی',   desc:'وارد یک اتاق مخفی شو',            check:function(s){ return s.stats.secretsFound >= 1; }, rewardCrystals:3 },
-  { id:'ach_ghost',   name:'شکارچی شبح',       desc:'از شبح رکورد قبلی جلو بزن',      check:function(s){ return s.stats.ghostWins >= 1; }, rewardCrystals:4 }
+  { id:'ach_ghost',   name:'شکارچی شبح',       desc:'از شبح رکورد قبلی جلو بزن',      check:function(s){ return s.stats.ghostWins >= 1; }, rewardCrystals:4 },
+  { id:'ach_carto',   name:'نقشه‌بردار هزارتو', desc:'۶ قطعه نقشه مخفی جمع‌آوری کن',    check:function(s){ return (s.mapPieces || 0) >= 6; }, rewardCrystals:4 }
 ];
+
+/* ۸ کارت تاکتیکی (دک ۳تایی با ارتقای سطح ۱ تا ۳ بدون Pay-to-Win) */
+var TACTICAL_CARDS = [
+  { id:'fire_dash',     name:'دش آتشین',      ico:'fireball',    needLv:1, slotHint:'تقویت دش',   desc:'ردپای آتشین هنگام دش و شکستن دیوارهای مخفی' },
+  { id:'ice_trap',      name:'تله یخی',       ico:'slow',        needLv:1, slotHint:'تقویت مهارت', desc:'انجماد دشمنان و کند کردن پرتابه‌های باس' },
+  { id:'magnet_storm',  name:'طوفان مغناطیس', ico:'magnet',      needLv:1, slotHint:'جذب خودکار', desc:'افزایش شعاع جذب غذا، سکه و قطعات نقشه' },
+  { id:'shadow_step',   name:'گام سایه',       ico:'ghost',       needLv:2, slotHint:'عبور از مانع', desc:'حالت روح کوتاه هنگام فعال‌سازی مهارت' },
+  { id:'time_echo',     name:'پژواک زمان',    ico:'rewind',      needLv:3, slotHint:'پشتیبانی زمان', desc:'+۱ شارژ بازگشت زمان و ایمنی بیشتر پس از ضربه' },
+  { id:'thunder_pulse', name:'موج رعد',       ico:'lightning',   needLv:4, slotHint:'موج تخریب',  desc:'انفجار شوک الکتریکی و تخریب دیوارهای اطراف' },
+  { id:'golden_rush',   name:'هجوم طلا',      ico:'gold',        needLv:5, slotHint:'امتیاز و طلا', desc:'+۲۰٪ امتیاز بیشتر و سکه اضافه در کمبوی بالا' },
+  { id:'phantom_clone', name:'همزاد شبح',     ico:'relic_eye',   needLv:6, slotHint:'حمایت شبح',  desc:'حذف خطر همزاد و دوام بیشتر حالت امتیاز ×۲' }
+];
+function getCardObj(id){
+  for (var i=0;i<TACTICAL_CARDS.length;i++) if (TACTICAL_CARDS[i].id===id) return TACTICAL_CARDS[i];
+  return TACTICAL_CARDS[0];
+}
+function getCardLevel(id){
+  return Math.min(3, Math.max(1, (save.cardLevels && save.cardLevels[id]) || 1));
+}
+function checkCardUnlocks(){
+  var unlocked = [];
+  if (!save.ownedCards) save.ownedCards = ['fire_dash','ice_trap','magnet_storm'];
+  TACTICAL_CARDS.forEach(function(c){
+    if (save.ownedCards.indexOf(c.id) === -1 && save.level >= c.needLv){
+      save.ownedCards.push(c.id);
+      if (!save.cardLevels) save.cardLevels = {};
+      save.cardLevels[c.id] = 1;
+      unlocked.push(c.name);
+    }
+  });
+  return unlocked;
+}
+
+/* محاسبه رتبه تسلط هر آرنا (برنز / نقره / طلا) */
+function getArenaRankTier(worldId){
+  var m = getWorldMastery(worldId);
+  var pts = (m.scoreBadge?1:0) + (m.noHitBadge?1:0) + (m.comboBadge?1:0) + (m.challengeDone?1:0);
+  if (pts >= 4) return { id:'gold',   name:'طلایی',   color:'#ffd43b', count:pts };
+  if (pts >= 2) return { id:'silver', name:'نقره‌ای', color:'#cbd5e1', count:pts };
+  if (pts >= 1) return { id:'bronze', name:'برنزی',   color:'#f59e0b', count:pts };
+  return { id:'none', name:'تازه‌وارد', color:'#64748b', count:0 };
+}
 
 /* ۵ رلیک دائمی در طول یک Run */
 var RELICS = [
@@ -2306,7 +2477,8 @@ var BESTIARY = [
   { id:'guardian', name:'مار نگهبان',    ico:'shield',      desc:'از گنج‌ها و کلیدها محافظت می‌کند' },
   { id:'dwall',    name:'دیوار شکننده',  ico:'brick',       desc:'با فعال کردن دش می‌توانی آن را بشکنی' },
   { id:'portal',   name:'پورتال دوقلو',  ico:'portal',      desc:'مار را بی‌وقفه به پورتال جفت منتقل می‌کند' },
-  { id:'secret',   name:'اتاق مخفی',     ico:'secret_door', desc:'ورودی پنهان به گنج، رلیک و چالش کمیاب' },
+  { id:'secret',   name:'اتاق مخفی',     ico:'secret_door', desc:'ورودی پنهان به گنج، محراب، فروشگاه و باس مخفی' },
+  { id:'map_pc',   name:'قطعه نقشه',     ico:'map_piece',   desc:'جمع‌آوری ۳ قطعه تمام مه نقشه را کنار می‌زند' },
   { id:'d1',       name:'اژدهای آبی',    ico:'orb',         desc:'باس ۳ فازه با پرتابه‌های مستقیم و موج یخی' },
   { id:'d2',       name:'اژدهای آتشین',  ico:'fireball',    desc:'باس ۳ فازه با مناطق سوزان و رگبار شعله' },
   { id:'d3',       name:'اژدهای برقی',   ico:'lightning',   desc:'باس ۳ فازه با رعدهای خطی سریع' },
@@ -2415,9 +2587,13 @@ var TYPES = {
   shield:    { ico:'shield',     color:'#60a5fa' },
   key:       { ico:'key',        color:'#ffd43b' },
   mimic:     { ico:'mimic',      color:'#ef4444' },
-  coin_drop: { ico:'coin',       color:'#ffd43b' },
-  timer:     { ico:'timer',      color:'#46f88f' },
-  relic_orb: { ico:'relic_eye',  color:'#a855f7' }
+  coin_drop:   { ico:'coin',       color:'#ffd43b' },
+  timer:       { ico:'timer',      color:'#46f88f' },
+  relic_orb:   { ico:'relic_eye',  color:'#a855f7' },
+  map_piece:   { ico:'map_piece',  color:'#fde68a' },
+  shop_heart:  { ico:'heart_full', color:'#ff4757' },
+  shop_shield: { ico:'shield',     color:'#38bdf8' },
+  shop_relic:  { ico:'merchant',   color:'#a855f7' }
 };
 
 function drawBoard(t){
@@ -2506,6 +2682,25 @@ function drawBoard(t){
     ctx.fillRect(wx+2, wy+2, cell-4, Math.max(2, Math.round(cell*0.16)));
     ctx.strokeStyle = '#09120e'; ctx.lineWidth = 2;
     ctx.strokeRect(wx+1, wy+1, cell-2, cell-2);
+  });
+
+  /* دیوارهای مخفی (ظاهری شبیه دیوار ولی با درخشش ریز قابل کشف) */
+  secretWalls.forEach(function(sw){
+    var wx = sw.x*cell, wy = sw.y*cell;
+    ctx.fillStyle = wo.wall;
+    ctx.fillRect(wx+1, wy+1, cell-2, cell-2);
+    ctx.fillStyle = 'rgba(168,85,247,'+(0.25 + 0.25*Math.sin(t/180))+')';
+    ctx.fillRect(wx+Math.round(cell*0.3), wy+Math.round(cell*0.3), Math.max(2, Math.round(cell*0.4)), 2);
+    ctx.strokeStyle = '#09120e'; ctx.lineWidth = 2;
+    ctx.strokeRect(wx+1, wy+1, cell-2, cell-2);
+  });
+
+  /* کلیدهای زمینی معمای محیطی */
+  switches.forEach(function(pz){
+    var px = pz.x*cell, py = pz.y*cell;
+    if (PX_ICONS.switch_pad) ctx.drawImage(PX_ICONS.switch_pad, px+1, py+1, cell-2, cell-2);
+    ctx.fillStyle = pz.active ? '#46f88f' : '#ffd43b';
+    ctx.fillRect(px+Math.round(cell*0.36), py+Math.round(cell*0.36), Math.max(3, Math.round(cell*0.28)), Math.max(3, Math.round(cell*0.28)));
   });
 
   /* دیوارهای تخریب‌پذیر با نمایش ترک */
@@ -2601,12 +2796,15 @@ function drawBoard(t){
 }
 
 function drawItems(t){
+  var fogOn = isFogActive();
+  var fastFx = isLowFx() || perfLowMode || particles.length > 26;
   items.forEach(function(it){
+    if (fogOn && !fogRevealAll && !isCellExplored(it.x, it.y)) return;
     var def = TYPES[it.type] || TYPES.apple;
     var bob = Math.sin(t/190 + it.x) * (cell * 0.08);
     var cx = (it.x + 0.5) * cell;
     var cy = (it.y + 0.5) * cell + bob;
-    if (!isLowFx()){
+    if (!fastFx){
       var g = ctx.createRadialGradient(cx, cy, cell*0.06, cx, cy, cell*0.58);
       g.addColorStop(0, def.color + '44'); g.addColorStop(1, 'transparent');
       ctx.fillStyle = g;
@@ -2640,12 +2838,22 @@ function interpolateBodyPts(currBody, prevBody, interp){
 }
 
 function drawWorldEffects(t){
-  /* کاهش دید در جهان سایه */
-  if (world === 'shadow' || fogActiveMs > 0){
-    var hx = snake.length ? (snake[0].x + 0.5) * cell : canvas.width * 0.5;
-    var hy = snake.length ? (snake[0].y + 0.5) * cell : canvas.height * 0.5;
-    var rSpot = (fogActiveMs > 0) ? cell * 3.8 : cell * 5.6;
-    var rad = ctx.createRadialGradient(hx, hy, cell * 1.4, hx, hy, rSpot);
+  /* مه جنگ هزارتو (Fog of War) */
+  if (isFogActive() && !fogRevealAll && snake.length){
+    var hxG = snake[0].x, hyG = snake[0].y;
+    var visR = hasRelic('phantom_eye') ? 5.2 : 3.6;
+    for (var fy=0; fy<ROWS; fy++){
+      for (var fx2=0; fx2<COLS; fx2++){
+        var d = Math.abs(fx2 - hxG) + Math.abs(fy - hyG);
+        if (d <= visR) continue;
+        ctx.fillStyle = isCellExplored(fx2, fy) ? 'rgba(8,6,18,0.48)' : 'rgba(6,8,16,0.90)';
+        ctx.fillRect(fx2*cell, fy*cell, cell, cell);
+      }
+    }
+  } else if (fogActiveMs > 0 && snake.length){
+    var hx = (snake[0].x + 0.5) * cell;
+    var hy = (snake[0].y + 0.5) * cell;
+    var rad = ctx.createRadialGradient(hx, hy, cell * 1.4, hx, hy, cell * 4.0);
     rad.addColorStop(0, 'rgba(10,5,24,0)');
     rad.addColorStop(0.65, 'rgba(10,5,24,0.45)');
     rad.addColorStop(1, 'rgba(8,4,18,0.88)');
@@ -2653,11 +2861,11 @@ function drawWorldEffects(t){
     ctx.fillRect(0, 0, COLS * cell, ROWS * cell);
   }
   /* طوفان شن در بیابان */
-  if (world === 'desert' && sandstormMs > 0 && !isLowFx()){
+  if (world === 'desert' && sandstormMs > 0 && !isLowFx() && !perfLowMode){
     ctx.fillStyle = 'rgba(245,158,11,0.16)';
     ctx.fillRect(0, 0, COLS*cell, ROWS*cell);
     ctx.fillStyle = 'rgba(254,243,199,0.45)';
-    for (var i=0;i<18;i++){
+    for (var i=0;i<14;i++){
       var sx = ((t*0.35 + i*47) % (COLS*cell));
       var sy = ((i*31 + Math.sin(t/200+i)*8) % (ROWS*cell));
       ctx.fillRect(sx, sy, 8, 2);
@@ -2873,10 +3081,10 @@ var boss = null, pShots = [], bossShots = [];
 var playerHp = 3, maxPlayerHp = 3, invulnT = 0;
 var shakeMag = 0;
 
-var walls = [], dWalls = [], hotTiles = [], iceTiles = [], sandTiles = [], crumbleTiles = [];
+var walls = [], dWalls = [], secretWalls = [], switches = [], hotTiles = [], iceTiles = [], sandTiles = [], crumbleTiles = [];
 var portals = [], doorCell = null, trailCells = [];
 var rivals = [], historyBuf = [], shadowSnake = [];
-var runTrace = [], lastRunTrace = null, replayIdx = 0, replayTrace = null, isReplay = false, replaySpeed = 1;
+var runTrace = [], fullGhostTrace = [], runTicks = 0, lastRunTrace = null, replayIdx = 0, replayTrace = null, isReplay = false, replaySpeed = 1;
 
 var dashTimer = 0, dashCd = 0, dashMaxCd = 3500;
 var energyPct = 0;
@@ -2889,14 +3097,58 @@ var activeChallenge = null;
 
 var activeRelics = [], dragonScaleUsed = false, phantomTarget = null;
 var secretEntrance = null, secretExit = null, inSecretRoom = false, secretTimerMs = 0, savedMainRoom = null;
-var rivalGhostTrace = null, rivalGhostIdx = 0, rivalGhostSnake = [], rivalGhostBeat = false, rivalGhostBest = 0;
+var rivalGhostTrace = null, rivalGhostTotalTicks = 0, rivalGhostSnake = [], rivalGhostBeat = false, rivalGhostBest = 0;
 var activeArcadeEvent = null, arcadeEventCd = 16000;
+var exploredMap = {}, fogRevealAll = false, perfLowMode = false, slowFrameStreak = 0;
+var MAX_PARTICLES = 45, MAX_SHOCKWAVES = 6, MAX_FLOATS = 10;
+
+function hasCard(id){ return !!(save.deck && save.deck.indexOf(id) !== -1); }
+function cardLv(id){ return getCardLevel(id); }
+
+function isFogActive(){
+  if (inSecretRoom) return false;
+  return !!(world === 'shadow' || save.fogEnabled || mode === 'dungeon');
+}
+function isCellExplored(x, y){
+  return !!exploredMap[x + ',' + y];
+}
+function updateFogVisibility(){
+  if (!snake.length) return;
+  var hx = snake[0].x, hy = snake[0].y;
+  var visR = hasRelic('phantom_eye') ? 5 : 4;
+  for (var dy=-visR; dy<=visR; dy++){
+    for (var dx=-visR; dx<=visR; dx++){
+      if (Math.abs(dx) + Math.abs(dy) <= visR){
+        var vx = (hx + dx + COLS) % COLS, vy = (hy + dy + ROWS) % ROWS;
+        exploredMap[vx + ',' + vy] = true;
+      }
+    }
+  }
+}
+
+function downsampleFrames(frames, maxLen){
+  if (!frames || !frames.length) return [];
+  if (frames.length <= maxLen) return frames.slice();
+  var out = [];
+  for (var i=0; i<maxLen; i++){
+    var idx = Math.round(i * (frames.length - 1) / (maxLen - 1));
+    out.push(frames[idx]);
+  }
+  return out;
+}
+
+function saveEmergencyCheckpoint(){
+  if (state === 'play' && !isReplay){
+    save.pendingRun = { world:world, mode:mode, score:score, foodsRun:foodsRun, ts:Date.now() };
+  }
+  persist();
+}
 
 function hasRelic(id){ return activeRelics.indexOf(id) !== -1; }
 function updatePhantomTarget(){
   if (!hasRelic('phantom_eye')){ phantomTarget = null; return; }
   for (var i=0;i<items.length;i++){
-    if (items[i].type === 'relic_orb' || items[i].type === 'crystal' || items[i].type === 'gold'){
+    if (items[i].type === 'relic_orb' || items[i].type === 'map_piece' || items[i].type === 'crystal' || items[i].type === 'gold'){
       phantomTarget = { x:items[i].x, y:items[i].y }; return;
     }
   }
@@ -2905,18 +3157,21 @@ function updatePhantomTarget(){
 
 function addShake(amount){ shakeMag = Math.max(shakeMag, amount); }
 function addShockwave(gx, gy, color, maxR){
-  if (isLowFx()) return;
+  if (isLowFx() || perfLowMode || shockwaves.length >= MAX_SHOCKWAVES) return;
   shockwaves.push({ x:(gx+0.5)*cell, y:(gy+0.5)*cell, r:cell*0.2, maxR:maxR||cell*2.4, color:color, life:1 });
 }
 function spawnParticles(gx, gy, color, n){
-  if (isLowFx()) return;
-  var count = n || 8;
+  if (isLowFx() || perfLowMode) return;
+  var avail = MAX_PARTICLES - particles.length;
+  if (avail <= 0) return;
+  var count = Math.min(n || 8, avail);
   for (var i=0;i<count;i++){
     var ang = Math.random()*Math.PI*2, spd = 1.2 + Math.random()*2.5;
-    particles.push({ x:(gx+0.5)*cell, y:(gy+0.5)*cell, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, color:color, size:Math.max(2, cell*0.2), life:1, decay:0.032 });
+    particles.push({ x:(gx+0.5)*cell, y:(gy+0.5)*cell, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, color:color, size:Math.max(2, cell*0.2), life:1, decay:0.036 });
   }
 }
 function addFloat(gx, gy, txt, color){
+  if (floatTexts.length >= MAX_FLOATS) floatTexts.shift();
   floatTexts.push({ x:(gx+0.5)*cell, y:gy*cell, vy:-0.6, text:txt, color:color, life:1 });
 }
 
@@ -2974,6 +3229,7 @@ function pauseGame(){
 function cellBlockedByWall(x, y){
   for (var i=0;i<walls.length;i++) if (walls[i].x===x && walls[i].y===y) return true;
   for (var j=0;j<dWalls.length;j++) if (dWalls[j].x===x && dWalls[j].y===y) return true;
+  for (var k=0;k<secretWalls.length;k++) if (secretWalls[k].x===x && secretWalls[k].y===y) return true;
   return false;
 }
 
@@ -3044,7 +3300,8 @@ function updateHUD(){
   }
   if ($('#hudGhostDiff')){
     if (rivalGhostTrace && rivalGhostTrace.length && !isReplay && !inSecretRoom){
-      var gSnap = rivalGhostTrace[Math.min(rivalGhostIdx, rivalGhostTrace.length - 1)];
+      var gIdx = Math.min(rivalGhostTrace.length - 1, Math.floor((runTicks / Math.max(1, rivalGhostTotalTicks || rivalGhostTrace.length)) * rivalGhostTrace.length));
+      var gSnap = rivalGhostTrace[gIdx];
       var gSc = gSnap ? gSnap.score : 0;
       var diff = score - gSc;
       $('#hudGhostDiff').style.display = 'inline-block';
@@ -3103,7 +3360,7 @@ function updateHUD(){
 }
 
 function resetStageArrays(){
-  items = []; walls = []; dWalls = []; hotTiles = []; iceTiles = []; sandTiles = [];
+  items = []; walls = []; dWalls = []; secretWalls = []; switches = []; hotTiles = []; iceTiles = []; sandTiles = [];
   crumbleTiles = []; portals = []; doorCell = null; trailCells = [];
   rivals = []; pShots = []; bossShots = []; boss = null; shadowSnake = [];
   particles = []; floatTexts = []; shockwaves = [];
@@ -3111,6 +3368,7 @@ function resetStageArrays(){
   dashTimer = 0; dashCd = 0; hotStayTicks = 0; onIce = false; onSand = false; portalCdTicks = 0;
   shrinkBorder = 0; fogActiveMs = 0; sandstormMs = 0;
   secretEntrance = null; secretExit = null; inSecretRoom = false; secretTimerMs = 0; savedMainRoom = null;
+  exploredMap = {}; fogRevealAll = false;
 }
 
 function spawnSnakeAt(sx, sy){
@@ -3179,6 +3437,8 @@ function setupStageContent(){
   var lay = generateWorldLayout(world, stageScale, rngFn);
   walls = lay.walls;
   dWalls = lay.dWalls;
+  secretWalls = lay.secretWalls || [];
+  switches = lay.switches || [];
   hotTiles = lay.hotTiles;
   iceTiles = lay.iceTiles;
   sandTiles = lay.sandTiles;
@@ -3193,6 +3453,7 @@ function setupStageContent(){
   spawnItem('gold');
   if (mode === 'timeattack') spawnItem('timer');
   if (rngFn() < 0.35 && activeRelics.length < 4) spawnItem('relic_orb');
+  if (rngFn() < 0.55) spawnItem('map_piece');
 
   /* اسپاون دشمن هوشمند بر اساس نوع حالت */
   if (mode === 'dungeon'){
@@ -3209,6 +3470,7 @@ function setupStageContent(){
   } else if (mode === 'endless'){
     rivals.push(spawnEnemySnake('rival', 15, 14));
   }
+  updateFogVisibility();
   updatePhantomTarget();
   updateHUD();
 }
@@ -3224,7 +3486,7 @@ function startGame(chosenMode, chosenWorld, challengeObj){
   if (mode === 'endless' && save.dailySeedMode){
     var dk = todayKey();
     if (save.dailySeedKey !== dk){ save.dailySeedKey = dk; save.dailySeedBest = 0; }
-    rngFn = mulberry32(hashStr('pixel-rush-' + dk + '-' + world));
+    rngFn = mulberry32(hashStr('maze-royale-' + dk + '-' + world));
   } else {
     rngFn = Math.random;
   }
@@ -3239,9 +3501,11 @@ function startGame(chosenMode, chosenWorld, challengeObj){
   energyPct = 0; skillCd = 0; envCd = 8500; closeCallCd = 0;
   roguePerks = {};
   maxPlayerHp = 3; playerHp = 3; invulnT = 0;
-  rewindsLeft = 1 + Math.floor((save.skills.reflex || 1) / 2);
+  rewindsLeft = 1 + Math.floor((save.skills.reflex || 1) / 2) + (hasCard('time_echo') ? (cardLv('time_echo') >= 3 ? 2 : 1) : 0);
   arenaTimeLeft = (save.timeAttackSec || 60) * 1000;
   runTrace = [];
+  fullGhostTrace = [];
+  runTicks = 0;
   activeRelics = [];
   dragonScaleUsed = false;
   phantomTarget = null;
@@ -3250,9 +3514,9 @@ function startGame(chosenMode, chosenWorld, challengeObj){
 
   var rKey = world + '_' + mode;
   var savedT = (save.rivalGhostEnabled !== false && save.bestTraces && save.bestTraces[rKey]) ? save.bestTraces[rKey] : null;
-  rivalGhostTrace = (savedT && Array.isArray(savedT.frames)) ? savedT.frames : null;
+  rivalGhostTrace = (savedT && Array.isArray(savedT.frames) && savedT.frames.length) ? savedT.frames : null;
+  rivalGhostTotalTicks = savedT ? Number(savedT.totalTicks || (rivalGhostTrace ? rivalGhostTrace.length : 0)) : 0;
   rivalGhostBest = savedT ? Number(savedT.score || 0) : 0;
-  rivalGhostIdx = 0;
   rivalGhostSnake = [];
   rivalGhostBeat = false;
 
@@ -3273,14 +3537,18 @@ function triggerDash(){
   if (state !== 'play' || isReplay) return;
   if (dashCd > 0 || dashTimer > 0) return;
   var cdReduc = (roguePerks.rg_bolt ? 0.6 : Math.max(0.65, 1 - (save.skills.reflex - 1) * 0.07)) * (hasRelic('broken_clock') ? 0.72 : 1);
-  dashTimer = 520;
+  dashTimer = 520 + (hasCard('fire_dash') ? cardLv('fire_dash') * 70 : 0);
   dashCd = Math.round(dashMaxCd * cdReduc);
   save.dailyProgress.dashes++;
+  if (hasCard('fire_dash')){
+    fx.trailType = 'fire';
+    fx.trailMs = Math.max(fx.trailMs, 1500 + cardLv('fire_dash') * 500);
+  }
   sfx.dash();
   vibrate(14);
   if (snake.length){
-    addShockwave(snake[0].x, snake[0].y, '#38bdf8', cell*2.2);
-    spawnParticles(snake[0].x, snake[0].y, '#38bdf8', 10);
+    addShockwave(snake[0].x, snake[0].y, hasCard('fire_dash') ? '#ff6b2b' : '#38bdf8', cell*2.2);
+    spawnParticles(snake[0].x, snake[0].y, hasCard('fire_dash') ? '#ff6b2b' : '#38bdf8', 10);
   }
   updateHUD();
 }
@@ -3308,7 +3576,6 @@ function triggerSkill(){
       fx.trailType = usedFullEnergy ? 'energy' : gid;
       fx.trailMs = Math.max(fx.trailMs, dur);
       if (gid === 'electric'){
-        /* موج شوک دیوارهای شکننده نزدیک را خرد می‌کند */
         for (var i=dWalls.length-1;i>=0;i--){
           var dw = dWalls[i];
           if (Math.abs(dw.x-h.x)+Math.abs(dw.y-h.y) <= 3){
@@ -3334,6 +3601,36 @@ function triggerSkill(){
     if (gid === 'ghost'){ fx.ghost = Math.max(fx.ghost, roguePerks.rg_ghost ? dur*2 : dur); }
     if (gid === 'shadow'){ fx.double = Math.max(fx.double, dur); }
   });
+
+  /* اجرای افکت کارت‌های تاکتیکی تجهیزشده در دک ۳تایی */
+  if (hasCard('ice_trap')){
+    var fzDur = 2400 + cardLv('ice_trap') * 800;
+    rivals.forEach(function(rv){ rv.frozenMs = Math.max(rv.frozenMs, fzDur); });
+    fx.slow = Math.max(fx.slow, 1800 + cardLv('ice_trap') * 500);
+  }
+  if (hasCard('shadow_step')){
+    fx.ghost = Math.max(fx.ghost, 1800 + cardLv('shadow_step') * 700);
+  }
+  if (hasCard('thunder_pulse')){
+    var pulseR = 2 + cardLv('thunder_pulse');
+    for (var ti=dWalls.length-1;ti>=0;ti--){
+      if (Math.abs(dWalls[ti].x-h.x)+Math.abs(dWalls[ti].y-h.y) <= pulseR){
+        spawnParticles(dWalls[ti].x, dWalls[ti].y, '#fde047', 8);
+        dWalls.splice(ti, 1); save.stats.wallsBroken++; score += 20;
+      }
+    }
+    rivals.forEach(function(rv){
+      if (rv.body.length && Math.abs(rv.body[0].x-h.x)+Math.abs(rv.body[0].y-h.y) <= pulseR + 2){
+        rv.hp--; rv.frozenMs = Math.max(rv.frozenMs, 1400);
+      }
+    });
+  }
+  if (hasCard('golden_rush')){
+    fx.double = Math.max(fx.double, 3200 + cardLv('golden_rush') * 900);
+  }
+  if (hasCard('phantom_clone')){
+    fx.double = Math.max(fx.double, 2600 + cardLv('phantom_clone') * 800);
+  }
 
   if (boss){
     pShots.push({ x:h.x, y:h.y, vx:0.38, vy:0, super:usedFullEnergy, dmg: usedFullEnergy ? 2 : 1 });
@@ -3413,7 +3710,8 @@ function awardFood(type, gx, gy){
 
   var sk = getSkinObj(save.skin);
   var comboTierMult = combo >= 2 ? 2 : 1; /* کمبوی ×۲ امتیاز پایه را دو برابر می‌کند */
-  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1) * comboTierMult;
+  var cardScoreMult = hasCard('golden_rush') ? (1.12 + cardLv('golden_rush') * 0.06) : 1;
+  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1) * comboTierMult * cardScoreMult;
   var cMult = 1 + Math.min(1.5, (combo - 1) * 0.15);
 
   foodsRun++;
@@ -3444,6 +3742,35 @@ function awardFood(type, gx, gy){
     sfx.crystal();
     spawnParticles(gx, gy, '#c084fc', 12);
     addFloat(gx, gy, '+۱ کریستال!', '#e9d5ff');
+  } else if (type === 'map_piece'){
+    save.mapPieces = (save.mapPieces || 0) + 1;
+    discover('map_pc');
+    score += 45;
+    save.chestMeter = Math.min(100, (save.chestMeter || 0) + 25);
+    sfx.crystal();
+    spawnParticles(gx, gy, '#fde68a', 12);
+    if (save.mapPieces % 3 === 0){
+      fogRevealAll = true;
+      addFloat(gx, gy, 'مه نقشه کنار رفت!', '#fde68a');
+    } else {
+      addFloat(gx, gy, 'قطعه نقشه ('+faNum(save.mapPieces%3)+'/۳)', '#fde68a');
+    }
+  } else if (type === 'shop_heart'){
+    if (save.gold >= 15){
+      save.gold -= 15;
+      playerHp = Math.min(maxPlayerHp + 1, playerHp + 1);
+      if (playerHp > maxPlayerHp) maxPlayerHp = playerHp;
+      sfx.win(); addFloat(gx, gy, '+۱ قلب (۱۵س)', '#46f88f');
+    } else addFloat(gx, gy, 'نیاز به ۱۵ سکه', '#fda4af');
+  } else if (type === 'shop_shield'){
+    if (save.gold >= 12){
+      save.gold -= 12; fx.shield = Math.max(fx.shield, 9000);
+      sfx.power(); addFloat(gx, gy, 'سپر خریداری شد!', '#38bdf8');
+    } else addFloat(gx, gy, 'نیاز به ۱۲ سکه', '#fda4af');
+  } else if (type === 'shop_relic'){
+    if (save.gold >= 25){
+      save.gold -= 25; openRelicDraft(); return;
+    } else addFloat(gx, gy, 'نیاز به ۲۵ سکه', '#fda4af');
   } else if (type === 'relic_orb'){
     score += 45;
     sfx.power();
@@ -3612,7 +3939,7 @@ function openRelicDraft(){
 function enterSecretRoom(){
   if (inSecretRoom) return;
   savedMainRoom = {
-    walls: walls, dWalls: dWalls, hotTiles: hotTiles, iceTiles: iceTiles,
+    walls: walls, dWalls: dWalls, secretWalls: secretWalls, switches: switches, hotTiles: hotTiles, iceTiles: iceTiles,
     sandTiles: sandTiles, crumbleTiles: crumbleTiles, portals: portals,
     doorCell: doorCell, items: items, snake: snake.map(function(p){ return {x:p.x,y:p.y}; }),
     prevSnake: prevSnake.map(function(p){ return {x:p.x,y:p.y}; }),
@@ -3623,16 +3950,22 @@ function enterSecretRoom(){
   secretEntrance = null;
   secretExit = sr.exit;
   secretTimerMs = sr.timerMs || 0;
-  walls = sr.walls; dWalls = sr.dWalls; hotTiles = []; iceTiles = []; sandTiles = []; crumbleTiles = []; portals = []; doorCell = null;
+  walls = sr.walls; dWalls = sr.dWalls; secretWalls = []; switches = []; hotTiles = []; iceTiles = []; sandTiles = []; crumbleTiles = []; portals = []; doorCell = null;
   items = sr.items;
   rivals = sr.enemy ? [spawnEnemySnake(sr.enemy.type, sr.enemy.x, sr.enemy.y)] : [];
+  if (sr.bossKey){
+    boss = createBossInstance(sr.bossKey, 5, 0.72);
+    boss.hazardTiles = [];
+  }
   spawnSnakeAt(5, 9);
   invulnT = 1200;
   save.stats.secretsFound++;
+  save.chestMeter = Math.min(100, (save.chestMeter || 0) + 20);
   discover('secret');
   sfx.portal();
   addShockwave(5, 9, '#a855f7', cell*3);
-  showToast(sr.kind === 'vault' ? 'خزانه مخفی (۱۵ ثانیه فرصت!)' : (sr.kind === 'guardian' ? 'اتاق نگهبان مخفی!' : 'اتاق گنج مخفی!'));
+  var srTitles = { vault:'خزانه مخفی (۱۵ث فرصت!)', guardian:'اتاق نگهبان مخفی!', shrine:'محراب رلیک مخفی!', merchant:'فروشگاه پنهان هزارتو!', secret_boss:'نبرد باس مخفی!', treasure:'اتاق گنج مخفی!' };
+  showToast(srTitles[sr.kind] || 'اتاق مخفی!');
   updatePhantomTarget();
   updateHUD();
 }
@@ -3640,14 +3973,16 @@ function enterSecretRoom(){
 function exitSecretRoom(){
   if (!inSecretRoom || !savedMainRoom) return;
   var m = savedMainRoom;
-  walls = m.walls; dWalls = m.dWalls; hotTiles = m.hotTiles; iceTiles = m.iceTiles;
-  sandTiles = m.sandTiles; crumbleTiles = m.crumbleTiles; portals = m.portals;
-  doorCell = m.doorCell; items = m.items; rivals = m.rivals;
+  walls = m.walls; dWalls = m.dWalls; secretWalls = m.secretWalls || []; switches = m.switches || [];
+  hotTiles = m.hotTiles; iceTiles = m.iceTiles; sandTiles = m.sandTiles; crumbleTiles = m.crumbleTiles;
+  portals = m.portals; doorCell = m.doorCell; items = m.items; rivals = m.rivals;
+  boss = null; pShots = []; bossShots = [];
   snake = m.snake; prevSnake = m.prevSnake; dir = m.dir; dirQueue = [m.dir];
   inSecretRoom = false; secretExit = null; secretTimerMs = 0; savedMainRoom = null;
   invulnT = 1400;
   ensureApplesPresent();
   sfx.portal();
+  updateFogVisibility();
   updatePhantomTarget();
   updateHUD();
   showToast('بازگشت به نقشه اصلی');
@@ -3910,6 +4245,24 @@ function stepSnakeTick(){
     }
   }
 
+  /* دیوار مخفی (با دش یا حالت روح می‌شکند و گنج می‌دهد!) */
+  for (var swi=secretWalls.length-1;swi>=0;swi--){
+    var sw = secretWalls[swi];
+    if (sw.x === nx && sw.y === ny){
+      if (dashTimer > 0 || fx.ghost > 0){
+        secretWalls.splice(swi, 1);
+        save.stats.wallsBroken++;
+        items.push({ x:nx, y:ny, type: sw.reward || 'crystal' });
+        sfx.wallBreak();
+        spawnParticles(nx, ny, '#a855f7', 12);
+        addFloat(nx, ny, 'دیوار مخفی کشف شد!', '#e9d5ff');
+      } else {
+        takePlayerHit('دیوار مخفی!');
+        return;
+      }
+    }
+  }
+
   /* دیوار تخریب‌پذیر (با دش می‌شکند!) */
   for (var dwi=dWalls.length-1;dwi>=0;dwi--){
     var dw = dWalls[dwi];
@@ -3946,7 +4299,7 @@ function stepSnakeTick(){
   }
 
   for (var sh=0;sh<shadowSnake.length;sh++){
-    if (shadowSnake[sh].x===nx && shadowSnake[sh].y===ny && fx.ghost <= 0){
+    if (shadowSnake[sh].x===nx && shadowSnake[sh].y===ny && fx.ghost <= 0 && !hasCard('phantom_clone')){
       takePlayerHit('همزاد سایه!');
       return;
     }
@@ -4003,6 +4356,32 @@ function stepSnakeTick(){
     }
   }
 
+  /* معمای محیطی: کلیدهای زمینی به ترتیب */
+  if (switches.length){
+    var nextOrd = 1;
+    switches.forEach(function(pz){ if (pz.active) nextOrd++; });
+    for (var pzi=0; pzi<switches.length; pzi++){
+      var pz = switches[pzi];
+      if (!pz.active && pz.x === nx && pz.y === ny){
+        if (pz.order === nextOrd){
+          pz.active = true;
+          sfx.power();
+          addFloat(nx, ny, 'معما '+faNum(pz.order)+'/'+faNum(switches.length), '#38bdf8');
+          if (switches.every(function(x){ return x.active; })){
+            score += 75;
+            spawnItem('crystal');
+            spawnItem('map_piece');
+            addFloat(nx, ny, 'معمای هزارتو حل شد! +۷۵', '#46f88f');
+          }
+        } else {
+          switches.forEach(function(x){ x.active = false; });
+          addFloat(nx, ny, 'ترتیب اشتباه! ریست شد', '#fda4af');
+        }
+        break;
+      }
+    }
+  }
+
   /* پاداش نزدیک به مرگ (Close Call + تغذیه کمبو) */
   if (closeCallCd <= 0){
     var nearDanger = false;
@@ -4028,11 +4407,12 @@ function stepSnakeTick(){
     trailCells.push({ x:snake[snake.length-1].x, y:snake[snake.length-1].y, kind:fx.trailType||'energy', ms:3500 });
   }
 
-  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس + هسته مغناطیس */
+  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس + هسته مغناطیس + کارت طوفان مغناطیس */
   var magRange = 0;
   if (fx.magnet > 0 || roguePerks.rg_magnet) magRange = 3;
   else if (combo >= 3) magRange = 1 + Math.floor(combo / 4);
   if (hasRelic('magnet_core')) magRange += 2;
+  if (hasCard('magnet_storm')) magRange += (cardLv('magnet_storm') >= 2 ? 2 : 1);
   if (save.skills.greed > 1) magRange += Math.floor((save.skills.greed - 1) / 2);
 
   for (var ii=items.length-1;ii>=0;ii--){
@@ -4041,7 +4421,7 @@ function stepSnakeTick(){
     if (it.x===nx && it.y===ny){
       items.splice(ii, 1);
       awardFood(it.type, nx, ny);
-    } else if (magRange > 0 && dist <= magRange && (it.type==='apple'||it.type==='gold'||it.type==='crystal'||it.type==='coin_drop')){
+    } else if (magRange > 0 && dist <= magRange && (it.type==='apple'||it.type==='gold'||it.type==='crystal'||it.type==='coin_drop'||it.type==='map_piece')){
       it.x += Math.sign(nx - it.x);
       it.y += Math.sign(ny - it.y);
       if (it.x===nx && it.y===ny){
@@ -4051,10 +4431,13 @@ function stepSnakeTick(){
     }
   }
 
-  /* پیشروی شبح رقیب و جایزه سبقت */
+  /* به‌روزرسانی مه هزارتو و ثبت یکنواخت مسیر برای شبح رقیب از فریم صفر */
+  updateFogVisibility();
+  runTicks++;
+
   if (!inSecretRoom && rivalGhostTrace && rivalGhostTrace.length){
-    if (rivalGhostIdx < rivalGhostTrace.length - 1) rivalGhostIdx++;
-    var gf = rivalGhostTrace[rivalGhostIdx];
+    var gIdx = Math.min(rivalGhostTrace.length - 1, Math.floor((runTicks / Math.max(1, rivalGhostTotalTicks || rivalGhostTrace.length)) * rivalGhostTrace.length));
+    var gf = rivalGhostTrace[gIdx];
     rivalGhostSnake = gf ? gf.snake : [];
     if (!rivalGhostBeat && rivalGhostBest > 0 && score > rivalGhostBest){
       rivalGhostBeat = true;
@@ -4064,15 +4447,23 @@ function stepSnakeTick(){
     }
   }
 
-  /* ذخیره فریم بازپخش */
+  /* ذخیره فریم بازپخش و شبح رقیب از ابتدای Run */
   if (!inSecretRoom){
+    var frameObj = { snake: snake.map(function(p){ return {x:p.x, y:p.y}; }), score: score };
+    fullGhostTrace.push(frameObj);
+    if (fullGhostTrace.length > 480){
+      fullGhostTrace = fullGhostTrace.filter(function(_, idx){
+        return idx === 0 || idx === fullGhostTrace.length - 1 || idx % 2 === 0;
+      });
+    }
     runTrace.push({
-      snake: snake.map(function(p){ return {x:p.x, y:p.y}; }),
+      snake: frameObj.snake,
       dir: dir,
       items: items.map(function(i){ return {x:i.x, y:i.y, type:i.type}; }),
       score: score
     });
     if (runTrace.length > 600) runTrace.shift();
+    if (runTicks % 12 === 0) saveEmergencyCheckpoint();
   }
 
   stepRivals();
@@ -4116,13 +4507,17 @@ function finalizeRewards(isVictory){
 
   save.gold += earnedGold;
   save.crystals += earnedCrystals;
+  save.arenaTrophies = (save.arenaTrophies || 0) + (isVictory ? 15 : Math.min(10, Math.floor(score / 80)));
+  save.chestMeter = Math.min(100, (save.chestMeter || 0) + (isVictory ? 40 : Math.min(30, Math.floor(score / 25))));
   var xpRes = addXP(earnedXp);
+  checkCardUnlocks();
   evaluateAchievements();
 
-  /* اختصاص صندوق به تک‌جایگاه در صورت خالی بودن */
+  /* اختصاص صندوق به تک‌جایگاه در صورت خالی بودن یا پر شدن نوار اکتشاف */
   var chestNotice = '';
-  if (save.slot === null && (isVictory || score >= 120)){
-    var cType = (isVictory && Math.random() < 0.2) ? 'gold' : ((isVictory || score >= 320) ? 'silver' : 'bronze');
+  if (save.slot === null && (isVictory || score >= 120 || save.chestMeter >= 100)){
+    var cType = (save.chestMeter >= 100 || (isVictory && Math.random() < 0.25)) ? 'gold' : ((isVictory || score >= 320) ? 'silver' : 'bronze');
+    if (save.chestMeter >= 100) save.chestMeter = 0;
     if (setSingleChest(cType)){
       chestNotice = 'صندوق ' + CHEST_TYPES[cType].name + ' دریافت شد!';
     }
@@ -4136,10 +4531,12 @@ function finalizeRewards(isVictory){
     if (!prevBestT || score > (prevBestT.score || 0)){
       save.bestTraces[rKey] = {
         score: score,
-        frames: runTrace.slice(-240).map(function(f){ return { snake:f.snake, score:f.score }; })
+        totalTicks: Math.max(1, runTicks),
+        frames: downsampleFrames(fullGhostTrace, 240)
       };
     }
   }
+  save.pendingRun = null;
   persist();
   return { gold:earnedGold, crystals:earnedCrystals, xpRes:xpRes, chestNotice:chestNotice, chRewardTxt:chRewardTxt };
 }
@@ -4244,10 +4641,18 @@ function applyControlLayout(){
   nav.style.display = (ctrl === 'swipe') ? 'none' : 'grid';
 }
 
-/* حلقه اصلی ۶۰ فریم */
+/* حلقه اصلی ۶۰ فریم با محافظ افت فریم */
 function loop(t){
-  var dt = Math.min(60, lastT ? (t - lastT) : 16);
+  var rawDt = lastT ? (t - lastT) : 16;
+  var dt = Math.min(60, rawDt);
   lastT = t;
+  if (rawDt > 36){
+    slowFrameStreak++;
+    if (slowFrameStreak >= 8) perfLowMode = true;
+  } else {
+    slowFrameStreak = Math.max(0, slowFrameStreak - 1);
+    if (slowFrameStreak === 0 && perfLowMode) perfLowMode = false;
+  }
 
   if (state === 'play'){
     if (isReplay && replayTrace){
@@ -4313,9 +4718,13 @@ function loop(t){
 }
 requestAnimationFrame(loop);
 
-/* قلاب‌های اندروید */
+/* قلاب‌های اندروید و ذخیره امن در خروج ناگهانی */
+window.addEventListener('pagehide', saveEmergencyCheckpoint);
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'hidden') saveEmergencyCheckpoint();
+});
 window.getGameState = function(){ return state; };
-window.pauseFromAndroid = function(){ pauseGame(); stopMusic(); };
+window.pauseFromAndroid = function(){ saveEmergencyCheckpoint(); pauseGame(); stopMusic(); };
 window.handleAndroidBack = function(){
   if ($('#chestModal') && $('#chestModal').classList.contains('show')){ $('#chestModal').classList.remove('show'); return 'handled'; }
   if ($('#settingsModal') && $('#settingsModal').classList.contains('show')){ $('#settingsModal').classList.remove('show'); return 'handled'; }
@@ -4331,11 +4740,12 @@ window.handleAndroidBack = function(){
 <script>
 /* === js/ui.js === */
 'use strict';
-/* ═══════════════ رابط کاربری ۵ تبه SNAKE: PIXEL RUSH ═══════════════ */
+/* ═══════════════ رابط کاربری ۵ تبه SNAKE: MAZE ROYALE ═══════════════ */
 var toastTimer = null;
 var activeTab = 'tabPlay';
-var colSubTab = 'skins';
-var misSubTab = 'missions';
+var cardsSubTab = 'deck';
+var evoSubTab = 'forms';
+var colSubTab = 'missions';
 
 function showToast(msg){
   var el = $('#crToast');
@@ -4368,6 +4778,35 @@ function applyUiScale(){
   document.documentElement.setAttribute('data-uisize', sz);
 }
 
+function switchTab(tabId){
+  activeTab = tabId;
+  $$('.nav-tab').forEach(function(x){
+    x.classList.toggle('active', x.getAttribute('data-tab') === tabId);
+  });
+  $$('.tab-page').forEach(function(p){
+    p.classList.toggle('active', p.id === tabId);
+  });
+  renderMenu();
+}
+
+function recoverPendingRunIfAny(){
+  if (!save.pendingRun || !save.pendingRun.score || save.pendingRun.score < 30){
+    if (save.pendingRun){ save.pendingRun = null; persist(); }
+    return;
+  }
+  var sc = save.pendingRun.score;
+  var bonusG = Math.max(2, Math.floor(sc / 30));
+  var bonusXp = Math.max(5, Math.floor(sc / 16));
+  save.gold += bonusG;
+  addXP(bonusXp);
+  save.pendingRun = null;
+  checkCardUnlocks();
+  persist();
+  setTimeout(function(){
+    showToast('امتیاز دست ناتمام بازیابی شد: +' + faNum(bonusG) + ' سکه و +' + faNum(bonusXp) + ' XP');
+  }, 350);
+}
+
 function renderTopBar(){
   var needXp = save.level * 100;
   if ($('#tbLevel')) $('#tbLevel').textContent = faNum(save.level);
@@ -4380,17 +4819,36 @@ function renderTopBar(){
   }
 }
 
-/* ═══════════════ تب ۱: بازی و شروع سریع ═══════════════ */
+/* ═══════════════ تب ۱: بازی، دک فعال و متر صندوق ═══════════════ */
 function renderHomeTab(){
   var wo = getWorldObj(save.world);
   var rec = getModeRecord(save.world, save.mode);
+  var tier = getArenaRankTier(save.world);
   if ($('#homeWorldTitle')){
-    $('#homeWorldTitle').innerHTML = pxImgTag('badge', 16) + ' جهان فعال: <b>' + wo.name + '</b>';
+    $('#homeWorldTitle').innerHTML =
+      pxImgTag('badge', 15) + ' آرنا ' + faNum(wo.arenaNum || 1) + ': <b>' + wo.name + '</b>' +
+      ' <span class="tier-pill" style="color:'+tier.color+'">' + tier.name + '</span>';
   }
   if ($('#homeRecordTxt')){
-    $('#homeRecordTxt').textContent = 'بهترین رکورد: ' + faNum(rec.bestScore) +
-      '  •  کمبو: ×' + faNum(rec.maxCombo || 0) +
+    $('#homeRecordTxt').textContent = 'رکورد: ' + faNum(rec.bestScore) +
+      '  •  کاپ: ' + faNum(save.arenaTrophies || 0) +
       '  •  زمان: ' + fmtDuration(rec.bestTimeMs);
+  }
+
+  /* پیش‌نمایش دک ۳ کارت روی خانه */
+  var deckRow = $('#homeDeckRow');
+  if (deckRow){
+    deckRow.innerHTML = '';
+    var dk = save.deck || ['fire_dash','ice_trap','magnet_storm'];
+    dk.forEach(function(cid){
+      var c = getCardObj(cid);
+      var lv = getCardLevel(cid);
+      var cardEl = document.createElement('div');
+      cardEl.className = 'deck-mini';
+      cardEl.innerHTML = pxImgTag(c.ico, 20) + '<b>' + c.name + '</b><span>سطح ' + faNum(lv) + '</span>';
+      cardEl.onclick = function(){ sfx.click(); cardsSubTab = 'deck'; switchTab('tabCards'); };
+      deckRow.appendChild(cardEl);
+    });
   }
 
   /* گرید ۵ حالت */
@@ -4411,32 +4869,35 @@ function renderHomeTab(){
     });
   }
 
-  /* گزینه‌های سریع حالت انتخاب‌شده */
+  /* گزینه‌های سریع حالت انتخاب‌شده + تاگل مه هزارتو */
   var optBox = $('#homeModeOpts');
   if (optBox){
     var mObj = getModeObj(save.mode);
-    var html = '<div class="mode-hint">' + mObj.hint + '</div>';
+    var html = '<div class="mode-hint">' + mObj.hint + '</div><div class="opt-row">';
     if (save.mode === 'timeattack'){
-      html += '<div class="opt-row">' +
-        '<button class="mini-pill-btn'+(save.timeAttackSec===60?' on':'')+'" id="btnTa60">۶۰ ثانیه</button>' +
-        '<button class="mini-pill-btn'+(save.timeAttackSec===120?' on':'')+'" id="btnTa120">۱۲۰ ثانیه</button>' +
-        '</div>';
+      html += '<button class="mini-pill-btn'+(save.timeAttackSec===60?' on':'')+'" id="btnTa60">۶۰ ثانیه</button>' +
+              '<button class="mini-pill-btn'+(save.timeAttackSec===120?' on':'')+'" id="btnTa120">۱۲۰ ثانیه</button>';
     } else if (save.mode === 'endless'){
-      html += '<div class="opt-row">' +
-        '<button class="mini-pill-btn'+(!save.dailySeedMode?' on':'')+'" id="btnEndFree">آزاد</button>' +
-        '<button class="mini-pill-btn'+(save.dailySeedMode?' on':'')+'" id="btnEndDaily">بذر روزانه ('+faNum(save.dailySeedBest||0)+')</button>' +
-        '</div>';
+      html += '<button class="mini-pill-btn'+(!save.dailySeedMode?' on':'')+'" id="btnEndFree">آزاد</button>' +
+              '<button class="mini-pill-btn'+(save.dailySeedMode?' on':'')+'" id="btnEndDaily">بذر روزانه ('+faNum(save.dailySeedBest||0)+')</button>';
     }
+    html += '<button class="mini-pill-btn'+(save.fogEnabled?' on':'')+'" id="btnToggleFog">مه هزارتو: '+(save.fogEnabled?'روشن':'خاموش')+'</button>';
+    html += '</div>';
     optBox.innerHTML = html;
     if ($('#btnTa60')) $('#btnTa60').onclick = function(){ sfx.click(); save.timeAttackSec = 60; persist(); renderHomeTab(); };
     if ($('#btnTa120')) $('#btnTa120').onclick = function(){ sfx.click(); save.timeAttackSec = 120; persist(); renderHomeTab(); };
     if ($('#btnEndFree')) $('#btnEndFree').onclick = function(){ sfx.click(); save.dailySeedMode = false; persist(); renderHomeTab(); };
     if ($('#btnEndDaily')) $('#btnEndDaily').onclick = function(){ sfx.click(); save.dailySeedMode = true; persist(); renderHomeTab(); };
+    if ($('#btnToggleFog')) $('#btnToggleFog').onclick = function(){ sfx.click(); save.fogEnabled = !save.fogEnabled; persist(); renderHomeTab(); };
   }
 
   if ($('#btnLastReplay')){
     $('#btnLastReplay').style.display = lastRunTrace ? 'inline-flex' : 'none';
   }
+
+  var pct = Math.min(100, Math.max(0, save.chestMeter || 0));
+  if ($('#chestMeterPct')) $('#chestMeterPct').textContent = faNum(pct) + '٪';
+  if ($('#chestMeterFill')) $('#chestMeterFill').style.width = pct + '%';
 
   renderSingleChestSlot();
 }
@@ -4446,7 +4907,7 @@ function renderSingleChestSlot(){
   if (!box) return;
   if (!save.slot){
     box.className = 'chest-card empty';
-    box.innerHTML = '<div class="chest-meta"><b>جایگاه صندوق خالی است</b><span>با پیروزی یا ثبت امتیاز بالا صندوق بگیر!</span></div>';
+    box.innerHTML = '<div class="chest-meta"><b>جایگاه صندوق خالی است</b><span>با پیروزی یا پر کردن نوار اکتشاف صندوق طلایی بگیر!</span></div>';
     box.onclick = null;
     return;
   }
@@ -4496,6 +4957,7 @@ function openActiveChest(){
   save.stats.chestsOpened++;
   save.weeklyProgress.chests++;
   addXP(cDef.xp);
+  checkCardUnlocks();
   save.slot = null;
   evaluateAchievements();
   persist();
@@ -4514,7 +4976,7 @@ function openActiveChest(){
   renderMenu();
 }
 
-/* ═══════════════ تب ۲: جهان‌ها و استادی نقشه ═══════════════ */
+/* ═══════════════ تب ۲: آرناهای رتبه‌بندی‌شده و استادی نقشه ═══════════════ */
 function renderWorldsTab(){
   var box = $('#worldsList');
   if (!box) return;
@@ -4522,6 +4984,7 @@ function renderWorldsTab(){
   WORLDS_ORDER.forEach(function(wid){
     var wo = WORLDS[wid];
     var mast = getWorldMastery(wid);
+    var tier = getArenaRankTier(wid);
     var rec = getModeRecord(wid, save.mode);
     var selected = (save.world === wid);
     var card = document.createElement('div');
@@ -4529,8 +4992,12 @@ function renderWorldsTab(){
     card.style.borderColor = selected ? wo.accent : 'rgba(255,255,255,0.12)';
     card.innerHTML =
       '<div class="wc-head">' +
-        '<div><b>' + wo.name + '</b><div class="wc-sub">' + wo.subtitle + '</div></div>' +
-        '<span class="wc-boss">' + wo.bossName + '</span>' +
+        '<div><b>آرنا ' + faNum(wo.arenaNum || 1) + ': ' + wo.name + '</b>' +
+        '<div class="wc-sub">' + wo.lvRange + ' • ' + wo.subtitle + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
+          '<span class="tier-pill" style="color:'+tier.color+'">رتبه ' + tier.name + ' ('+faNum(tier.count)+'/۴)</span>' +
+          '<span class="wc-boss">' + wo.bossName + '</span>' +
+        '</div>' +
       '</div>' +
       '<div class="wc-rules">' +
         '<span>خطرها: ' + wo.hazards.join(' • ') + '</span>' +
@@ -4544,7 +5011,7 @@ function renderWorldsTab(){
         '<span class="wc-best">رکورد: ' + faNum(rec.bestScore) + '</span>' +
       '</div>' +
       '<div class="wc-actions">' +
-        '<button class="btn-sm'+(selected?' on':'')+'" data-sel="'+wid+'">'+(selected?'جهان انتخاب‌شده':'انتخاب جهان')+'</button>' +
+        '<button class="btn-sm'+(selected?' on':'')+'" data-sel="'+wid+'">'+(selected?'آرنای انتخاب‌شده':'انتخاب آرنا')+'</button>' +
         '<button class="btn-sm chall'+(mast.challengeDone?' done':'')+'" data-ch="'+wid+'">'+(mast.challengeDone?'چالش تکمیل شد':'شروع چالش')+'</button>' +
       '</div>';
 
@@ -4553,7 +5020,7 @@ function renderWorldsTab(){
       save.world = wid;
       persist();
       renderMenu();
-      showToast('جهان فعال: ' + wo.name);
+      showToast('آرنای فعال: ' + wo.name);
     };
     card.querySelector('[data-ch]').onclick = function(){
       sfx.click();
@@ -4565,8 +5032,85 @@ function renderWorldsTab(){
   });
 }
 
-/* ═══════════════ تب ۳: تکامل، ژن‌ها و ترکیب ۲ ژن ═══════════════ */
-function renderEvoTab(){
+/* ═══════════════ تب ۳: کارت‌های تاکتیکی + ژن‌ها و مهارت ═══════════════ */
+function renderCardsTab(){
+  $$('#cardsSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === cardsSubTab);
+  });
+  var deckPane = $('#cardsDeckPane');
+  var genesPane = $('#cardsGenesPane');
+  if (deckPane) deckPane.style.display = (cardsSubTab === 'deck') ? 'flex' : 'none';
+  if (genesPane) genesPane.style.display = (cardsSubTab === 'genes') ? 'flex' : 'none';
+
+  if (cardsSubTab === 'deck'){
+    var bar = $('#activeDeckBar');
+    if (bar){
+      bar.innerHTML = '';
+      (save.deck || []).forEach(function(cid, idx){
+        var c = getCardObj(cid);
+        var lv = getCardLevel(cid);
+        var slotEl = document.createElement('div');
+        slotEl.className = 'deck-slot-pill';
+        slotEl.innerHTML = pxImgTag(c.ico, 22) + '<b>' + c.name + '</b><span style="color:var(--gold)">اسلات ' + faNum(idx+1) + ' • س' + faNum(lv) + '</span>';
+        bar.appendChild(slotEl);
+      });
+    }
+
+    var cl = $('#cardsList');
+    if (cl){
+      cl.innerHTML = '';
+      TACTICAL_CARDS.forEach(function(c){
+        var unlocked = (save.ownedCards || []).indexOf(c.id) !== -1;
+        var inDeck = (save.deck || []).indexOf(c.id) !== -1;
+        var lv = getCardLevel(c.id);
+        var upgCost = lv === 1 ? 120 : (lv === 2 ? 240 : 0);
+        var card = document.createElement('div');
+        card.className = 'evo-card' + (inDeck ? ' active' : '') + (!unlocked ? ' locked' : '');
+        card.innerHTML =
+          pxImgTag(c.ico, 28) +
+          '<div class="evo-info">' +
+            '<b>' + c.name + (unlocked ? ' (سطح ' + faNum(lv) + '/۳)' : '') + '</b>' +
+            '<span>' + c.desc + '</span>' +
+            '<small class="req-tag ' + (unlocked ? 'ok' : '') + '">' +
+              (unlocked ? (c.slotHint + (inDeck ? ' • در دک فعال' : ' • آماده نصب')) : ('باز شدن در سطح ' + faNum(c.needLv))) +
+            '</small>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:4px;">' +
+            (unlocked ? '<button class="btn-sm'+(inDeck?' on':'')+'" data-eq="'+c.id+'">'+(inDeck?'در دک':'چیدمان')+'</button>' : '') +
+            (unlocked && upgCost > 0 ? '<button class="btn-sm chall" data-up="'+c.id+'">ارتقا ('+faNum(upgCost)+'س)</button>' : '') +
+          '</div>';
+
+        if (unlocked){
+          var eqBtn = card.querySelector('[data-eq]');
+          if (eqBtn) eqBtn.onclick = function(){
+            sfx.click();
+            if (!save.deck || save.deck.length !== 3) save.deck = ['fire_dash','ice_trap','magnet_storm'];
+            if (save.deck.indexOf(c.id) !== -1) return;
+            save.deck = [c.id, save.deck[0], save.deck[1]];
+            persist();
+            renderCardsTab();
+            showToast(c.name + ' در دک قرار گرفت!');
+          };
+          var upBtn = card.querySelector('[data-up]');
+          if (upBtn) upBtn.onclick = function(){
+            if (save.gold < upgCost){ showToast('سکه کافی نیست!'); return; }
+            sfx.power();
+            save.gold -= upgCost;
+            if (!save.cardLevels) save.cardLevels = {};
+            save.cardLevels[c.id] = Math.min(3, lv + 1);
+            persist();
+            renderTopBar();
+            renderCardsTab();
+            showToast(c.name + ' به سطح ' + faNum(save.cardLevels[c.id]) + ' ارتقا یافت!');
+          };
+        }
+        cl.appendChild(card);
+      });
+    }
+    return;
+  }
+
+  /* زیرتب ژن‌ها، ترکیب ۲تایی و مهارت‌های پایه */
   if ($('#evoPointsBadge')) $('#evoPointsBadge').textContent = 'امتیاز تکامل: ' + faNum(save.evoPoints || 0);
   var fusBox = $('#activeFusionBox');
   if (fusBox){
@@ -4602,37 +5146,11 @@ function renderEvoTab(){
           if (save.genes[0] === g.id || save.genes[1] === g.id) return;
           save.genes = [g.id, save.genes[0]];
           persist();
-          renderEvoTab();
+          renderCardsTab();
           showToast(g.name + ' نصب شد!');
         };
       }
       gList.appendChild(card);
-    });
-  }
-
-  var efList = $('#evoFormsList');
-  if (efList){
-    efList.innerHTML = '';
-    if (!save.activeEvoForm) save.activeEvoForm = 'basic';
-    EVO_FORMS.forEach(function(ef){
-      var unlocked = save.level >= ef.needLv;
-      var active = getEffectiveEvoForm() === ef.id;
-      var btn = document.createElement('button');
-      btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
-      btn.innerHTML =
-        '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
-        '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
-        '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
-      if (unlocked){
-        btn.onclick = function(){
-          sfx.click();
-          save.activeEvoForm = ef.id;
-          persist();
-          renderEvoTab();
-          showToast('فرم ظاهری: ' + ef.name);
-        };
-      }
-      efList.appendChild(btn);
     });
   }
 
@@ -4653,23 +5171,55 @@ function renderEvoTab(){
         save.evoPoints--;
         save.skills[sk.id] = lv + 1;
         persist();
-        renderEvoTab();
+        renderCardsTab();
       };
       sList.appendChild(card);
     });
   }
 }
 
-/* ═══════════════ تب ۴: مجموعه (اسکین، اکسسوری، آلبوم، دستاوردها) ═══════════════ */
-function renderCollectionTab(){
-  $$('#colSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === colSubTab);
+/* ═══════════════ تب ۴: تکامل ظاهری، اسکین و اکسسوری ═══════════════ */
+function renderEvoTab(){
+  $$('#evoSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === evoSubTab);
   });
-  var box = $('#colContent');
-  if (!box) return;
-  box.innerHTML = '';
+  var formsPane = $('#evoFormsPane');
+  var cosPane = $('#evoCosmeticsPane');
+  if (formsPane) formsPane.style.display = (evoSubTab === 'forms') ? 'flex' : 'none';
+  if (cosPane) cosPane.style.display = (evoSubTab !== 'forms') ? 'flex' : 'none';
 
-  if (colSubTab === 'skins'){
+  if (evoSubTab === 'forms'){
+    var efList = $('#evoFormsList');
+    if (efList){
+      efList.innerHTML = '';
+      if (!save.activeEvoForm) save.activeEvoForm = 'basic';
+      EVO_FORMS.forEach(function(ef){
+        var unlocked = save.level >= ef.needLv;
+        var active = getEffectiveEvoForm() === ef.id;
+        var btn = document.createElement('button');
+        btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
+        btn.innerHTML =
+          '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
+          '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
+          '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
+        if (unlocked){
+          btn.onclick = function(){
+            sfx.click();
+            save.activeEvoForm = ef.id;
+            persist();
+            renderEvoTab();
+            showToast('فرم ظاهری: ' + ef.name);
+          };
+        }
+        efList.appendChild(btn);
+      });
+    }
+    return;
+  }
+
+  if (!cosPane) return;
+  cosPane.innerHTML = '';
+  if (evoSubTab === 'skins'){
     SKINS.forEach(function(sk){
       var owned = save.ownedSkins.indexOf(sk.id) !== -1;
       var eq = save.skin === sk.id;
@@ -4691,9 +5241,9 @@ function renderCollectionTab(){
         }
         sfx.chest(); save.ownedSkins.push(sk.id); save.skin = sk.id; persist(); renderMenu();
       };
-      box.appendChild(card);
+      cosPane.appendChild(card);
     });
-  } else if (colSubTab === 'acc'){
+  } else {
     ACCESSORIES.forEach(function(ac){
       var owned = save.ownedAcc.indexOf(ac.id) !== -1;
       var eq = save.acc === ac.id;
@@ -4715,42 +5265,21 @@ function renderCollectionTab(){
         }
         sfx.chest(); save.ownedAcc.push(ac.id); save.acc = ac.id; persist(); renderMenu();
       };
-      box.appendChild(card);
-    });
-  } else if (colSubTab === 'bestiary'){
-    BESTIARY.forEach(function(b){
-      var seen = save.discovered.indexOf(b.id) !== -1;
-      var card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML =
-        pxImgTag(b.ico, 28) +
-        '<div class="ic-info"><b>'+(seen?b.name:'مورد ناشناخته')+'</b><span>'+(seen?b.desc:'در طول بازی با آن روبه‌رو شو تا ثبت شود!')+'</span></div>';
-      box.appendChild(card);
-    });
-  } else {
-    ACHIEVEMENTS.forEach(function(a){
-      var done = save.achievements.indexOf(a.id) !== -1;
-      var card = document.createElement('div');
-      card.className = 'item-card' + (done ? ' eq' : '');
-      card.innerHTML =
-        pxImgTag(done ? 'badge' : 'trophy', 26) +
-        '<div class="ic-info"><b>'+a.name+'</b><span>'+a.desc+'</span></div>' +
-        '<span class="ach-rew">'+(done?'دریافت‌شده':'+'+faNum(a.rewardCrystals)+' کریستال')+'</span>';
-      box.appendChild(card);
+      cosPane.appendChild(card);
     });
   }
 }
 
-/* ═══════════════ تب ۵: مأموریت‌ها، جایزه روزانه و فروشگاه ═══════════════ */
-function renderMissionsTab(){
-  $$('#misSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === misSubTab);
+/* ═══════════════ تب ۵: گنجینه (مأموریت، روزانه، آلبوم، دستاورد، فروشگاه) ═══════════════ */
+function renderCollectionTab(){
+  $$('#colSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === colSubTab);
   });
-  var box = $('#misContent');
+  var box = $('#colContent');
   if (!box) return;
   box.innerHTML = '';
 
-  if (misSubTab === 'missions'){
+  if (colSubTab === 'missions'){
     function addSection(title, list, srcObj, claimedArr){
       var h = document.createElement('div');
       h.className = 'sec-hdr'; h.textContent = title;
@@ -4779,7 +5308,7 @@ function renderMissionsTab(){
     addSection('مأموریت‌های روزانه', DAILY_MISSIONS, save.dailyProgress, save.claimedDailyMissions);
     addSection('مأموریت‌های هفتگی', WEEKLY_MISSIONS, save.weeklyProgress, save.claimedWeeklyMissions);
     addSection('مأموریت‌های مخفی', SECRET_MISSIONS, save.stats, save.claimedSecretMissions);
-  } else if (misSubTab === 'daily'){
+  } else if (colSubTab === 'daily'){
     var now = Date.now();
     var canClaim = (now - (save.lastDailyTs || 0)) >= 20 * 3600 * 1000;
     DAILY_REWARDS.forEach(function(d){
@@ -4803,8 +5332,28 @@ function renderMissionsTab(){
       };
       box.appendChild(row);
     });
+  } else if (colSubTab === 'bestiary'){
+    BESTIARY.forEach(function(b){
+      var seen = save.discovered.indexOf(b.id) !== -1;
+      var card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML =
+        pxImgTag(b.ico, 28) +
+        '<div class="ic-info"><b>'+(seen?b.name:'مورد ناشناخته')+'</b><span>'+(seen?b.desc:'در طول بازی با آن روبه‌رو شو تا ثبت شود!')+'</span></div>';
+      box.appendChild(card);
+    });
+  } else if (colSubTab === 'ach'){
+    ACHIEVEMENTS.forEach(function(a){
+      var done = save.achievements.indexOf(a.id) !== -1;
+      var card = document.createElement('div');
+      card.className = 'item-card' + (done ? ' eq' : '');
+      card.innerHTML =
+        pxImgTag(done ? 'badge' : 'trophy', 26) +
+        '<div class="ic-info"><b>'+a.name+'</b><span>'+a.desc+'</span></div>' +
+        '<span class="ach-rew">'+(done?'دریافت‌شده':'+'+faNum(a.rewardCrystals)+' کریستال')+'</span>';
+      box.appendChild(card);
+    });
   } else {
-    /* فروشگاه صندوق‌ها و هدیه روزانه */
     ['bronze','silver','gold'].forEach(function(cid){
       var c = CHEST_TYPES[cid];
       var isCrys = c.shopCrystals > 0;
@@ -4898,9 +5447,9 @@ function renderMenu(){
   renderTopBar();
   if (activeTab === 'tabPlay') renderHomeTab();
   else if (activeTab === 'tabWorlds') renderWorldsTab();
+  else if (activeTab === 'tabCards') renderCardsTab();
   else if (activeTab === 'tabEvo') renderEvoTab();
   else if (activeTab === 'tabCollection') renderCollectionTab();
-  else if (activeTab === 'tabMissions') renderMissionsTab();
 }
 
 /* تایمر زنده تک‌جایگاه صندوق در پس‌زمینه */
@@ -4915,19 +5464,17 @@ function wireEvents(){
   $$('.nav-tab').forEach(function(btn){
     btn.onclick = function(){
       sfx.click();
-      activeTab = btn.getAttribute('data-tab');
-      $$('.nav-tab').forEach(function(x){ x.classList.remove('active'); });
-      btn.classList.add('active');
-      $$('.tab-page').forEach(function(p){ p.classList.remove('active'); });
-      if ($('#'+activeTab)) $('#'+activeTab).classList.add('active');
-      renderMenu();
+      switchTab(btn.getAttribute('data-tab'));
     };
+  });
+  $$('#cardsSubTabs .sub-pill').forEach(function(b){
+    b.onclick = function(){ sfx.click(); cardsSubTab = b.getAttribute('data-sub'); renderCardsTab(); };
+  });
+  $$('#evoSubTabs .sub-pill').forEach(function(b){
+    b.onclick = function(){ sfx.click(); evoSubTab = b.getAttribute('data-sub'); renderEvoTab(); };
   });
   $$('#colSubTabs .sub-pill').forEach(function(b){
     b.onclick = function(){ sfx.click(); colSubTab = b.getAttribute('data-sub'); renderCollectionTab(); };
-  });
-  $$('#misSubTabs .sub-pill').forEach(function(b){
-    b.onclick = function(){ sfx.click(); misSubTab = b.getAttribute('data-sub'); renderMissionsTab(); };
   });
 
   if ($('#btnQuickPlay')) $('#btnQuickPlay').onclick = function(){ startGame(save.mode, save.world); };
@@ -4954,7 +5501,7 @@ function wireEvents(){
   if ($('#btnCloseGuide')) $('#btnCloseGuide').onclick = function(){ $('#guideModal').classList.remove('show'); };
   if ($('#btnCloseChestModal')) $('#btnCloseChestModal').onclick = function(){ $('#chestModal').classList.remove('show'); };
 
-  /* آیکون‌های پیکسلی HUD */
+  /* آیکون‌های پیکسلی HUD و نوار ناوبری */
   if ($('#icoDashBtn')) $('#icoDashBtn').innerHTML = pxImgTag('dash_ico', 18);
   if ($('#icoSkillBtn')) $('#icoSkillBtn').innerHTML = pxImgTag('dna', 18);
   if ($('#icoRewindBtn')) $('#icoRewindBtn').innerHTML = pxImgTag('rewind', 18);
@@ -4966,12 +5513,14 @@ function wireEvents(){
   if ($('#tbCryIco')) $('#tbCryIco').innerHTML = pxImgTag('crystal', 15);
   if ($('#navIcoPlay')) $('#navIcoPlay').innerHTML = pxImgTag('snake_ico', 20);
   if ($('#navIcoWorlds')) $('#navIcoWorlds').innerHTML = pxImgTag('portal', 20);
+  if ($('#navIcoCards')) $('#navIcoCards').innerHTML = pxImgTag('card_ico', 20);
   if ($('#navIcoEvo')) $('#navIcoEvo').innerHTML = pxImgTag('dna', 20);
   if ($('#navIcoCol')) $('#navIcoCol').innerHTML = pxImgTag('trophy', 20);
-  if ($('#navIcoMis')) $('#navIcoMis').innerHTML = pxImgTag('gift', 20);
 }
 
 wireEvents();
+checkCardUnlocks();
+recoverPendingRunIfAny();
 applyUiScale();
 renderMenu();
 

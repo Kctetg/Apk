@@ -84,8 +84,51 @@ var ACHIEVEMENTS = [
   { id:'ach_portal',  name:'مسافر بعد',       desc:'۱۰ بار از پورتال عبور کن',         check:function(s){ return s.stats.portalsUsed >= 10; }, rewardCrystals:2 },
   { id:'ach_master',  name:'فاتح جهان‌ها',     desc:'حداقل ۳ مدال استادی جهان بگیر',   check:function(s){ return countMasteryBadges() >= 3; }, rewardCrystals:5 },
   { id:'ach_secret',  name:'کاشف اتاق مخفی',   desc:'وارد یک اتاق مخفی شو',            check:function(s){ return s.stats.secretsFound >= 1; }, rewardCrystals:3 },
-  { id:'ach_ghost',   name:'شکارچی شبح',       desc:'از شبح رکورد قبلی جلو بزن',      check:function(s){ return s.stats.ghostWins >= 1; }, rewardCrystals:4 }
+  { id:'ach_ghost',   name:'شکارچی شبح',       desc:'از شبح رکورد قبلی جلو بزن',      check:function(s){ return s.stats.ghostWins >= 1; }, rewardCrystals:4 },
+  { id:'ach_carto',   name:'نقشه‌بردار هزارتو', desc:'۶ قطعه نقشه مخفی جمع‌آوری کن',    check:function(s){ return (s.mapPieces || 0) >= 6; }, rewardCrystals:4 }
 ];
+
+/* ۸ کارت تاکتیکی (دک ۳تایی با ارتقای سطح ۱ تا ۳ بدون Pay-to-Win) */
+var TACTICAL_CARDS = [
+  { id:'fire_dash',     name:'دش آتشین',      ico:'fireball',    needLv:1, slotHint:'تقویت دش',   desc:'ردپای آتشین هنگام دش و شکستن دیوارهای مخفی' },
+  { id:'ice_trap',      name:'تله یخی',       ico:'slow',        needLv:1, slotHint:'تقویت مهارت', desc:'انجماد دشمنان و کند کردن پرتابه‌های باس' },
+  { id:'magnet_storm',  name:'طوفان مغناطیس', ico:'magnet',      needLv:1, slotHint:'جذب خودکار', desc:'افزایش شعاع جذب غذا، سکه و قطعات نقشه' },
+  { id:'shadow_step',   name:'گام سایه',       ico:'ghost',       needLv:2, slotHint:'عبور از مانع', desc:'حالت روح کوتاه هنگام فعال‌سازی مهارت' },
+  { id:'time_echo',     name:'پژواک زمان',    ico:'rewind',      needLv:3, slotHint:'پشتیبانی زمان', desc:'+۱ شارژ بازگشت زمان و ایمنی بیشتر پس از ضربه' },
+  { id:'thunder_pulse', name:'موج رعد',       ico:'lightning',   needLv:4, slotHint:'موج تخریب',  desc:'انفجار شوک الکتریکی و تخریب دیوارهای اطراف' },
+  { id:'golden_rush',   name:'هجوم طلا',      ico:'gold',        needLv:5, slotHint:'امتیاز و طلا', desc:'+۲۰٪ امتیاز بیشتر و سکه اضافه در کمبوی بالا' },
+  { id:'phantom_clone', name:'همزاد شبح',     ico:'relic_eye',   needLv:6, slotHint:'حمایت شبح',  desc:'حذف خطر همزاد و دوام بیشتر حالت امتیاز ×۲' }
+];
+function getCardObj(id){
+  for (var i=0;i<TACTICAL_CARDS.length;i++) if (TACTICAL_CARDS[i].id===id) return TACTICAL_CARDS[i];
+  return TACTICAL_CARDS[0];
+}
+function getCardLevel(id){
+  return Math.min(3, Math.max(1, (save.cardLevels && save.cardLevels[id]) || 1));
+}
+function checkCardUnlocks(){
+  var unlocked = [];
+  if (!save.ownedCards) save.ownedCards = ['fire_dash','ice_trap','magnet_storm'];
+  TACTICAL_CARDS.forEach(function(c){
+    if (save.ownedCards.indexOf(c.id) === -1 && save.level >= c.needLv){
+      save.ownedCards.push(c.id);
+      if (!save.cardLevels) save.cardLevels = {};
+      save.cardLevels[c.id] = 1;
+      unlocked.push(c.name);
+    }
+  });
+  return unlocked;
+}
+
+/* محاسبه رتبه تسلط هر آرنا (برنز / نقره / طلا) */
+function getArenaRankTier(worldId){
+  var m = getWorldMastery(worldId);
+  var pts = (m.scoreBadge?1:0) + (m.noHitBadge?1:0) + (m.comboBadge?1:0) + (m.challengeDone?1:0);
+  if (pts >= 4) return { id:'gold',   name:'طلایی',   color:'#ffd43b', count:pts };
+  if (pts >= 2) return { id:'silver', name:'نقره‌ای', color:'#cbd5e1', count:pts };
+  if (pts >= 1) return { id:'bronze', name:'برنزی',   color:'#f59e0b', count:pts };
+  return { id:'none', name:'تازه‌وارد', color:'#64748b', count:0 };
+}
 
 /* ۵ رلیک دائمی در طول یک Run */
 var RELICS = [
@@ -140,7 +183,8 @@ var BESTIARY = [
   { id:'guardian', name:'مار نگهبان',    ico:'shield',      desc:'از گنج‌ها و کلیدها محافظت می‌کند' },
   { id:'dwall',    name:'دیوار شکننده',  ico:'brick',       desc:'با فعال کردن دش می‌توانی آن را بشکنی' },
   { id:'portal',   name:'پورتال دوقلو',  ico:'portal',      desc:'مار را بی‌وقفه به پورتال جفت منتقل می‌کند' },
-  { id:'secret',   name:'اتاق مخفی',     ico:'secret_door', desc:'ورودی پنهان به گنج، رلیک و چالش کمیاب' },
+  { id:'secret',   name:'اتاق مخفی',     ico:'secret_door', desc:'ورودی پنهان به گنج، محراب، فروشگاه و باس مخفی' },
+  { id:'map_pc',   name:'قطعه نقشه',     ico:'map_piece',   desc:'جمع‌آوری ۳ قطعه تمام مه نقشه را کنار می‌زند' },
   { id:'d1',       name:'اژدهای آبی',    ico:'orb',         desc:'باس ۳ فازه با پرتابه‌های مستقیم و موج یخی' },
   { id:'d2',       name:'اژدهای آتشین',  ico:'fireball',    desc:'باس ۳ فازه با مناطق سوزان و رگبار شعله' },
   { id:'d3',       name:'اژدهای برقی',   ico:'lightning',   desc:'باس ۳ فازه با رعدهای خطی سریع' },
