@@ -256,5 +256,63 @@ function generateWorldLayout(worldId, stageNum, rand){
     }
   }
 
+  layout.secretEntrance = null;
+  if (rand() < 0.65){
+    for (var sei=0; sei<40; sei++){
+      var sx2 = 2 + Math.floor(rand() * (COLS - 4));
+      var sy2 = 2 + Math.floor(rand() * (ROWS - 4));
+      if (canPlace(sx2, sy2)){
+        used[keyOf(sx2, sy2)] = true;
+        layout.secretEntrance = { x:sx2, y:sy2 };
+        break;
+      }
+    }
+  }
+
   return layout;
+}
+
+/* تولید ۳ نوع اتاق مخفی (گنج، نگهبان، خزانه ۱۵ ثانیه‌ای) */
+function generateSecretRoom(rand){
+  rand = rand || Math.random;
+  var roll = rand();
+  var kind = roll < 0.36 ? 'treasure' : (roll < 0.7 ? 'guardian' : 'vault');
+  var sr = {
+    kind: kind,
+    walls: [],
+    dWalls: [],
+    items: [],
+    exit: { x: 16, y: 9 },
+    timerMs: kind === 'vault' ? 15000 : 0,
+    enemy: kind === 'guardian' ? { type:'guardian', x:14, y:5 } : null
+  };
+
+  for (var x=3; x<=15; x++){
+    if (x !== 9){
+      sr.walls.push({x:x, y:3});
+      sr.walls.push({x:x, y:15});
+    }
+  }
+  if (kind === 'treasure'){
+    sr.items.push({x:9, y:9, type:'relic_orb'});
+    sr.items.push({x:8, y:7, type:'gold'});
+    sr.items.push({x:10, y:7, type:'gold'});
+    sr.items.push({x:9, y:11, type:'crystal'});
+    sr.items.push({x:12, y:9, type:'gold'});
+  } else if (kind === 'guardian'){
+    sr.items.push({x:11, y:9, type:'relic_orb'});
+    sr.items.push({x:10, y:6, type:'crystal'});
+    sr.items.push({x:10, y:12, type:'gold'});
+    sr.items.push({x:7, y:9, type:'apple'});
+  } else {
+    sr.dWalls.push({x:8, y:9, hp:1, maxHp:1});
+    sr.dWalls.push({x:11, y:7, hp:1, maxHp:1});
+    sr.dWalls.push({x:11, y:11, hp:1, maxHp:1});
+    sr.items.push({x:10, y:9, type:'gold'});
+    sr.items.push({x:12, y:6, type:'gold'});
+    sr.items.push({x:12, y:12, type:'gold'});
+    sr.items.push({x:13, y:9, type:'crystal'});
+    sr.items.push({x:9, y:5, type:'relic_orb'});
+  }
+  return sr;
 }

@@ -114,10 +114,14 @@
   .nav-tab.active{color:var(--emerald)}
 
   /* صفحه بازی */
-  .hud{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;background:#0e161f;border-bottom:2px solid var(--border)}
-  .hud-block{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:bold}
-  .stage-badge{background:var(--card);border:1.5px solid var(--cyan);color:var(--cyan);padding:3px 8px;border-radius:8px;font-size:11px;cursor:pointer}
-  .energy-bar-wrap{width:50px;height:7px;background:#1e293b;border-radius:4px;overflow:hidden}
+  .hud{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:6px 8px;background:#0e161f;border-bottom:2px solid var(--border)}
+  .hud-block{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:bold;min-width:0}
+  .stage-badge{background:var(--card);border:1.5px solid var(--cyan);color:var(--cyan);padding:3px 7px;border-radius:8px;font-size:10px;cursor:pointer;white-space:nowrap}
+  .energy-bar-wrap{width:44px;height:7px;background:#1e293b;border-radius:4px;overflow:hidden}
+  .evo-form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .evo-form-btn{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:3px;text-align:right;cursor:pointer;color:var(--text)}
+  .evo-form-btn.on{border-color:var(--gold);background:#251c08}
+  .evo-form-btn.locked{opacity:.55;cursor:default}
   .energy-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--emerald));width:0%}
   #stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden}
   #stage{position:relative;border:2px solid var(--border);border-radius:10px;overflow:hidden;background:#09110e}
@@ -214,6 +218,8 @@
       </div>
       <div class="evo-banner" id="activeFusionBox"></div>
       <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div class="sec-hdr">فرم ظاهری مار (تکامل بصری)</div>
+      <div id="evoFormsList" class="evo-form-grid"></div>
       <div class="sec-hdr">مهارت‌های پایه</div>
       <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
     </section>
@@ -254,8 +260,10 @@
     <div class="hud-block">
       <div id="hudHearts" style="display:flex;gap:3px;"></div>
       <span class="stage-badge" id="hudStageBadge">رکوردزنی</span>
+      <div id="hudRelics" style="display:flex;gap:3px;align-items:center;"></div>
     </div>
     <div class="hud-block">
+      <span id="hudGhostDiff" style="font-size:10px;font-weight:bold;display:none;white-space:nowrap;"></span>
       <span id="icoHudCombo"></span><b id="hudCombo">×۱</b>
       <div class="energy-bar-wrap"><div class="energy-bar" id="hudEnergyBar"></div></div>
       <b id="hudScore" style="color:var(--gold);min-width:26px;text-align:left;">۰</b>
@@ -351,16 +359,16 @@
     <div style="font-size:12px;text-align:right;line-height:1.7;color:#cbd5e1;" id="guideBody">
       <b>۱. حرکت و دش:</b> با کشیدن انگشت روی صفحه یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> سرعتت را لحظه‌ای زیاد می‌کند و بلوک‌های ترک‌خورده را می‌شکند!<br>
       <b>۲. نوار انرژی و ژن‌ها:</b> با حرکت و خوردن سیب نوار انرژی پر می‌شود. دکمه <b>مهارت (E)</b> ترکیب ۲ ژن را فعال می‌کند.<br>
-      <b>۳. زنجیره کمبو و فرار میلی‌متری:</b> خوردن سریع غذا کمبو می‌سازد و آیتم‌ها را به سمتت می‌کشد. عبور نزدیک از خطر پاداش اضافه دارد.<br>
-      <b>۴. بازگشت زمان (R):</b> در لحظه خطر مار را به موقعیت آبی‌رنگ قبلی برمی‌گرداند.<br>
-      <b>۵. نسخه کاملاً آفلاین:</b> بدون نیاز به اینترنت و همراه با پشتیبان‌گیری دستی کد ذخیره.
+      <b>۳. کمبوی بحرانی (×۲ / ×۵ جنون / ×۱۰ طلایی):</b> خوردن سریع غذا و فرار میلی‌متری کمبو می‌سازد؛ در ×۳ جاذبه، در ×۵ حالت جنون و در ×۱۰ حالت طلایی با سکه اضافه فعال می‌شود!<br>
+      <b>۴. رلیک‌ها و اتاق‌های مخفی:</b> گوی‌های بنفش یا دروازه مخفی نقشه را پیدا کن تا رلیک دائمی آن دست و گنج ویژه بگیری.<br>
+      <b>۵. شبح رقیب و بازگشت زمان (R):</b> شبح بهترین رکوردت در هر جهان با تو مسابقه می‌دهد و سبقت از آن جایزه دارد. دکمه زمان در خطر مار را به موقعیت آبی برمی‌گرداند.
     </div>
     <button class="btn" id="btnCloseGuide">فهمیدم!</button>
   </div>
 </div>
 
 <script>
-// === js/storage.js ===
+/* === js/storage.js === */
 'use strict';
 var $ = function(s){ return document.querySelector(s); };
 var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -447,6 +455,9 @@ function defaultSave(){
     skills: { reflex: 1, power: 1, greed: 1 },
     worldRecords: {},
     worldMastery: {},
+    bestTraces: {},
+    rivalGhostEnabled: true,
+    activeEvoForm: 'basic',
     levelRushIdx: 0,
     dailySeedKey: '',
     dailySeedBest: 0,
@@ -474,7 +485,9 @@ function defaultSave(){
       closeCalls: 0,
       maxComboEver: 0,
       noHitWins: 0,
-      portalsUsed: 0
+      portalsUsed: 0,
+      secretsFound: 0,
+      ghostWins: 0
     },
     settings: defaultSettings()
   };
@@ -513,6 +526,9 @@ var save = (function(){
     for (var st in def.settings) if (parsed.settings[st] === undefined) parsed.settings[st] = def.settings[st];
     if (!parsed.worldRecords) parsed.worldRecords = {};
     if (!parsed.worldMastery) parsed.worldMastery = {};
+    if (!parsed.bestTraces) parsed.bestTraces = {};
+    if (!parsed.activeEvoForm) parsed.activeEvoForm = 'basic';
+    if (parsed.rivalGhostEnabled === undefined) parsed.rivalGhostEnabled = true;
     if (!parsed.dailyProgress) parsed.dailyProgress = def.dailyProgress;
     if (!parsed.weeklyProgress) parsed.weeklyProgress = def.weeklyProgress;
     if (parsed.missionDayKey !== todayKey()){
@@ -555,7 +571,9 @@ function importBackupJson(raw){
   }
 }
 
-// === js/audio.js ===
+</script>
+<script>
+/* === js/audio.js === */
 'use strict';
 var audioCtx = null;
 var musicTimer = null;
@@ -652,7 +670,9 @@ function syncAudioSettings(){
   else if (typeof state !== 'undefined' && state === 'play') startMusic();
 }
 
-// === js/snake.js ===
+</script>
+<script>
+/* === js/snake.js === */
 'use strict';
 /* ═══════════════ بافر پیکسلی و اسپرایت‌های شفاف ═══════════════ */
 var SP_W=200, SP_H=150, SP_OX=32, SP_OY=36, SP_AX=50, SP_AY=52;
@@ -1123,7 +1143,55 @@ function initPixelIcons(){
       '..oKKKKKKRRoo.......','..oKKddKKKo.........','...odddddo..........','....ooooo...........',
       '....................','....................','....................','....................',
       '....................','....................','....................','....................'
-    ], { o:'#1e0909', K:'#57534e', d:'#292524', W:'#d6d3d1', R:'#ef4444', O:'#f97316', Y:'#fde047' }]
+    ], { o:'#1e0909', K:'#57534e', d:'#292524', W:'#d6d3d1', R:'#ef4444', O:'#f97316', Y:'#fde047' }],
+
+    relic_fang: [20, 20, [
+      '....................','.....oooo...........','....oYYYYoo.........','....oYYWWYYo........',
+      '.....oYYYYYYo.......','......oYYYYYYo......','.......oYYYddYo.....','........oYYYddo.....',
+      '.........oYYddo.....','..........oYYdo.....','...........oYdo.....','............ooo.....',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#422006', Y:'#ffd43b', d:'#d97706', W:'#fffbeb' }],
+
+    relic_eye: [20, 20, [
+      '....................','......oooooooo......','....ooPPPPPPPPoo....','..ooPPWWWWWWWWPPoo..',
+      '.oPPWWCCCCCCCCWWPPo.','.oPWWCCKKKKKKCCWWPo.','.oPWWCCKWWWWKCCWWPo.','.oPPWWCCCCCCCCWWPPo.',
+      '..ooPPWWWWWWWWPPoo..','....ooPPPPPPPPoo....','......oooooooo......','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#1e1b4b', P:'#a855f7', W:'#f8fafc', C:'#38bdf8', K:'#090d14' }],
+
+    relic_clock: [20, 20, [
+      '....................','......oooooooo......','....ooYYYYYYYYoo....','...oYYWWWWWWWWYYo...',
+      '..oYYWWKKKKKKWWYYo..','..oYYWKCCCCCCKWYYo..','..oYYWKCCWKKCKWYYo..','..oYYWKKCCWWWWKYYo..',
+      '...oYYWWWWWWWWYYo...','....ooYYYYYYYYoo....','......oooooooo......','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#422006', Y:'#fbbf24', W:'#f8fafc', K:'#1e293b', C:'#38bdf8' }],
+
+    relic_scale: [20, 20, [
+      '....................','......oooooooo......','....ooRRRRRRRRoo....','...oRRWWYYYYWWRRo...',
+      '..oRRWYYYYYYYYWRRo..','..oRRYYRRRRRRYYRRo..','...oRRYRRRRRRYRRo...',
+      '....oRRYYYYYYRRo....','.....oRRRRRRRRo.....','......oRRddRRo......','.......oooooo.......',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#450a0a', R:'#ef4444', d:'#991b1b', Y:'#fde047', W:'#fffbeb' }],
+
+    relic_magnet: [20, 20, [
+      '....................','....oooo....oooo....','...oYYYYo..oYYYYo...','...oRRRRo..oCCCCo...',
+      '...oRRRRo..oCCCCo...','...oRRRRo..oCCCCo...','...oRRRRooooCCCCo...',
+      '....oRRRRCCCCCCo....','.....oRRRCCCCCo.....','......oooooooo......','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#0f172a', Y:'#ffd43b', R:'#ef4444', C:'#38bdf8' }],
+
+    secret_door: [20, 20, [
+      '....................','.....oooooooooo.....','....oPPPPPPPPPPo....','...oPPWWWWWWWWPPo...',
+      '..oPPWCCCCCCCCWPPo..','..oPPWCPPPPPPCWPPO..','..oPPWCPWWWWPCWPPO..','..oPPWCPWYYWPCWPPO..',
+      '..oPPWCPWWWWPCWPPO..','..oPPWCCCCCCCCWPPO..','..oPPWWWWWWWWWWPPO..','..oooooooooooooooo..',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#1e1b4b', P:'#9333ea', W:'#f3e8ff', C:'#38bdf8', Y:'#ffd43b', O:'#1e1b4b' }]
   };
 
   for (var key in defs){
@@ -1244,7 +1312,11 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
   var hlC = sk.head;
   var ribC = sk.dark;
 
+  var evo = opts.evoForm || 'basic';
+  var isGolden = !!opts.goldenCombo;
+
   function segCol(s){
+    if (isGolden && ((s + Math.floor((t||0)/140)) % 2 === 0)) return '#ffd43b';
     if (opts.rainbow){
       var h = Math.floor(((s * 24 + (t||0) / 6) % 360) / 15) * 15;
       return 'hsl('+h+',85%,56%)';
@@ -1320,11 +1392,32 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
         cctx.fillStyle = spotC;
         cctx.fillRect(Math.round(midX - spW * 0.5), Math.round(midY - spW * 0.4), spW, Math.max(2, Math.round(spW * 0.7)));
       }
+      if ((evo === 'armored' || evo === 'legend') && s3 % 2 === 0){
+        cctx.fillStyle = evo === 'legend' ? '#fde047' : '#cbd5e1';
+        var armS = Math.max(3, Math.round(r * 0.45));
+        cctx.fillRect(Math.round(midX - armS * 0.5), Math.round(midY - armS * 0.5), armS, armS);
+      }
     }
   }
 
+  /* دم شعله انرژی در فرم تکامل ۱۵ و افسانه‌ای */
+  if ((evo === 'energy_tail' || evo === 'legend') && n > 1){
+    var tp = pts[n - 1];
+    var pulseT = Math.max(2, Math.round(r * (0.45 + 0.15 * Math.sin((t||0)/95))));
+    cctx.fillStyle = evo === 'legend' ? '#ffd43b' : '#38bdf8';
+    cctx.fillRect(Math.round(tp.x - pulseT), Math.round(tp.y - pulseT), pulseT * 2, pulseT * 2);
+  }
+
   var hp = pts[0];
-  var heads = buildSnakeHeads(sk, opts.overrideBody, opts.overrideBelly);
+  if (evo === 'legend'){
+    cctx.save();
+    cctx.strokeStyle = 'rgba(255,212,59,' + (0.45 + 0.35 * Math.sin((t||0)/130)) + ')';
+    cctx.lineWidth = Math.max(1.5, cellSize * 0.09);
+    cctx.strokeRect(Math.round(hp.x - r * 1.45), Math.round(hp.y - r * 1.45), Math.round(r * 2.9), Math.round(r * 2.9));
+    cctx.restore();
+  }
+
+  var heads = buildSnakeHeads(sk, isGolden ? '#ffd43b' : opts.overrideBody, isGolden ? '#fef08a' : opts.overrideBelly);
   cctx.save();
   cctx.imageSmoothingEnabled = false;
   cctx.translate(Math.round(hp.x), Math.round(hp.y));
@@ -1332,6 +1425,11 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
     var wS = Math.round(cellSize * 1.18), hS = Math.round(cellSize * 0.96);
     if (dirStr === 'left') cctx.scale(-1, 1);
     cctx.drawImage(heads.side, -Math.round(wS * 0.42), -Math.round(hS * 0.5), wS, hS);
+    if (evo === 'glow_eyes' || evo === 'legend'){
+      cctx.fillStyle = evo === 'legend' ? '#fde047' : '#38bdf8';
+      var eS = Math.max(2, Math.round(cellSize * 0.16));
+      cctx.fillRect(Math.round(wS * 0.14), -Math.round(hS * 0.22), eS, eS);
+    }
     if (((t || 0) % 750) < 280){
       var tx = Math.round(wS * 0.54), px = Math.max(1, Math.round(cellSize * 0.08));
       cctx.fillStyle = '#e62e4c';
@@ -1343,6 +1441,12 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
     var wU = Math.round(cellSize * 0.98), hU = Math.round(cellSize * 1.14);
     if (dirStr === 'down') cctx.scale(1, -1);
     cctx.drawImage(heads.ud, -Math.round(wU * 0.5), -Math.round(hU * 0.54), wU, hU);
+    if (evo === 'glow_eyes' || evo === 'legend'){
+      cctx.fillStyle = evo === 'legend' ? '#fde047' : '#38bdf8';
+      var eS2 = Math.max(2, Math.round(cellSize * 0.14));
+      cctx.fillRect(-Math.round(wU * 0.22), -Math.round(hU * 0.14), eS2, eS2);
+      cctx.fillRect(Math.round(wU * 0.08), -Math.round(hU * 0.14), eS2, eS2);
+    }
     if (((t || 0) % 750) < 280){
       var ty = -Math.round(hU * 0.56), px2 = Math.max(1, Math.round(cellSize * 0.08));
       cctx.fillStyle = '#e62e4c';
@@ -1358,7 +1462,9 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
   }
 }
 
-// === js/worlds.js ===
+</script>
+<script>
+/* === js/worlds.js === */
 'use strict';
 var COLS = 19, ROWS = 19;
 var DIRS = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
@@ -1617,10 +1723,70 @@ function generateWorldLayout(worldId, stageNum, rand){
     }
   }
 
+  layout.secretEntrance = null;
+  if (rand() < 0.65){
+    for (var sei=0; sei<40; sei++){
+      var sx2 = 2 + Math.floor(rand() * (COLS - 4));
+      var sy2 = 2 + Math.floor(rand() * (ROWS - 4));
+      if (canPlace(sx2, sy2)){
+        used[keyOf(sx2, sy2)] = true;
+        layout.secretEntrance = { x:sx2, y:sy2 };
+        break;
+      }
+    }
+  }
+
   return layout;
 }
 
-// === js/enemies.js ===
+/* تولید ۳ نوع اتاق مخفی (گنج، نگهبان، خزانه ۱۵ ثانیه‌ای) */
+function generateSecretRoom(rand){
+  rand = rand || Math.random;
+  var roll = rand();
+  var kind = roll < 0.36 ? 'treasure' : (roll < 0.7 ? 'guardian' : 'vault');
+  var sr = {
+    kind: kind,
+    walls: [],
+    dWalls: [],
+    items: [],
+    exit: { x: 16, y: 9 },
+    timerMs: kind === 'vault' ? 15000 : 0,
+    enemy: kind === 'guardian' ? { type:'guardian', x:14, y:5 } : null
+  };
+
+  for (var x=3; x<=15; x++){
+    if (x !== 9){
+      sr.walls.push({x:x, y:3});
+      sr.walls.push({x:x, y:15});
+    }
+  }
+  if (kind === 'treasure'){
+    sr.items.push({x:9, y:9, type:'relic_orb'});
+    sr.items.push({x:8, y:7, type:'gold'});
+    sr.items.push({x:10, y:7, type:'gold'});
+    sr.items.push({x:9, y:11, type:'crystal'});
+    sr.items.push({x:12, y:9, type:'gold'});
+  } else if (kind === 'guardian'){
+    sr.items.push({x:11, y:9, type:'relic_orb'});
+    sr.items.push({x:10, y:6, type:'crystal'});
+    sr.items.push({x:10, y:12, type:'gold'});
+    sr.items.push({x:7, y:9, type:'apple'});
+  } else {
+    sr.dWalls.push({x:8, y:9, hp:1, maxHp:1});
+    sr.dWalls.push({x:11, y:7, hp:1, maxHp:1});
+    sr.dWalls.push({x:11, y:11, hp:1, maxHp:1});
+    sr.items.push({x:10, y:9, type:'gold'});
+    sr.items.push({x:12, y:6, type:'gold'});
+    sr.items.push({x:12, y:12, type:'gold'});
+    sr.items.push({x:13, y:9, type:'crystal'});
+    sr.items.push({x:9, y:5, type:'relic_orb'});
+  }
+  return sr;
+}
+
+</script>
+<script>
+/* === js/enemies.js === */
 'use strict';
 /* ═══════════════ اژدهاهای پیکسلی (۴ لایه) + غول سنگی دژ ═══════════════ */
 var DRAGON_STYLE = {
@@ -1900,187 +2066,9 @@ function updateBossPhase(b, addFloatFn){
   }
 }
 
-// === js/progression.js ===
-'use strict';
-/* ═══════════════ صندوق‌ها، پیشرفت گیم‌پلی، ژن‌ها و مأموریت‌ها ═══════════════ */
-var CHEST_TYPES = {
-  bronze: { id:'bronze', name:'صندوق برنزی', ico:'chest_bronze', unlockSec:300,  crystalSkip:2, shopGold:85,  shopCrystals:0,  gold:[14,24],  crystals:[0,1], xp:22 },
-  silver: { id:'silver', name:'صندوق نقره‌ای', ico:'chest_silver', unlockSec:600,  crystalSkip:5, shopGold:190, shopCrystals:0,  gold:[30,50],  crystals:[2,3], xp:45 },
-  gold:   { id:'gold',   name:'صندوق طلایی', ico:'chest_gold',   unlockSec:1200, crystalSkip:9, shopGold:0,   shopCrystals:12, gold:[70,115], crystals:[4,7], xp:90 }
-};
-
-var DAILY_REWARDS = [
-  { day:1, gold:20, crystals:0, chest:null,     label:'۲۰ سکه' },
-  { day:2, gold:25, crystals:1, chest:null,     label:'۲۵ سکه + ۱ کریستال' },
-  { day:3, gold:20, crystals:1, chest:'bronze', label:'صندوق برنزی' },
-  { day:4, gold:35, crystals:2, chest:null,     label:'۳۵ سکه + ۲ کریستال' },
-  { day:5, gold:25, crystals:2, chest:'silver', label:'صندوق نقره‌ای' },
-  { day:6, gold:50, crystals:3, chest:null,     label:'۵۰ سکه + ۳ کریستال' },
-  { day:7, gold:75, crystals:5, chest:'gold',   label:'صندوق طلایی' }
-];
-
-/* ژن‌ها از طریق مهارت، لِوِل و شکست باس باز می‌شوند (بدون Pay-to-Win!) */
-var GENES = [
-  { id:'fire',     name:'ژن آتشین',   ico:'fireball',  rarity:'common', unlockText:'باز از ابتدا',         needLv:1, needBoss:0, desc:'ردپای شعله‌ور برای آسیب به رقبا و شکستن یخ', color:'#ff6b2b' },
-  { id:'frost',    name:'ژن یخی',     ico:'slow',      rarity:'common', unlockText:'لِوِل ۲',              needLv:2, needBoss:0, desc:'موج یخی کندکننده دشمنان و پرتابه‌ها',        color:'#38bdf8' },
-  { id:'electric', name:'ژن برقی',    ico:'lightning', rarity:'rare',   unlockText:'لِوِل ۳',              needLv:3, needBoss:0, desc:'موج شوک الکتریکی + تخریب دیوار ضعیف',      color:'#fde047' },
-  { id:'magnet',   name:'ژن مغناطیس', ico:'magnet',    rarity:'rare',   unlockText:'لِوِل ۴',              needLv:4, needBoss:0, desc:'جذب سریع غذا، سکه و کریستال‌های اطراف',     color:'#60a5fa' },
-  { id:'armor',    name:'ژن زرهی',    ico:'shield',    rarity:'epic',   unlockText:'۱ پیروزی باس یا لول ۵', needLv:5, needBoss:1, desc:'سپر اضطراری محافظ هنگام برخورد',           color:'#cbd5e1' },
-  { id:'toxic',    name:'ژن سمی',     ico:'acid',      rarity:'epic',   unlockText:'۲ پیروزی باس یا لول ۶', needLv:6, needBoss:2, desc:'ابر سمی آسیب‌زننده به مارهای دشمن',          color:'#a3e635' },
-  { id:'ghost',    name:'ژن روحی',    ico:'ghost',     rarity:'epic',   unlockText:'۳ پیروزی باس یا لول ۷', needLv:7, needBoss:3, desc:'عبور موقت از دیوارها و موانع',               color:'#93c5fd' },
-  { id:'shadow',   name:'ژن سایه',    ico:'acc_ninja', rarity:'legend', unlockText:'۵ پیروزی باس یا لول ۹', needLv:9, needBoss:5, desc:'موج سایه و امتیاز کمبوی دو برابر',           color:'#c084fc' }
-];
-
-var FUSIONS = {
-  'electric+fire':   { name:'طوفان پلاسما', desc:'ردپای آتشین + شوک الکتریکی و تخریب دیوار' },
-  'fire+frost':      { name:'انفجار بخار',  desc:'آتش و یخ همزمان + کندی شدید دشمنان' },
-  'fire+toxic':      { name:'باران مذاب',   desc:'منطقه سمی شعله‌ور طولانی' },
-  'electric+magnet': { name:'میدان مغناطیس',desc:'جذب خودکار وسیع + موج شوک' },
-  'frost+ghost':     { name:'شبح یخ‌زده',  desc:'عبور از دیوار و انجماد رقبا' },
-  'magnet+toxic':    { name:'جذب سمی',     desc:'جذب غنیمت + ابر سمی محافظ' },
-  'armor+shadow':    { name:'شوالیه سایه',  desc:'سپر و امتیاز دوبرابر کمبو' },
-  'ghost+shadow':    { name:'طیف ناپدید',   desc:'عبور از موانع + کمبوی سریع' }
-};
-
-function getGeneObj(id){
-  for (var i=0;i<GENES.length;i++) if (GENES[i].id===id) return GENES[i];
-  return GENES[0];
-}
-function getFusionInfo(g1, g2){
-  if (!g1 || !g2 || g1 === g2) return null;
-  var k = [g1, g2].sort().join('+');
-  return FUSIONS[k] || { name:'ترکیب '+getGeneObj(g1).name.replace('ژن ','')+' + '+getGeneObj(g2).name.replace('ژن ',''), desc:'اجرای هم‌زمان هر دو مهارت ژنتیکی' };
-}
-
-/* ارتقای مهارت با امتیاز تکامل حاصل از لول‌آپ */
-var SKILLS = [
-  { id:'reflex', name:'چابکی و زمان', desc:'بازگشت زمان بیشتر و زمان شارژ سریع‌تر دش', maxLv:5 },
-  { id:'power',  name:'قدرت ژن',      desc:'دوام طولانی‌تر مهارت و تخریب بیشتر',        maxLv:5 },
-  { id:'greed',  name:'جاذبه کمبو',   desc:'شعاع جذب بیشتر با زنجیره کمبو و پاداش طلا',  maxLv:5 }
-];
-
-var DAILY_MISSIONS = [
-  { id:'dm_games',  title:'۳ دست بازی کن',          stat:'games',  target:3,  gold:25, crystals:1 },
-  { id:'dm_foods',  title:'۲۵ غذا و سیب جمع کن',    stat:'foods',  target:25, gold:30, crystals:1 },
-  { id:'dm_dashes', title:'۱۰ بار از دش استفاده کن', stat:'dashes', target:10, gold:25, crystals:2 },
-  { id:'dm_combos', title:'۵ زنجیره کمبوی ×۳ بساز',  stat:'combos', target:5,  gold:35, crystals:2 }
-];
-
-var WEEKLY_MISSIONS = [
-  { id:'wm_boss',   title:'۳ باس را شکست بده',      stat:'bossWins', target:3,    gold:90,  crystals:4 },
-  { id:'wm_rivals', title:'۸ مار دشمن را از بین ببر',stat:'rivals',   target:8,    gold:75,  crystals:3 },
-  { id:'wm_chests', title:'۴ صندوق باز کن',          stat:'chests',   target:4,    gold:70,  crystals:3 },
-  { id:'wm_score',  title:'۳۰۰۰ امتیاز مجموع بگیر',  stat:'scoreSum', target:3000, gold:100, crystals:5 }
-];
-
-var SECRET_MISSIONS = [
-  { id:'sm_close',  title:'۲۰ فرار نزدیک به مرگ!',    stat:'closeCalls',  target:20, gold:60, crystals:4 },
-  { id:'sm_walls',  title:'۱۵ دیوار با دش بشکن',      stat:'wallsBroken', target:15, gold:55, crystals:3 },
-  { id:'sm_nohit',  title:'۳ برد بدون خوردن حتی ۱ ضربه', stat:'noHitWins', target:3,  gold:95, crystals:6 }
-];
-
-var ACHIEVEMENTS = [
-  { id:'ach_lv3',     name:'مار تازه‌نفس',    desc:'به لِوِل ۳ برس',                  check:function(s){ return s.level >= 3; }, rewardCrystals:2 },
-  { id:'ach_combo8',  name:'استاد زنجیره',    desc:'به کمبوی ×۸ برس',                 check:function(s){ return s.stats.maxComboEver >= 8; }, rewardCrystals:3 },
-  { id:'ach_boss1',   name:'شکارچی اژدها',    desc:'اولین باس را شکست بده',           check:function(s){ return s.stats.bossWins >= 1; }, rewardCrystals:3 },
-  { id:'ach_walls',   name:'دیوارشکن',        desc:'۱۰ دیوار تخریب‌پذیر بشکن',         check:function(s){ return s.stats.wallsBroken >= 10; }, rewardCrystals:2 },
-  { id:'ach_portal',  name:'مسافر بعد',       desc:'۱۰ بار از پورتال عبور کن',         check:function(s){ return s.stats.portalsUsed >= 10; }, rewardCrystals:2 },
-  { id:'ach_master',  name:'فاتح جهان‌ها',     desc:'حداقل ۳ مدال استادی جهان بگیر',   check:function(s){ return countMasteryBadges() >= 3; }, rewardCrystals:5 }
-];
-
-var ROGUE_CARDS = [
-  { id:'rg_magnet', title:'مغناطیس دائمی', ico:'magnet',     desc:'جذب خودکار سیب‌ها به سمت سر' },
-  { id:'rg_hp',     title:'+۱ قلب زرهی',  ico:'heart_full', desc:'یک جان اضافی در سیاهچال' },
-  { id:'rg_bolt',   title:'دش برق‌آسا',    ico:'dash_ico',   desc:'کاهش ۴۰٪ زمان انتظار دش و مهارت' },
-  { id:'rg_combo',  title:'کمبوی طلایی',  ico:'gold',       desc:'+۵۰٪ امتیاز برای هر غذا' },
-  { id:'rg_ghost',  title:'قدم روح',      ico:'ghost',      desc:'دوام دو برابر قدرت روح و سپر' },
-  { id:'rg_rewind', title:'ساعت شنی',     ico:'rewind',     desc:'+۲ شارژ اضافه برای بازگشت زمان' }
-];
-
-var BESTIARY = [
-  { id:'hunter',   name:'مار شکارچی',    ico:'snake_ico',  desc:'مسیر حرکت تو را پیش‌بینی و قطع می‌کند' },
-  { id:'rival',    name:'مار رقیب',      ico:'gold',       desc:'برای تصاحب سیب‌ها و کریستال‌ها مسابقه می‌دهد' },
-  { id:'guardian', name:'مار نگهبان',    ico:'shield',     desc:'از گنج‌ها و کلیدها محافظت می‌کند' },
-  { id:'dwall',    name:'دیوار شکننده',  ico:'brick',      desc:'با فعال کردن دش می‌توانی آن را بشکنی' },
-  { id:'portal',   name:'پورتال دوقلو',  ico:'portal',     desc:'مار را بی‌وقفه به پورتال جفت منتقل می‌کند' },
-  { id:'d1',       name:'اژدهای آبی',    ico:'orb',        desc:'باس ۳ فازه با پرتابه‌های مستقیم و موج یخی' },
-  { id:'d2',       name:'اژدهای آتشین',  ico:'fireball',   desc:'باس ۳ فازه با مناطق سوزان و رگبار شعله' },
-  { id:'d3',       name:'اژدهای برقی',   ico:'lightning',  desc:'باس ۳ فازه با رعدهای خطی سریع' },
-  { id:'d4',       name:'غول سنگی',      ico:'golem_ico',  desc:'غول دژ دیجیتال که دیوارهای سنگی می‌سازد' }
-];
-
-function checkLevelGeneUnlocks(){
-  var unlockedNew = [];
-  GENES.forEach(function(g){
-    if (save.ownedGenes.indexOf(g.id) !== -1) return;
-    var okLv = save.level >= g.needLv;
-    var okBoss = g.needBoss > 0 && save.stats.bossWins >= g.needBoss;
-    if (okLv || okBoss){
-      save.ownedGenes.push(g.id);
-      unlockedNew.push(g.name);
-    }
-  });
-  return unlockedNew;
-}
-
-function addXP(amt){
-  save.xp += amt;
-  var leveled = false;
-  while (save.xp >= save.level * 100){
-    save.xp -= save.level * 100;
-    save.level++;
-    save.evoPoints = (save.evoPoints || 0) + 1;
-    leveled = true;
-  }
-  var newGenes = checkLevelGeneUnlocks();
-  return { leveled: leveled, newGenes: newGenes };
-}
-
-function evaluateAchievements(){
-  var newly = [];
-  ACHIEVEMENTS.forEach(function(a){
-    if (save.achievements.indexOf(a.id) === -1 && a.check(save)){
-      save.achievements.push(a.id);
-      save.crystals += a.rewardCrystals;
-      newly.push(a);
-    }
-  });
-  return newly;
-}
-
-function getWorldMastery(worldId){
-  if (!save.worldMastery[worldId]){
-    save.worldMastery[worldId] = { scoreBadge:false, noHitBadge:false, comboBadge:false, challengeDone:false };
-  }
-  return save.worldMastery[worldId];
-}
-
-function countMasteryBadges(){
-  var total = 0;
-  WORLDS_ORDER.forEach(function(w){
-    var m = save.worldMastery[w];
-    if (m){
-      if (m.scoreBadge) total++;
-      if (m.noHitBadge) total++;
-      if (m.comboBadge) total++;
-    }
-  });
-  return total;
-}
-
-function setSingleChest(type){
-  if (save.slot !== null) return false;
-  save.slot = { type: type, unlockAt: 0, ready: false };
-  return true;
-}
-
-function discover(id){
-  if (!id || save.discovered.indexOf(id) !== -1) return;
-  save.discovered.push(id);
-  persist();
-}
-
-// === js/modes.js ===
+</script>
+<script>
+/* === js/modes.js === */
 'use strict';
 /* ═══════════════ حالت‌های ۵گانه بازی + رکورد هر جهان و مرحله‌های معمایی-سرعتی ═══════════════ */
 var GAME_MODES = [
@@ -2173,7 +2161,232 @@ var LEVEL_RUSH_STAGES = [
   }
 ];
 
-// === js/renderer.js ===
+</script>
+<script>
+/* === js/progression.js === */
+'use strict';
+/* ═══════════════ صندوق‌ها، پیشرفت گیم‌پلی، ژن‌ها و مأموریت‌ها ═══════════════ */
+var CHEST_TYPES = {
+  bronze: { id:'bronze', name:'صندوق برنزی', ico:'chest_bronze', unlockSec:300,  crystalSkip:2, shopGold:85,  shopCrystals:0,  gold:[14,24],  crystals:[0,1], xp:22 },
+  silver: { id:'silver', name:'صندوق نقره‌ای', ico:'chest_silver', unlockSec:600,  crystalSkip:5, shopGold:190, shopCrystals:0,  gold:[30,50],  crystals:[2,3], xp:45 },
+  gold:   { id:'gold',   name:'صندوق طلایی', ico:'chest_gold',   unlockSec:1200, crystalSkip:9, shopGold:0,   shopCrystals:12, gold:[70,115], crystals:[4,7], xp:90 }
+};
+
+var DAILY_REWARDS = [
+  { day:1, gold:20, crystals:0, chest:null,     label:'۲۰ سکه' },
+  { day:2, gold:25, crystals:1, chest:null,     label:'۲۵ سکه + ۱ کریستال' },
+  { day:3, gold:20, crystals:1, chest:'bronze', label:'صندوق برنزی' },
+  { day:4, gold:35, crystals:2, chest:null,     label:'۳۵ سکه + ۲ کریستال' },
+  { day:5, gold:25, crystals:2, chest:'silver', label:'صندوق نقره‌ای' },
+  { day:6, gold:50, crystals:3, chest:null,     label:'۵۰ سکه + ۳ کریستال' },
+  { day:7, gold:75, crystals:5, chest:'gold',   label:'صندوق طلایی' }
+];
+
+/* ژن‌ها از طریق مهارت، لِوِل و شکست باس باز می‌شوند (بدون Pay-to-Win!) */
+var GENES = [
+  { id:'fire',     name:'ژن آتشین',   ico:'fireball',  rarity:'common', unlockText:'باز از ابتدا',         needLv:1, needBoss:0, desc:'ردپای شعله‌ور برای آسیب به رقبا و شکستن یخ', color:'#ff6b2b' },
+  { id:'frost',    name:'ژن یخی',     ico:'slow',      rarity:'common', unlockText:'لِوِل ۲',              needLv:2, needBoss:0, desc:'موج یخی کندکننده دشمنان و پرتابه‌ها',        color:'#38bdf8' },
+  { id:'electric', name:'ژن برقی',    ico:'lightning', rarity:'rare',   unlockText:'لِوِل ۳',              needLv:3, needBoss:0, desc:'موج شوک الکتریکی + تخریب دیوار ضعیف',      color:'#fde047' },
+  { id:'magnet',   name:'ژن مغناطیس', ico:'magnet',    rarity:'rare',   unlockText:'لِوِل ۴',              needLv:4, needBoss:0, desc:'جذب سریع غذا، سکه و کریستال‌های اطراف',     color:'#60a5fa' },
+  { id:'armor',    name:'ژن زرهی',    ico:'shield',    rarity:'epic',   unlockText:'۱ پیروزی باس یا لول ۵', needLv:5, needBoss:1, desc:'سپر اضطراری محافظ هنگام برخورد',           color:'#cbd5e1' },
+  { id:'toxic',    name:'ژن سمی',     ico:'acid',      rarity:'epic',   unlockText:'۲ پیروزی باس یا لول ۶', needLv:6, needBoss:2, desc:'ابر سمی آسیب‌زننده به مارهای دشمن',          color:'#a3e635' },
+  { id:'ghost',    name:'ژن روحی',    ico:'ghost',     rarity:'epic',   unlockText:'۳ پیروزی باس یا لول ۷', needLv:7, needBoss:3, desc:'عبور موقت از دیوارها و موانع',               color:'#93c5fd' },
+  { id:'shadow',   name:'ژن سایه',    ico:'acc_ninja', rarity:'legend', unlockText:'۵ پیروزی باس یا لول ۹', needLv:9, needBoss:5, desc:'موج سایه و امتیاز کمبوی دو برابر',           color:'#c084fc' }
+];
+
+var FUSIONS = {
+  'electric+fire':   { name:'طوفان پلاسما', desc:'ردپای آتشین + شوک الکتریکی و تخریب دیوار' },
+  'fire+frost':      { name:'انفجار بخار',  desc:'آتش و یخ همزمان + کندی شدید دشمنان' },
+  'fire+toxic':      { name:'باران مذاب',   desc:'منطقه سمی شعله‌ور طولانی' },
+  'electric+magnet': { name:'میدان مغناطیس',desc:'جذب خودکار وسیع + موج شوک' },
+  'frost+ghost':     { name:'شبح یخ‌زده',  desc:'عبور از دیوار و انجماد رقبا' },
+  'magnet+toxic':    { name:'جذب سمی',     desc:'جذب غنیمت + ابر سمی محافظ' },
+  'armor+shadow':    { name:'شوالیه سایه',  desc:'سپر و امتیاز دوبرابر کمبو' },
+  'ghost+shadow':    { name:'طیف ناپدید',   desc:'عبور از موانع + کمبوی سریع' }
+};
+
+function getGeneObj(id){
+  for (var i=0;i<GENES.length;i++) if (GENES[i].id===id) return GENES[i];
+  return GENES[0];
+}
+function getFusionInfo(g1, g2){
+  if (!g1 || !g2 || g1 === g2) return null;
+  var k = [g1, g2].sort().join('+');
+  return FUSIONS[k] || { name:'ترکیب '+getGeneObj(g1).name.replace('ژن ','')+' + '+getGeneObj(g2).name.replace('ژن ',''), desc:'اجرای هم‌زمان هر دو مهارت ژنتیکی' };
+}
+
+/* ارتقای مهارت با امتیاز تکامل حاصل از لول‌آپ */
+var SKILLS = [
+  { id:'reflex', name:'چابکی و زمان', desc:'بازگشت زمان بیشتر و زمان شارژ سریع‌تر دش', maxLv:5 },
+  { id:'power',  name:'قدرت ژن',      desc:'دوام طولانی‌تر مهارت و تخریب بیشتر',        maxLv:5 },
+  { id:'greed',  name:'جاذبه کمبو',   desc:'شعاع جذب بیشتر با زنجیره کمبو و پاداش طلا',  maxLv:5 }
+];
+
+var DAILY_MISSIONS = [
+  { id:'dm_games',  title:'۳ دست بازی کن',          stat:'games',  target:3,  gold:25, crystals:1 },
+  { id:'dm_foods',  title:'۲۵ غذا و سیب جمع کن',    stat:'foods',  target:25, gold:30, crystals:1 },
+  { id:'dm_dashes', title:'۱۰ بار از دش استفاده کن', stat:'dashes', target:10, gold:25, crystals:2 },
+  { id:'dm_combos', title:'۵ زنجیره کمبوی ×۳ بساز',  stat:'combos', target:5,  gold:35, crystals:2 }
+];
+
+var WEEKLY_MISSIONS = [
+  { id:'wm_boss',   title:'۳ باس را شکست بده',      stat:'bossWins', target:3,    gold:90,  crystals:4 },
+  { id:'wm_rivals', title:'۸ مار دشمن را از بین ببر',stat:'rivals',   target:8,    gold:75,  crystals:3 },
+  { id:'wm_chests', title:'۴ صندوق باز کن',          stat:'chests',   target:4,    gold:70,  crystals:3 },
+  { id:'wm_score',  title:'۳۰۰۰ امتیاز مجموع بگیر',  stat:'scoreSum', target:3000, gold:100, crystals:5 }
+];
+
+var SECRET_MISSIONS = [
+  { id:'sm_close',  title:'۲۰ فرار نزدیک به مرگ!',    stat:'closeCalls',  target:20, gold:60, crystals:4 },
+  { id:'sm_walls',  title:'۱۵ دیوار با دش بشکن',      stat:'wallsBroken', target:15, gold:55, crystals:3 },
+  { id:'sm_nohit',  title:'۳ برد بدون خوردن حتی ۱ ضربه', stat:'noHitWins', target:3,  gold:95, crystals:6 }
+];
+
+var ACHIEVEMENTS = [
+  { id:'ach_lv3',     name:'مار تازه‌نفس',    desc:'به لِوِل ۳ برس',                  check:function(s){ return s.level >= 3; }, rewardCrystals:2 },
+  { id:'ach_combo8',  name:'استاد زنجیره',    desc:'به کمبوی ×۸ برس',                 check:function(s){ return s.stats.maxComboEver >= 8; }, rewardCrystals:3 },
+  { id:'ach_boss1',   name:'شکارچی اژدها',    desc:'اولین باس را شکست بده',           check:function(s){ return s.stats.bossWins >= 1; }, rewardCrystals:3 },
+  { id:'ach_walls',   name:'دیوارشکن',        desc:'۱۰ دیوار تخریب‌پذیر بشکن',         check:function(s){ return s.stats.wallsBroken >= 10; }, rewardCrystals:2 },
+  { id:'ach_portal',  name:'مسافر بعد',       desc:'۱۰ بار از پورتال عبور کن',         check:function(s){ return s.stats.portalsUsed >= 10; }, rewardCrystals:2 },
+  { id:'ach_master',  name:'فاتح جهان‌ها',     desc:'حداقل ۳ مدال استادی جهان بگیر',   check:function(s){ return countMasteryBadges() >= 3; }, rewardCrystals:5 },
+  { id:'ach_secret',  name:'کاشف اتاق مخفی',   desc:'وارد یک اتاق مخفی شو',            check:function(s){ return s.stats.secretsFound >= 1; }, rewardCrystals:3 },
+  { id:'ach_ghost',   name:'شکارچی شبح',       desc:'از شبح رکورد قبلی جلو بزن',      check:function(s){ return s.stats.ghostWins >= 1; }, rewardCrystals:4 }
+];
+
+/* ۵ رلیک دائمی در طول یک Run */
+var RELICS = [
+  { id:'golden_fang',  name:'دندان طلایی',  ico:'relic_fang',   desc:'+۶۰٪ امتیاز و سکه بیشتر از غذاهای طلایی' },
+  { id:'phantom_eye',  name:'چشم شبح',      ico:'relic_eye',    desc:'نمایش مکان آیتم بعدی و +۱.۲ ثانیه پنجره کمبو' },
+  { id:'broken_clock', name:'ساعت شکسته',   ico:'relic_clock',  desc:'۲۸٪ کاهش زمان شارژ دش/مهارت و +۱ بازگشت زمان' },
+  { id:'dragon_scale', name:'پولک اژدها',   ico:'relic_scale',  desc:'یک‌بار نجات قطعی از مرگ هنگام تمام شدن قلب‌ها' },
+  { id:'magnet_core',  name:'هسته مغناطیس', ico:'relic_magnet', desc:'جذب خودکار غذاها و کریستال‌ها از فاصله +۲ خانه' }
+];
+function getRelicObj(id){
+  for (var i=0;i<RELICS.length;i++) if (RELICS[i].id===id) return RELICS[i];
+  return RELICS[0];
+}
+
+/* ۵ فرم تکامل بصری مار بر اساس لول */
+var EVO_FORMS = [
+  { id:'basic',       name:'فرم کلاسیک',     needLv:1,  desc:'مار پیکسلی اصیل' },
+  { id:'glow_eyes',   name:'چشمان درخشان',   needLv:5,  desc:'چشمان نئونی نورانی (لول ۵)' },
+  { id:'armored',     name:'مار زرهی',       needLv:10, desc:'صفحات زره نقره‌ای روی بدن (لول ۱۰)' },
+  { id:'energy_tail', name:'دم انرژی',       needLv:15, desc:'انتهای دم با شعله انرژی (لول ۱۵)' },
+  { id:'legend',      name:'فرم افسانه‌ای',  needLv:20, desc:'ترکیب کامل زره، هاله و دم انرژی (لول ۲۰)' }
+];
+function getEffectiveEvoForm(){
+  var chosen = save.activeEvoForm || 'basic';
+  for (var i=0;i<EVO_FORMS.length;i++){
+    if (EVO_FORMS[i].id === chosen && save.level >= EVO_FORMS[i].needLv) return chosen;
+  }
+  return 'basic';
+}
+
+/* ۵ رویداد آرکید در طول Run */
+var ARCADE_EVENTS = [
+  { id:'golden_rush',    name:'هجوم طلا',      desc:'غذاهای طلایی فراوان روی نقشه ظاهر می‌شوند!' },
+  { id:'darkness',       name:'تاریکی ناگهانی',desc:'بخشی از نقشه تاریک می‌شود و امتیاز افزایش می‌یابد' },
+  { id:'meteor_rain',    name:'بارش شهاب',     desc:'شهاب‌سنگ‌ها دیوارهای شکننده می‌سازند' },
+  { id:'double_trouble', name:'دشمن مضاعف',    desc:'یک مار شکارچی اضافه وارد میدان می‌شود' },
+  { id:'treasure_hunt',  name:'شکار گنج',      desc:'صندوق یا کریستال‌های مخفی در میدان می‌درخشند' }
+];
+
+var ROGUE_CARDS = [
+  { id:'rg_magnet', title:'مغناطیس دائمی', ico:'magnet',     desc:'جذب خودکار سیب‌ها به سمت سر' },
+  { id:'rg_hp',     title:'+۱ قلب زرهی',  ico:'heart_full', desc:'یک جان اضافی در سیاهچال' },
+  { id:'rg_bolt',   title:'دش برق‌آسا',    ico:'dash_ico',   desc:'کاهش ۴۰٪ زمان انتظار دش و مهارت' },
+  { id:'rg_combo',  title:'کمبوی طلایی',  ico:'gold',       desc:'+۵۰٪ امتیاز برای هر غذا' },
+  { id:'rg_ghost',  title:'قدم روح',      ico:'ghost',      desc:'دوام دو برابر قدرت روح و سپر' },
+  { id:'rg_rewind', title:'ساعت شنی',     ico:'rewind',     desc:'+۲ شارژ اضافه برای بازگشت زمان' }
+];
+
+var BESTIARY = [
+  { id:'hunter',   name:'مار شکارچی',    ico:'snake_ico',   desc:'مسیر حرکت تو را پیش‌بینی و قطع می‌کند' },
+  { id:'rival',    name:'مار رقیب',      ico:'gold',        desc:'برای تصاحب سیب‌ها و کریستال‌ها مسابقه می‌دهد' },
+  { id:'guardian', name:'مار نگهبان',    ico:'shield',      desc:'از گنج‌ها و کلیدها محافظت می‌کند' },
+  { id:'dwall',    name:'دیوار شکننده',  ico:'brick',       desc:'با فعال کردن دش می‌توانی آن را بشکنی' },
+  { id:'portal',   name:'پورتال دوقلو',  ico:'portal',      desc:'مار را بی‌وقفه به پورتال جفت منتقل می‌کند' },
+  { id:'secret',   name:'اتاق مخفی',     ico:'secret_door', desc:'ورودی پنهان به گنج، رلیک و چالش کمیاب' },
+  { id:'d1',       name:'اژدهای آبی',    ico:'orb',         desc:'باس ۳ فازه با پرتابه‌های مستقیم و موج یخی' },
+  { id:'d2',       name:'اژدهای آتشین',  ico:'fireball',    desc:'باس ۳ فازه با مناطق سوزان و رگبار شعله' },
+  { id:'d3',       name:'اژدهای برقی',   ico:'lightning',   desc:'باس ۳ فازه با رعدهای خطی سریع' },
+  { id:'d4',       name:'غول سنگی',      ico:'golem_ico',   desc:'غول دژ دیجیتال که دیوارهای سنگی می‌سازد' }
+];
+
+function checkLevelGeneUnlocks(){
+  var unlockedNew = [];
+  GENES.forEach(function(g){
+    if (save.ownedGenes.indexOf(g.id) !== -1) return;
+    var okLv = save.level >= g.needLv;
+    var okBoss = g.needBoss > 0 && save.stats.bossWins >= g.needBoss;
+    if (okLv || okBoss){
+      save.ownedGenes.push(g.id);
+      unlockedNew.push(g.name);
+    }
+  });
+  return unlockedNew;
+}
+
+function addXP(amt){
+  save.xp += amt;
+  var leveled = false;
+  while (save.xp >= save.level * 100){
+    save.xp -= save.level * 100;
+    save.level++;
+    save.evoPoints = (save.evoPoints || 0) + 1;
+    leveled = true;
+  }
+  var newGenes = checkLevelGeneUnlocks();
+  return { leveled: leveled, newGenes: newGenes };
+}
+
+function evaluateAchievements(){
+  var newly = [];
+  ACHIEVEMENTS.forEach(function(a){
+    if (save.achievements.indexOf(a.id) === -1 && a.check(save)){
+      save.achievements.push(a.id);
+      save.crystals += a.rewardCrystals;
+      newly.push(a);
+    }
+  });
+  return newly;
+}
+
+function getWorldMastery(worldId){
+  if (!save.worldMastery[worldId]){
+    save.worldMastery[worldId] = { scoreBadge:false, noHitBadge:false, comboBadge:false, challengeDone:false };
+  }
+  return save.worldMastery[worldId];
+}
+
+function countMasteryBadges(){
+  var total = 0;
+  WORLDS_ORDER.forEach(function(w){
+    var m = save.worldMastery[w];
+    if (m){
+      if (m.scoreBadge) total++;
+      if (m.noHitBadge) total++;
+      if (m.comboBadge) total++;
+    }
+  });
+  return total;
+}
+
+function setSingleChest(type){
+  if (save.slot !== null) return false;
+  save.slot = { type: type, unlockAt: 0, ready: false };
+  return true;
+}
+
+function discover(id){
+  if (!id || save.discovered.indexOf(id) !== -1) return;
+  save.discovered.push(id);
+  persist();
+}
+
+</script>
+<script>
+/* === js/renderer.js === */
 'use strict';
 /* ═══════════════ رندر پیکسلی میدان، پورتال‌ها، همزاد سایه و بازگشت زمان ═══════════════ */
 var canvas = $('#game'), ctx = canvas.getContext('2d');
@@ -2203,7 +2416,8 @@ var TYPES = {
   key:       { ico:'key',        color:'#ffd43b' },
   mimic:     { ico:'mimic',      color:'#ef4444' },
   coin_drop: { ico:'coin',       color:'#ffd43b' },
-  timer:     { ico:'timer',      color:'#46f88f' }
+  timer:     { ico:'timer',      color:'#46f88f' },
+  relic_orb: { ico:'relic_eye',  color:'#a855f7' }
 };
 
 function drawBoard(t){
@@ -2320,6 +2534,30 @@ function drawBoard(t){
     if (dIco) ctx.drawImage(dIco, dx2+2, dy2+2, cell-4, cell-4);
   }
 
+  /* ورودی یا خروجی اتاق مخفی */
+  if (!inSecretRoom && secretEntrance){
+    var sxE = secretEntrance.x * cell, syE = secretEntrance.y * cell;
+    ctx.fillStyle = 'rgba(168,85,247,' + (0.25 + 0.16 * Math.sin(t/140)) + ')';
+    ctx.fillRect(sxE+1, syE+1, cell-2, cell-2);
+    if (PX_ICONS.secret_door) ctx.drawImage(PX_ICONS.secret_door, sxE+1, syE+1, cell-2, cell-2);
+  }
+  if (inSecretRoom && secretExit){
+    var exS = secretExit.x * cell, eyS = secretExit.y * cell;
+    ctx.fillStyle = 'rgba(70,248,143,' + (0.28 + 0.18 * Math.sin(t/130)) + ')';
+    ctx.fillRect(exS+1, eyS+1, cell-2, cell-2);
+    if (PX_ICONS.portal) ctx.drawImage(PX_ICONS.portal, exS+1, eyS+1, cell-2, cell-2);
+  }
+
+  /* نشانگر چشم شبح روی هدف بعدی */
+  if (phantomTarget){
+    var pxT = (phantomTarget.x + 0.5) * cell, pyT = (phantomTarget.y + 0.5) * cell;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(168,85,247,' + (0.5 + 0.4 * Math.sin(t/120)) + ')';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(Math.round(pxT - cell*0.42), Math.round(pyT - cell*0.42), Math.round(cell*0.84), Math.round(cell*0.84));
+    ctx.restore();
+  }
+
   /* پیش‌نمایش مسیر بازگشت زمان (نقاط آبی محو پشت مار) */
   if (rewindsLeft > 0 && historyBuf.length > 2 && !isLowFx()){
     var previewIdx = Math.max(0, historyBuf.length - 12);
@@ -2353,10 +2591,11 @@ function drawBoard(t){
     });
   }
 
-  /* خطوط حاشیه زمین */
-  ctx.strokeStyle = (dashTimer > 0) ? '#38bdf8' : (fx.double > 0 ? '#ffd43b' : wo.accent);
-  ctx.globalAlpha = (dashTimer > 0) ? 0.65 : 0.22;
-  ctx.lineWidth = 2;
+  /* خطوط حاشیه زمین با نمایش حالت جنون (×۵) و طلایی (×۱۰) */
+  var borderCol = inSecretRoom ? '#a855f7' : (combo >= 10 ? '#ffd43b' : (combo >= 5 ? '#46f88f' : (dashTimer > 0 ? '#38bdf8' : (fx.double > 0 ? '#ffd43b' : wo.accent))));
+  ctx.strokeStyle = borderCol;
+  ctx.globalAlpha = (combo >= 5 || dashTimer > 0 || inSecretRoom) ? (0.55 + 0.25*Math.sin(t/110)) : 0.22;
+  ctx.lineWidth = (combo >= 10 || inSecretRoom) ? 3 : 2;
   ctx.strokeRect(1, 1, w-2, h-2);
   ctx.globalAlpha = 1;
 }
@@ -2447,7 +2686,20 @@ function render(t){
 
   var interp = (state === 'play' && tickAcc >= 0) ? Math.min(1, tickAcc / Math.max(40, currentStepMs())) : 1;
 
-  /* سایه شبح بازیکن (رکورد قبلی یا سایه جهان تاریکی) */
+  /* شبح رقیب (مسابقه زنده با بهترین رکورد) */
+  if (!inSecretRoom && !isReplay && rivalGhostSnake && rivalGhostSnake.length > 1){
+    ctx.save();
+    ctx.globalAlpha = 0.34;
+    var rgPts = rivalGhostSnake.map(function(p, idx){
+      var nxt = rivalGhostSnake[idx+1];
+      var wn = nxt ? (Math.abs(p.x-nxt.x)>1 || Math.abs(p.y-nxt.y)>1) : false;
+      return { x:(p.x+0.5)*cell, y:(p.y+0.5)*cell, wrapNext:wn };
+    });
+    drawSeamlessSnake(ctx, rgPts, 'right', { id:'rival_ghost', head:'#7dd3fc', body:'#0ea5e9', spot:'#0369a1', belly:'#e0f2fe', dark:'#0c4a6e' }, cell, t, {});
+    ctx.restore();
+  }
+
+  /* سایه شبح بازیکن (سایه جهان تاریکی) */
   if (shadowSnake && shadowSnake.length > 1){
     ctx.save();
     ctx.globalAlpha = 0.52;
@@ -2508,7 +2760,9 @@ function render(t){
       rainbow: (sk.body === 'rainbow'),
       overrideBody: overrideBody,
       overrideBelly: overrideBelly,
-      accId: save.acc
+      accId: save.acc,
+      evoForm: getEffectiveEvoForm(),
+      goldenCombo: (combo >= 10)
     });
     ctx.restore();
   }
@@ -2596,13 +2850,15 @@ function renderMenuPreview(t){
       {x:108, y:48+bob}, {x:92, y:48+bob*0.7}, {x:76, y:48+bob*0.3},
       {x:60, y:48-bob*0.3}, {x:44, y:48-bob*0.7}, {x:28, y:48-bob}
     ];
-    drawSeamlessSnake(pCtx, pts, 'right', sk, 20, t, { rainbow:(sk.body==='rainbow'), accId:save.acc });
+    drawSeamlessSnake(pCtx, pts, 'right', sk, 20, t, { rainbow:(sk.body==='rainbow'), accId:save.acc, evoForm:getEffectiveEvoForm() });
   }
   requestAnimationFrame(renderMenuPreview);
 }
 requestAnimationFrame(renderMenuPreview);
 
-// === js/core.js ===
+</script>
+<script>
+/* === js/core.js === */
 'use strict';
 /* ═══════════════ هسته گیم‌پلی SNAKE: PIXEL RUSH ═══════════════ */
 var cell = 20, state = 'menu';
@@ -2630,6 +2886,22 @@ var arenaTimeLeft = 60000, shrinkBorder = 0, onIce = false, onSand = false, hotS
 var envEvent = null, envCd = 9000, fogActiveMs = 0, sandstormMs = 0, portalCdTicks = 0, closeCallCd = 0;
 var rngFn = Math.random;
 var activeChallenge = null;
+
+var activeRelics = [], dragonScaleUsed = false, phantomTarget = null;
+var secretEntrance = null, secretExit = null, inSecretRoom = false, secretTimerMs = 0, savedMainRoom = null;
+var rivalGhostTrace = null, rivalGhostIdx = 0, rivalGhostSnake = [], rivalGhostBeat = false, rivalGhostBest = 0;
+var activeArcadeEvent = null, arcadeEventCd = 16000;
+
+function hasRelic(id){ return activeRelics.indexOf(id) !== -1; }
+function updatePhantomTarget(){
+  if (!hasRelic('phantom_eye')){ phantomTarget = null; return; }
+  for (var i=0;i<items.length;i++){
+    if (items[i].type === 'relic_orb' || items[i].type === 'crystal' || items[i].type === 'gold'){
+      phantomTarget = { x:items[i].x, y:items[i].y }; return;
+    }
+  }
+  phantomTarget = items.length ? { x:items[0].x, y:items[0].y } : null;
+}
 
 function addShake(amount){ shakeMag = Math.max(shakeMag, amount); }
 function addShockwave(gx, gy, color, maxR){
@@ -2660,7 +2932,8 @@ function currentStepMs(){
 
   base = Math.max(76, base);
   if (dashTimer > 0) base *= 0.56;
-  else if (onIce) base *= 0.72;
+  else if (combo >= 3) base *= 0.92;
+  if (onIce) base *= 0.72;
   else if (onSand) base *= 1.25;
   if (fx.slow > 0) base *= 1.32;
   return Math.max(52, Math.round(base));
@@ -2755,16 +3028,37 @@ function initHudHearts(){
 function updateHUD(){
   if ($('#hudScore')) $('#hudScore').textContent = faNum(score);
   if ($('#hudCombo')){
-    $('#hudCombo').textContent = '×' + faNum(Math.max(1, combo));
-    $('#hudCombo').style.color = combo >= 5 ? '#ffd43b' : (combo >= 3 ? '#46f88f' : '#e2e8f0');
+    var cLabel = '×' + faNum(Math.max(1, combo));
+    if (combo >= 10) cLabel += ' طلایی!';
+    else if (combo >= 5) cLabel += ' جنون!';
+    $('#hudCombo').textContent = cLabel;
+    $('#hudCombo').style.color = combo >= 10 ? '#ffd43b' : (combo >= 5 ? '#46f88f' : (combo >= 3 ? '#38bdf8' : '#e2e8f0'));
   }
   if ($('#hudEnergyBar')){
     $('#hudEnergyBar').style.width = Math.min(100, Math.round(energyPct)) + '%';
+  }
+  if ($('#hudRelics')){
+    $('#hudRelics').innerHTML = activeRelics.map(function(rid){
+      return pxImgTag(getRelicObj(rid).ico, 14);
+    }).join('');
+  }
+  if ($('#hudGhostDiff')){
+    if (rivalGhostTrace && rivalGhostTrace.length && !isReplay && !inSecretRoom){
+      var gSnap = rivalGhostTrace[Math.min(rivalGhostIdx, rivalGhostTrace.length - 1)];
+      var gSc = gSnap ? gSnap.score : 0;
+      var diff = score - gSc;
+      $('#hudGhostDiff').style.display = 'inline-block';
+      $('#hudGhostDiff').textContent = (diff >= 0 ? '+' : '') + faNum(diff) + ' شبح';
+      $('#hudGhostDiff').style.color = diff >= 0 ? '#46f88f' : '#fda4af';
+    } else {
+      $('#hudGhostDiff').style.display = 'none';
+    }
   }
 
   var stageEl = $('#hudStageBadge');
   if (stageEl){
     if (isReplay) stageEl.textContent = 'بازپخش (' + faNum(replaySpeed) + 'x)';
+    else if (inSecretRoom) stageEl.textContent = secretTimerMs > 0 ? ('مخفی ' + faNum(Math.ceil(secretTimerMs/1000)) + 'ث') : 'اتاق مخفی';
     else if (mode === 'timeattack') stageEl.textContent = faNum(Math.max(0, Math.ceil(arenaTimeLeft/1000))) + 'ث';
     else if (mode === 'bossrush') stageEl.textContent = 'باس ' + faNum(bossRushStage) + '/۴';
     else if (mode === 'dungeon') stageEl.textContent = 'طبقه ' + faNum(dungeonFloor);
@@ -2816,6 +3110,7 @@ function resetStageArrays(){
   fx = { ghost:0, slow:0, double:0, shield:0, magnet:0, trailType:'', trailMs:0 };
   dashTimer = 0; dashCd = 0; hotStayTicks = 0; onIce = false; onSand = false; portalCdTicks = 0;
   shrinkBorder = 0; fogActiveMs = 0; sandstormMs = 0;
+  secretEntrance = null; secretExit = null; inSecretRoom = false; secretTimerMs = 0; savedMainRoom = null;
 }
 
 function spawnSnakeAt(sx, sy){
@@ -2889,6 +3184,7 @@ function setupStageContent(){
   sandTiles = lay.sandTiles;
   crumbleTiles = lay.crumbleTiles;
   portals = lay.portals;
+  secretEntrance = lay.secretEntrance || null;
   if (portals.length) discover('portal');
   if (dWalls.length) discover('dwall');
 
@@ -2896,6 +3192,7 @@ function setupStageContent(){
   spawnItem('apple');
   spawnItem('gold');
   if (mode === 'timeattack') spawnItem('timer');
+  if (rngFn() < 0.35 && activeRelics.length < 4) spawnItem('relic_orb');
 
   /* اسپاون دشمن هوشمند بر اساس نوع حالت */
   if (mode === 'dungeon'){
@@ -2912,6 +3209,7 @@ function setupStageContent(){
   } else if (mode === 'endless'){
     rivals.push(spawnEnemySnake('rival', 15, 14));
   }
+  updatePhantomTarget();
   updateHUD();
 }
 
@@ -2944,6 +3242,19 @@ function startGame(chosenMode, chosenWorld, challengeObj){
   rewindsLeft = 1 + Math.floor((save.skills.reflex || 1) / 2);
   arenaTimeLeft = (save.timeAttackSec || 60) * 1000;
   runTrace = [];
+  activeRelics = [];
+  dragonScaleUsed = false;
+  phantomTarget = null;
+  activeArcadeEvent = null;
+  arcadeEventCd = 16000;
+
+  var rKey = world + '_' + mode;
+  var savedT = (save.rivalGhostEnabled !== false && save.bestTraces && save.bestTraces[rKey]) ? save.bestTraces[rKey] : null;
+  rivalGhostTrace = (savedT && Array.isArray(savedT.frames)) ? savedT.frames : null;
+  rivalGhostBest = savedT ? Number(savedT.score || 0) : 0;
+  rivalGhostIdx = 0;
+  rivalGhostSnake = [];
+  rivalGhostBeat = false;
 
   setupStageContent();
   applyControlLayout();
@@ -2961,7 +3272,7 @@ function startGame(chosenMode, chosenWorld, challengeObj){
 function triggerDash(){
   if (state !== 'play' || isReplay) return;
   if (dashCd > 0 || dashTimer > 0) return;
-  var cdReduc = roguePerks.rg_bolt ? 0.6 : Math.max(0.65, 1 - (save.skills.reflex - 1) * 0.07);
+  var cdReduc = (roguePerks.rg_bolt ? 0.6 : Math.max(0.65, 1 - (save.skills.reflex - 1) * 0.07)) * (hasRelic('broken_clock') ? 0.72 : 1);
   dashTimer = 520;
   dashCd = Math.round(dashMaxCd * cdReduc);
   save.dailyProgress.dashes++;
@@ -2980,7 +3291,7 @@ function triggerSkill(){
   var usedFullEnergy = (energyPct >= 100);
   if (usedFullEnergy) energyPct = 0;
   else {
-    var cdMult = roguePerks.rg_bolt ? 0.6 : Math.max(0.6, 1 - (save.skills.power - 1) * 0.08);
+    var cdMult = (roguePerks.rg_bolt ? 0.6 : Math.max(0.6, 1 - (save.skills.power - 1) * 0.08)) * (hasRelic('broken_clock') ? 0.72 : 1);
     skillCd = Math.round(skillMaxCd * cdMult);
   }
 
@@ -3073,6 +3384,19 @@ function takePlayerHit(reason){
   if (snake.length) addFloat(snake[0].x, snake[0].y, reason || '-۱ قلب!', '#ff4757');
   updateHUD();
   if (playerHp <= 0){
+    if (hasRelic('dragon_scale') && !dragonScaleUsed){
+      dragonScaleUsed = true;
+      playerHp = 1;
+      invulnT = 2600;
+      sfx.power();
+      vibrate([20, 30, 20]);
+      if (snake.length){
+        addShockwave(snake[0].x, snake[0].y, '#ffd43b', cell*3.4);
+        addFloat(snake[0].x, snake[0].y, 'پولک اژدها نجات داد!', '#ffd43b');
+      }
+      updateHUD();
+      return false;
+    }
     endRunGameOver();
     return true;
   }
@@ -3081,32 +3405,35 @@ function takePlayerHit(reason){
 
 function awardFood(type, gx, gy){
   combo = (comboTimer > 0) ? Math.min(15, combo + 1) : 1;
-  comboTimer = 3900;
+  comboTimer = hasRelic('phantom_eye') ? 5100 : 3900;
   if (combo > maxComboRun) maxComboRun = combo;
   if (combo > save.stats.maxComboEver) save.stats.maxComboEver = combo;
   if (combo === 3) save.dailyProgress.combos++;
   if (combo >= 3) sfx.combo(combo);
 
   var sk = getSkinObj(save.skin);
-  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1);
+  var comboTierMult = combo >= 2 ? 2 : 1; /* کمبوی ×۲ امتیاز پایه را دو برابر می‌کند */
+  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1) * comboTierMult;
   var cMult = 1 + Math.min(1.5, (combo - 1) * 0.15);
 
   foodsRun++;
   save.stats.totalApples++;
   save.dailyProgress.foods++;
-  energyPct = Math.min(100, energyPct + 14);
+  energyPct = Math.min(100, energyPct + (combo >= 5 ? 22 : 14));
 
   if (type === 'apple'){
     var pts = Math.round(15 * mult * cMult);
     score += pts;
     applesEaten++;
+    if (combo >= 10) save.gold += 2; /* حالت طلایی: سکه اضافه روی هر سیب */
     sfx.eat();
-    spawnParticles(gx, gy, '#ff4757', 8);
-    addFloat(gx, gy, '+'+faNum(pts) + (combo>=3 ? ' ×'+faNum(combo):''), '#46f88f');
+    spawnParticles(gx, gy, combo >= 10 ? '#ffd43b' : '#ff4757', 8);
+    addFloat(gx, gy, '+'+faNum(pts) + (combo>=10 ? ' طلایی!' : (combo>=5 ? ' جنون!' : (combo>=3 ? ' ×'+faNum(combo):''))), combo >= 10 ? '#ffd43b' : '#46f88f');
     snake.push({x:snake[snake.length-1].x, y:snake[snake.length-1].y});
   } else if (type === 'gold' || type === 'coin_drop'){
-    var ptsG = Math.round(35 * mult * cMult);
-    var gCoin = Math.round((2 + Math.floor(combo/3)) * (sk.bonusGold || 1));
+    var fangMult = hasRelic('golden_fang') ? 1.6 : 1;
+    var ptsG = Math.round(35 * mult * cMult * fangMult);
+    var gCoin = Math.round((2 + Math.floor(combo/3)) * (sk.bonusGold || 1) * fangMult);
     score += ptsG; save.gold += gCoin;
     sfx.gold();
     spawnParticles(gx, gy, '#ffd43b', 10);
@@ -3117,6 +3444,11 @@ function awardFood(type, gx, gy){
     sfx.crystal();
     spawnParticles(gx, gy, '#c084fc', 12);
     addFloat(gx, gy, '+۱ کریستال!', '#e9d5ff');
+  } else if (type === 'relic_orb'){
+    score += 45;
+    sfx.power();
+    openRelicDraft();
+    return;
   } else if (type === 'orb'){
     score += Math.round(40 * mult);
     energyPct = Math.min(100, energyPct + 35);
@@ -3191,6 +3523,7 @@ function awardFood(type, gx, gy){
       advanceStageFlow();
     }
   }
+  updatePhantomTarget();
   updateHUD();
 }
 
@@ -3247,6 +3580,101 @@ function openRogueDraft(){
     box.appendChild(card);
   });
   $('#draftModal').classList.add('show');
+}
+
+function openRelicDraft(){
+  var avail = RELICS.filter(function(r){ return !hasRelic(r.id); });
+  if (!avail.length){ score += 60; save.gold += 8; showToast('تمام رلیک‌ها فعالند! +۸ سکه'); return; }
+  state = 'paused';
+  var box = $('#draftOptions');
+  if (!box) return;
+  box.innerHTML = '';
+  var pool = avail.slice().sort(function(){ return Math.random()-0.5; }).slice(0, 3);
+  pool.forEach(function(r){
+    var card = document.createElement('div');
+    card.className = 'draft-card';
+    card.innerHTML = pxImgTag(r.ico, 28) + '<b>'+r.name+'</b><span>'+r.desc+'</span>';
+    card.onclick = function(){
+      sfx.power();
+      activeRelics.push(r.id);
+      if (r.id === 'broken_clock') rewindsLeft++;
+      $('#draftModal').classList.remove('show');
+      state = 'play';
+      updatePhantomTarget();
+      updateHUD();
+      showToast('رلیک فعال شد: ' + r.name);
+    };
+    box.appendChild(card);
+  });
+  $('#draftModal').classList.add('show');
+}
+
+function enterSecretRoom(){
+  if (inSecretRoom) return;
+  savedMainRoom = {
+    walls: walls, dWalls: dWalls, hotTiles: hotTiles, iceTiles: iceTiles,
+    sandTiles: sandTiles, crumbleTiles: crumbleTiles, portals: portals,
+    doorCell: doorCell, items: items, snake: snake.map(function(p){ return {x:p.x,y:p.y}; }),
+    prevSnake: prevSnake.map(function(p){ return {x:p.x,y:p.y}; }),
+    dir: dir, rivals: rivals
+  };
+  var sr = generateSecretRoom(rngFn);
+  inSecretRoom = true;
+  secretEntrance = null;
+  secretExit = sr.exit;
+  secretTimerMs = sr.timerMs || 0;
+  walls = sr.walls; dWalls = sr.dWalls; hotTiles = []; iceTiles = []; sandTiles = []; crumbleTiles = []; portals = []; doorCell = null;
+  items = sr.items;
+  rivals = sr.enemy ? [spawnEnemySnake(sr.enemy.type, sr.enemy.x, sr.enemy.y)] : [];
+  spawnSnakeAt(5, 9);
+  invulnT = 1200;
+  save.stats.secretsFound++;
+  discover('secret');
+  sfx.portal();
+  addShockwave(5, 9, '#a855f7', cell*3);
+  showToast(sr.kind === 'vault' ? 'خزانه مخفی (۱۵ ثانیه فرصت!)' : (sr.kind === 'guardian' ? 'اتاق نگهبان مخفی!' : 'اتاق گنج مخفی!'));
+  updatePhantomTarget();
+  updateHUD();
+}
+
+function exitSecretRoom(){
+  if (!inSecretRoom || !savedMainRoom) return;
+  var m = savedMainRoom;
+  walls = m.walls; dWalls = m.dWalls; hotTiles = m.hotTiles; iceTiles = m.iceTiles;
+  sandTiles = m.sandTiles; crumbleTiles = m.crumbleTiles; portals = m.portals;
+  doorCell = m.doorCell; items = m.items; rivals = m.rivals;
+  snake = m.snake; prevSnake = m.prevSnake; dir = m.dir; dirQueue = [m.dir];
+  inSecretRoom = false; secretExit = null; secretTimerMs = 0; savedMainRoom = null;
+  invulnT = 1400;
+  ensureApplesPresent();
+  sfx.portal();
+  updatePhantomTarget();
+  updateHUD();
+  showToast('بازگشت به نقشه اصلی');
+}
+
+function triggerArcadeEvent(){
+  if (inSecretRoom || boss) return;
+  var ev = pick(ARCADE_EVENTS);
+  activeArcadeEvent = ev;
+  showToast('رویداد: ' + ev.name);
+  if (ev.id === 'golden_rush'){
+    spawnItem('gold'); spawnItem('gold'); spawnItem('gold');
+  } else if (ev.id === 'darkness'){
+    fogActiveMs = 5500; fx.double = Math.max(fx.double, 5500);
+  } else if (ev.id === 'meteor_rain'){
+    for (var m=0;m<2;m++){
+      var fp = findFreeCell();
+      dWalls.push({x:fp.x, y:fp.y, hp:1, maxHp:1});
+      spawnParticles(fp.x, fp.y, '#f97316', 8);
+    }
+  } else if (ev.id === 'double_trouble' && rivals.length < 3){
+    var ep = findFreeCell();
+    rivals.push(spawnEnemySnake('hunter', ep.x, ep.y));
+  } else if (ev.id === 'treasure_hunt'){
+    spawnItem('crystal');
+    if (activeRelics.length < 4) spawnItem('relic_orb');
+  }
 }
 
 function triggerWorldEvent(){
@@ -3460,6 +3888,16 @@ function stepSnakeTick(){
     }
   }
 
+  /* ورود به اتاق مخفی یا خروج از آن */
+  if (!inSecretRoom && secretEntrance && secretEntrance.x === nx && secretEntrance.y === ny){
+    enterSecretRoom();
+    return;
+  }
+  if (inSecretRoom && secretExit && secretExit.x === nx && secretExit.y === ny){
+    exitSecretRoom();
+    return;
+  }
+
   /* دروازه خروجی مرحله‌ای / سیاهچال */
   if (doorCell && doorCell.x === nx && doorCell.y === ny){
     var remKeys = items.filter(function(it){ return it.type==='key'; }).length;
@@ -3565,7 +4003,7 @@ function stepSnakeTick(){
     }
   }
 
-  /* پاداش نزدیک به مرگ (Close Call) */
+  /* پاداش نزدیک به مرگ (Close Call + تغذیه کمبو) */
   if (closeCallCd <= 0){
     var nearDanger = false;
     [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(off){
@@ -3575,6 +4013,9 @@ function stepSnakeTick(){
     });
     if (nearDanger && dirQueue.length >= 1){
       closeCallCd = 3200;
+      combo = (comboTimer > 0) ? Math.min(15, combo + 1) : 1;
+      comboTimer = hasRelic('phantom_eye') ? 5100 : 3900;
+      if (combo > maxComboRun) maxComboRun = combo;
       score += 25;
       save.stats.closeCalls++;
       sfx.closeCall();
@@ -3587,10 +4028,11 @@ function stepSnakeTick(){
     trailCells.push({ x:snake[snake.length-1].x, y:snake[snake.length-1].y, kind:fx.trailType||'energy', ms:3500 });
   }
 
-  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس */
+  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس + هسته مغناطیس */
   var magRange = 0;
   if (fx.magnet > 0 || roguePerks.rg_magnet) magRange = 3;
   else if (combo >= 3) magRange = 1 + Math.floor(combo / 4);
+  if (hasRelic('magnet_core')) magRange += 2;
   if (save.skills.greed > 1) magRange += Math.floor((save.skills.greed - 1) / 2);
 
   for (var ii=items.length-1;ii>=0;ii--){
@@ -3609,14 +4051,29 @@ function stepSnakeTick(){
     }
   }
 
+  /* پیشروی شبح رقیب و جایزه سبقت */
+  if (!inSecretRoom && rivalGhostTrace && rivalGhostTrace.length){
+    if (rivalGhostIdx < rivalGhostTrace.length - 1) rivalGhostIdx++;
+    var gf = rivalGhostTrace[rivalGhostIdx];
+    rivalGhostSnake = gf ? gf.snake : [];
+    if (!rivalGhostBeat && rivalGhostBest > 0 && score > rivalGhostBest){
+      rivalGhostBeat = true;
+      score += 40;
+      save.stats.ghostWins++;
+      addFloat(nx, ny, 'سبقت از شبح! +۴۰', '#46f88f');
+    }
+  }
+
   /* ذخیره فریم بازپخش */
-  runTrace.push({
-    snake: snake.map(function(p){ return {x:p.x, y:p.y}; }),
-    dir: dir,
-    items: items.map(function(i){ return {x:i.x, y:i.y, type:i.type}; }),
-    score: score
-  });
-  if (runTrace.length > 600) runTrace.shift();
+  if (!inSecretRoom){
+    runTrace.push({
+      snake: snake.map(function(p){ return {x:p.x, y:p.y}; }),
+      dir: dir,
+      items: items.map(function(i){ return {x:i.x, y:i.y, type:i.type}; }),
+      score: score
+    });
+    if (runTrace.length > 600) runTrace.shift();
+  }
 
   stepRivals();
   updateHUD();
@@ -3671,7 +4128,18 @@ function finalizeRewards(isVictory){
     }
   }
 
-  if (runTrace.length > 5) lastRunTrace = runTrace.slice();
+  if (runTrace.length > 5){
+    lastRunTrace = runTrace.slice();
+    var rKey = world + '_' + mode;
+    if (!save.bestTraces) save.bestTraces = {};
+    var prevBestT = save.bestTraces[rKey];
+    if (!prevBestT || score > (prevBestT.score || 0)){
+      save.bestTraces[rKey] = {
+        score: score,
+        frames: runTrace.slice(-240).map(function(f){ return { snake:f.snake, score:f.score }; })
+      };
+    }
+  }
   persist();
   return { gold:earnedGold, crystals:earnedCrystals, xpRes:xpRes, chestNotice:chestNotice, chRewardTxt:chRewardTxt };
 }
@@ -3817,6 +4285,14 @@ function loop(t){
       envCd -= dt;
       if (envCd <= 0){ envCd = 11000; triggerWorldEvent(); }
 
+      arcadeEventCd -= dt;
+      if (arcadeEventCd <= 0){ arcadeEventCd = 19000; triggerArcadeEvent(); }
+
+      if (inSecretRoom && secretTimerMs > 0){
+        secretTimerMs -= dt;
+        if (secretTimerMs <= 0) exitSecretRoom();
+      }
+
       if (mode === 'timeattack'){
         arenaTimeLeft -= dt;
         if (arenaTimeLeft <= 0){ arenaTimeLeft = 0; endRunWin(); }
@@ -3851,7 +4327,9 @@ window.handleAndroidBack = function(){
   return 'exit';
 };
 
-// === js/ui.js ===
+</script>
+<script>
+/* === js/ui.js === */
 'use strict';
 /* ═══════════════ رابط کاربری ۵ تبه SNAKE: PIXEL RUSH ═══════════════ */
 var toastTimer = null;
@@ -4132,6 +4610,32 @@ function renderEvoTab(){
     });
   }
 
+  var efList = $('#evoFormsList');
+  if (efList){
+    efList.innerHTML = '';
+    if (!save.activeEvoForm) save.activeEvoForm = 'basic';
+    EVO_FORMS.forEach(function(ef){
+      var unlocked = save.level >= ef.needLv;
+      var active = getEffectiveEvoForm() === ef.id;
+      var btn = document.createElement('button');
+      btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
+      btn.innerHTML =
+        '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
+        '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
+        '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
+      if (unlocked){
+        btn.onclick = function(){
+          sfx.click();
+          save.activeEvoForm = ef.id;
+          persist();
+          renderEvoTab();
+          showToast('فرم ظاهری: ' + ef.name);
+        };
+      }
+      efList.appendChild(btn);
+    });
+  }
+
   var sList = $('#skillsList');
   if (sList){
     sList.innerHTML = '';
@@ -4354,6 +4858,7 @@ function openSettingsModal(){
       '<button class="mini-pill-btn'+(st.music?' on':'')+'" id="tglMusic">موسیقی</button>' +
       '<button class="mini-pill-btn'+(st.vibrate?' on':'')+'" id="tglVib">لرزش</button>' +
       '<button class="mini-pill-btn'+(st.lowFx?' on':'')+'" id="tglLowFx">حالت سبک</button>' +
+      '<button class="mini-pill-btn'+(save.rivalGhostEnabled!==false?' on':'')+'" id="tglGhost">شبح رقیب</button>' +
     '</div></div>' +
     '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:6px;">' +
       '<span>پشتیبان‌گیری و بازیابی (کد ذخیره)</span>' +
@@ -4371,6 +4876,7 @@ function openSettingsModal(){
   $('#tglMusic').onclick = function(){ st.music = !st.music; persist(); syncAudioSettings(); openSettingsModal(); };
   $('#tglVib').onclick = function(){ st.vibrate = !st.vibrate; persist(); openSettingsModal(); };
   $('#tglLowFx').onclick = function(){ st.lowFx = !st.lowFx; persist(); openSettingsModal(); };
+  $('#tglGhost').onclick = function(){ save.rivalGhostEnabled = (save.rivalGhostEnabled === false); persist(); openSettingsModal(); };
   $('#btnExportSave').onclick = function(){
     $('#backupArea').value = exportBackupJson();
     $('#backupArea').select();

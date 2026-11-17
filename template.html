@@ -114,10 +114,14 @@
   .nav-tab.active{color:var(--emerald)}
 
   /* صفحه بازی */
-  .hud{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;background:#0e161f;border-bottom:2px solid var(--border)}
-  .hud-block{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:bold}
-  .stage-badge{background:var(--card);border:1.5px solid var(--cyan);color:var(--cyan);padding:3px 8px;border-radius:8px;font-size:11px;cursor:pointer}
-  .energy-bar-wrap{width:50px;height:7px;background:#1e293b;border-radius:4px;overflow:hidden}
+  .hud{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:6px 8px;background:#0e161f;border-bottom:2px solid var(--border)}
+  .hud-block{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:bold;min-width:0}
+  .stage-badge{background:var(--card);border:1.5px solid var(--cyan);color:var(--cyan);padding:3px 7px;border-radius:8px;font-size:10px;cursor:pointer;white-space:nowrap}
+  .energy-bar-wrap{width:44px;height:7px;background:#1e293b;border-radius:4px;overflow:hidden}
+  .evo-form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+  .evo-form-btn{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:3px;text-align:right;cursor:pointer;color:var(--text)}
+  .evo-form-btn.on{border-color:var(--gold);background:#251c08}
+  .evo-form-btn.locked{opacity:.55;cursor:default}
   .energy-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--emerald));width:0%}
   #stage-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden}
   #stage{position:relative;border:2px solid var(--border);border-radius:10px;overflow:hidden;background:#09110e}
@@ -214,6 +218,8 @@
       </div>
       <div class="evo-banner" id="activeFusionBox"></div>
       <div id="genesList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      <div class="sec-hdr">فرم ظاهری مار (تکامل بصری)</div>
+      <div id="evoFormsList" class="evo-form-grid"></div>
       <div class="sec-hdr">مهارت‌های پایه</div>
       <div id="skillsList" style="display:flex;flex-direction:column;gap:7px;"></div>
     </section>
@@ -254,8 +260,10 @@
     <div class="hud-block">
       <div id="hudHearts" style="display:flex;gap:3px;"></div>
       <span class="stage-badge" id="hudStageBadge">رکوردزنی</span>
+      <div id="hudRelics" style="display:flex;gap:3px;align-items:center;"></div>
     </div>
     <div class="hud-block">
+      <span id="hudGhostDiff" style="font-size:10px;font-weight:bold;display:none;white-space:nowrap;"></span>
       <span id="icoHudCombo"></span><b id="hudCombo">×۱</b>
       <div class="energy-bar-wrap"><div class="energy-bar" id="hudEnergyBar"></div></div>
       <b id="hudScore" style="color:var(--gold);min-width:26px;text-align:left;">۰</b>
@@ -351,9 +359,9 @@
     <div style="font-size:12px;text-align:right;line-height:1.7;color:#cbd5e1;" id="guideBody">
       <b>۱. حرکت و دش:</b> با کشیدن انگشت روی صفحه یا دکمه‌ها حرکت کن. دکمه <b>دش (Space)</b> سرعتت را لحظه‌ای زیاد می‌کند و بلوک‌های ترک‌خورده را می‌شکند!<br>
       <b>۲. نوار انرژی و ژن‌ها:</b> با حرکت و خوردن سیب نوار انرژی پر می‌شود. دکمه <b>مهارت (E)</b> ترکیب ۲ ژن را فعال می‌کند.<br>
-      <b>۳. زنجیره کمبو و فرار میلی‌متری:</b> خوردن سریع غذا کمبو می‌سازد و آیتم‌ها را به سمتت می‌کشد. عبور نزدیک از خطر پاداش اضافه دارد.<br>
-      <b>۴. بازگشت زمان (R):</b> در لحظه خطر مار را به موقعیت آبی‌رنگ قبلی برمی‌گرداند.<br>
-      <b>۵. نسخه کاملاً آفلاین:</b> بدون نیاز به اینترنت و همراه با پشتیبان‌گیری دستی کد ذخیره.
+      <b>۳. کمبوی بحرانی (×۲ / ×۵ جنون / ×۱۰ طلایی):</b> خوردن سریع غذا و فرار میلی‌متری کمبو می‌سازد؛ در ×۳ جاذبه، در ×۵ حالت جنون و در ×۱۰ حالت طلایی با سکه اضافه فعال می‌شود!<br>
+      <b>۴. رلیک‌ها و اتاق‌های مخفی:</b> گوی‌های بنفش یا دروازه مخفی نقشه را پیدا کن تا رلیک دائمی آن دست و گنج ویژه بگیری.<br>
+      <b>۵. شبح رقیب و بازگشت زمان (R):</b> شبح بهترین رکوردت در هر جهان با تو مسابقه می‌دهد و سبقت از آن جایزه دارد. دکمه زمان در خطر مار را به موقعیت آبی برمی‌گرداند.
     </div>
     <button class="btn" id="btnCloseGuide">فهمیدم!</button>
   </div>

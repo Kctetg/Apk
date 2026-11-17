@@ -27,7 +27,8 @@ var TYPES = {
   key:       { ico:'key',        color:'#ffd43b' },
   mimic:     { ico:'mimic',      color:'#ef4444' },
   coin_drop: { ico:'coin',       color:'#ffd43b' },
-  timer:     { ico:'timer',      color:'#46f88f' }
+  timer:     { ico:'timer',      color:'#46f88f' },
+  relic_orb: { ico:'relic_eye',  color:'#a855f7' }
 };
 
 function drawBoard(t){
@@ -144,6 +145,30 @@ function drawBoard(t){
     if (dIco) ctx.drawImage(dIco, dx2+2, dy2+2, cell-4, cell-4);
   }
 
+  /* ورودی یا خروجی اتاق مخفی */
+  if (!inSecretRoom && secretEntrance){
+    var sxE = secretEntrance.x * cell, syE = secretEntrance.y * cell;
+    ctx.fillStyle = 'rgba(168,85,247,' + (0.25 + 0.16 * Math.sin(t/140)) + ')';
+    ctx.fillRect(sxE+1, syE+1, cell-2, cell-2);
+    if (PX_ICONS.secret_door) ctx.drawImage(PX_ICONS.secret_door, sxE+1, syE+1, cell-2, cell-2);
+  }
+  if (inSecretRoom && secretExit){
+    var exS = secretExit.x * cell, eyS = secretExit.y * cell;
+    ctx.fillStyle = 'rgba(70,248,143,' + (0.28 + 0.18 * Math.sin(t/130)) + ')';
+    ctx.fillRect(exS+1, eyS+1, cell-2, cell-2);
+    if (PX_ICONS.portal) ctx.drawImage(PX_ICONS.portal, exS+1, eyS+1, cell-2, cell-2);
+  }
+
+  /* نشانگر چشم شبح روی هدف بعدی */
+  if (phantomTarget){
+    var pxT = (phantomTarget.x + 0.5) * cell, pyT = (phantomTarget.y + 0.5) * cell;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(168,85,247,' + (0.5 + 0.4 * Math.sin(t/120)) + ')';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(Math.round(pxT - cell*0.42), Math.round(pyT - cell*0.42), Math.round(cell*0.84), Math.round(cell*0.84));
+    ctx.restore();
+  }
+
   /* پیش‌نمایش مسیر بازگشت زمان (نقاط آبی محو پشت مار) */
   if (rewindsLeft > 0 && historyBuf.length > 2 && !isLowFx()){
     var previewIdx = Math.max(0, historyBuf.length - 12);
@@ -177,10 +202,11 @@ function drawBoard(t){
     });
   }
 
-  /* خطوط حاشیه زمین */
-  ctx.strokeStyle = (dashTimer > 0) ? '#38bdf8' : (fx.double > 0 ? '#ffd43b' : wo.accent);
-  ctx.globalAlpha = (dashTimer > 0) ? 0.65 : 0.22;
-  ctx.lineWidth = 2;
+  /* خطوط حاشیه زمین با نمایش حالت جنون (×۵) و طلایی (×۱۰) */
+  var borderCol = inSecretRoom ? '#a855f7' : (combo >= 10 ? '#ffd43b' : (combo >= 5 ? '#46f88f' : (dashTimer > 0 ? '#38bdf8' : (fx.double > 0 ? '#ffd43b' : wo.accent))));
+  ctx.strokeStyle = borderCol;
+  ctx.globalAlpha = (combo >= 5 || dashTimer > 0 || inSecretRoom) ? (0.55 + 0.25*Math.sin(t/110)) : 0.22;
+  ctx.lineWidth = (combo >= 10 || inSecretRoom) ? 3 : 2;
   ctx.strokeRect(1, 1, w-2, h-2);
   ctx.globalAlpha = 1;
 }
@@ -271,7 +297,20 @@ function render(t){
 
   var interp = (state === 'play' && tickAcc >= 0) ? Math.min(1, tickAcc / Math.max(40, currentStepMs())) : 1;
 
-  /* سایه شبح بازیکن (رکورد قبلی یا سایه جهان تاریکی) */
+  /* شبح رقیب (مسابقه زنده با بهترین رکورد) */
+  if (!inSecretRoom && !isReplay && rivalGhostSnake && rivalGhostSnake.length > 1){
+    ctx.save();
+    ctx.globalAlpha = 0.34;
+    var rgPts = rivalGhostSnake.map(function(p, idx){
+      var nxt = rivalGhostSnake[idx+1];
+      var wn = nxt ? (Math.abs(p.x-nxt.x)>1 || Math.abs(p.y-nxt.y)>1) : false;
+      return { x:(p.x+0.5)*cell, y:(p.y+0.5)*cell, wrapNext:wn };
+    });
+    drawSeamlessSnake(ctx, rgPts, 'right', { id:'rival_ghost', head:'#7dd3fc', body:'#0ea5e9', spot:'#0369a1', belly:'#e0f2fe', dark:'#0c4a6e' }, cell, t, {});
+    ctx.restore();
+  }
+
+  /* سایه شبح بازیکن (سایه جهان تاریکی) */
   if (shadowSnake && shadowSnake.length > 1){
     ctx.save();
     ctx.globalAlpha = 0.52;
@@ -332,7 +371,9 @@ function render(t){
       rainbow: (sk.body === 'rainbow'),
       overrideBody: overrideBody,
       overrideBelly: overrideBelly,
-      accId: save.acc
+      accId: save.acc,
+      evoForm: getEffectiveEvoForm(),
+      goldenCombo: (combo >= 10)
     });
     ctx.restore();
   }
@@ -420,7 +461,7 @@ function renderMenuPreview(t){
       {x:108, y:48+bob}, {x:92, y:48+bob*0.7}, {x:76, y:48+bob*0.3},
       {x:60, y:48-bob*0.3}, {x:44, y:48-bob*0.7}, {x:28, y:48-bob}
     ];
-    drawSeamlessSnake(pCtx, pts, 'right', sk, 20, t, { rainbow:(sk.body==='rainbow'), accId:save.acc });
+    drawSeamlessSnake(pCtx, pts, 'right', sk, 20, t, { rainbow:(sk.body==='rainbow'), accId:save.acc, evoForm:getEffectiveEvoForm() });
   }
   requestAnimationFrame(renderMenuPreview);
 }

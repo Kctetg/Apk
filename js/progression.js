@@ -82,7 +82,47 @@ var ACHIEVEMENTS = [
   { id:'ach_boss1',   name:'شکارچی اژدها',    desc:'اولین باس را شکست بده',           check:function(s){ return s.stats.bossWins >= 1; }, rewardCrystals:3 },
   { id:'ach_walls',   name:'دیوارشکن',        desc:'۱۰ دیوار تخریب‌پذیر بشکن',         check:function(s){ return s.stats.wallsBroken >= 10; }, rewardCrystals:2 },
   { id:'ach_portal',  name:'مسافر بعد',       desc:'۱۰ بار از پورتال عبور کن',         check:function(s){ return s.stats.portalsUsed >= 10; }, rewardCrystals:2 },
-  { id:'ach_master',  name:'فاتح جهان‌ها',     desc:'حداقل ۳ مدال استادی جهان بگیر',   check:function(s){ return countMasteryBadges() >= 3; }, rewardCrystals:5 }
+  { id:'ach_master',  name:'فاتح جهان‌ها',     desc:'حداقل ۳ مدال استادی جهان بگیر',   check:function(s){ return countMasteryBadges() >= 3; }, rewardCrystals:5 },
+  { id:'ach_secret',  name:'کاشف اتاق مخفی',   desc:'وارد یک اتاق مخفی شو',            check:function(s){ return s.stats.secretsFound >= 1; }, rewardCrystals:3 },
+  { id:'ach_ghost',   name:'شکارچی شبح',       desc:'از شبح رکورد قبلی جلو بزن',      check:function(s){ return s.stats.ghostWins >= 1; }, rewardCrystals:4 }
+];
+
+/* ۵ رلیک دائمی در طول یک Run */
+var RELICS = [
+  { id:'golden_fang',  name:'دندان طلایی',  ico:'relic_fang',   desc:'+۶۰٪ امتیاز و سکه بیشتر از غذاهای طلایی' },
+  { id:'phantom_eye',  name:'چشم شبح',      ico:'relic_eye',    desc:'نمایش مکان آیتم بعدی و +۱.۲ ثانیه پنجره کمبو' },
+  { id:'broken_clock', name:'ساعت شکسته',   ico:'relic_clock',  desc:'۲۸٪ کاهش زمان شارژ دش/مهارت و +۱ بازگشت زمان' },
+  { id:'dragon_scale', name:'پولک اژدها',   ico:'relic_scale',  desc:'یک‌بار نجات قطعی از مرگ هنگام تمام شدن قلب‌ها' },
+  { id:'magnet_core',  name:'هسته مغناطیس', ico:'relic_magnet', desc:'جذب خودکار غذاها و کریستال‌ها از فاصله +۲ خانه' }
+];
+function getRelicObj(id){
+  for (var i=0;i<RELICS.length;i++) if (RELICS[i].id===id) return RELICS[i];
+  return RELICS[0];
+}
+
+/* ۵ فرم تکامل بصری مار بر اساس لول */
+var EVO_FORMS = [
+  { id:'basic',       name:'فرم کلاسیک',     needLv:1,  desc:'مار پیکسلی اصیل' },
+  { id:'glow_eyes',   name:'چشمان درخشان',   needLv:5,  desc:'چشمان نئونی نورانی (لول ۵)' },
+  { id:'armored',     name:'مار زرهی',       needLv:10, desc:'صفحات زره نقره‌ای روی بدن (لول ۱۰)' },
+  { id:'energy_tail', name:'دم انرژی',       needLv:15, desc:'انتهای دم با شعله انرژی (لول ۱۵)' },
+  { id:'legend',      name:'فرم افسانه‌ای',  needLv:20, desc:'ترکیب کامل زره، هاله و دم انرژی (لول ۲۰)' }
+];
+function getEffectiveEvoForm(){
+  var chosen = save.activeEvoForm || 'basic';
+  for (var i=0;i<EVO_FORMS.length;i++){
+    if (EVO_FORMS[i].id === chosen && save.level >= EVO_FORMS[i].needLv) return chosen;
+  }
+  return 'basic';
+}
+
+/* ۵ رویداد آرکید در طول Run */
+var ARCADE_EVENTS = [
+  { id:'golden_rush',    name:'هجوم طلا',      desc:'غذاهای طلایی فراوان روی نقشه ظاهر می‌شوند!' },
+  { id:'darkness',       name:'تاریکی ناگهانی',desc:'بخشی از نقشه تاریک می‌شود و امتیاز افزایش می‌یابد' },
+  { id:'meteor_rain',    name:'بارش شهاب',     desc:'شهاب‌سنگ‌ها دیوارهای شکننده می‌سازند' },
+  { id:'double_trouble', name:'دشمن مضاعف',    desc:'یک مار شکارچی اضافه وارد میدان می‌شود' },
+  { id:'treasure_hunt',  name:'شکار گنج',      desc:'صندوق یا کریستال‌های مخفی در میدان می‌درخشند' }
 ];
 
 var ROGUE_CARDS = [
@@ -95,15 +135,16 @@ var ROGUE_CARDS = [
 ];
 
 var BESTIARY = [
-  { id:'hunter',   name:'مار شکارچی',    ico:'snake_ico',  desc:'مسیر حرکت تو را پیش‌بینی و قطع می‌کند' },
-  { id:'rival',    name:'مار رقیب',      ico:'gold',       desc:'برای تصاحب سیب‌ها و کریستال‌ها مسابقه می‌دهد' },
-  { id:'guardian', name:'مار نگهبان',    ico:'shield',     desc:'از گنج‌ها و کلیدها محافظت می‌کند' },
-  { id:'dwall',    name:'دیوار شکننده',  ico:'brick',      desc:'با فعال کردن دش می‌توانی آن را بشکنی' },
-  { id:'portal',   name:'پورتال دوقلو',  ico:'portal',     desc:'مار را بی‌وقفه به پورتال جفت منتقل می‌کند' },
-  { id:'d1',       name:'اژدهای آبی',    ico:'orb',        desc:'باس ۳ فازه با پرتابه‌های مستقیم و موج یخی' },
-  { id:'d2',       name:'اژدهای آتشین',  ico:'fireball',   desc:'باس ۳ فازه با مناطق سوزان و رگبار شعله' },
-  { id:'d3',       name:'اژدهای برقی',   ico:'lightning',  desc:'باس ۳ فازه با رعدهای خطی سریع' },
-  { id:'d4',       name:'غول سنگی',      ico:'golem_ico',  desc:'غول دژ دیجیتال که دیوارهای سنگی می‌سازد' }
+  { id:'hunter',   name:'مار شکارچی',    ico:'snake_ico',   desc:'مسیر حرکت تو را پیش‌بینی و قطع می‌کند' },
+  { id:'rival',    name:'مار رقیب',      ico:'gold',        desc:'برای تصاحب سیب‌ها و کریستال‌ها مسابقه می‌دهد' },
+  { id:'guardian', name:'مار نگهبان',    ico:'shield',      desc:'از گنج‌ها و کلیدها محافظت می‌کند' },
+  { id:'dwall',    name:'دیوار شکننده',  ico:'brick',       desc:'با فعال کردن دش می‌توانی آن را بشکنی' },
+  { id:'portal',   name:'پورتال دوقلو',  ico:'portal',      desc:'مار را بی‌وقفه به پورتال جفت منتقل می‌کند' },
+  { id:'secret',   name:'اتاق مخفی',     ico:'secret_door', desc:'ورودی پنهان به گنج، رلیک و چالش کمیاب' },
+  { id:'d1',       name:'اژدهای آبی',    ico:'orb',         desc:'باس ۳ فازه با پرتابه‌های مستقیم و موج یخی' },
+  { id:'d2',       name:'اژدهای آتشین',  ico:'fireball',    desc:'باس ۳ فازه با مناطق سوزان و رگبار شعله' },
+  { id:'d3',       name:'اژدهای برقی',   ico:'lightning',   desc:'باس ۳ فازه با رعدهای خطی سریع' },
+  { id:'d4',       name:'غول سنگی',      ico:'golem_ico',   desc:'غول دژ دیجیتال که دیوارهای سنگی می‌سازد' }
 ];
 
 function checkLevelGeneUnlocks(){

@@ -278,6 +278,32 @@ function renderEvoTab(){
     });
   }
 
+  var efList = $('#evoFormsList');
+  if (efList){
+    efList.innerHTML = '';
+    if (!save.activeEvoForm) save.activeEvoForm = 'basic';
+    EVO_FORMS.forEach(function(ef){
+      var unlocked = save.level >= ef.needLv;
+      var active = getEffectiveEvoForm() === ef.id;
+      var btn = document.createElement('button');
+      btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
+      btn.innerHTML =
+        '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
+        '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
+        '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
+      if (unlocked){
+        btn.onclick = function(){
+          sfx.click();
+          save.activeEvoForm = ef.id;
+          persist();
+          renderEvoTab();
+          showToast('فرم ظاهری: ' + ef.name);
+        };
+      }
+      efList.appendChild(btn);
+    });
+  }
+
   var sList = $('#skillsList');
   if (sList){
     sList.innerHTML = '';
@@ -500,6 +526,7 @@ function openSettingsModal(){
       '<button class="mini-pill-btn'+(st.music?' on':'')+'" id="tglMusic">موسیقی</button>' +
       '<button class="mini-pill-btn'+(st.vibrate?' on':'')+'" id="tglVib">لرزش</button>' +
       '<button class="mini-pill-btn'+(st.lowFx?' on':'')+'" id="tglLowFx">حالت سبک</button>' +
+      '<button class="mini-pill-btn'+(save.rivalGhostEnabled!==false?' on':'')+'" id="tglGhost">شبح رقیب</button>' +
     '</div></div>' +
     '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:6px;">' +
       '<span>پشتیبان‌گیری و بازیابی (کد ذخیره)</span>' +
@@ -517,6 +544,7 @@ function openSettingsModal(){
   $('#tglMusic').onclick = function(){ st.music = !st.music; persist(); syncAudioSettings(); openSettingsModal(); };
   $('#tglVib').onclick = function(){ st.vibrate = !st.vibrate; persist(); openSettingsModal(); };
   $('#tglLowFx').onclick = function(){ st.lowFx = !st.lowFx; persist(); openSettingsModal(); };
+  $('#tglGhost').onclick = function(){ save.rivalGhostEnabled = (save.rivalGhostEnabled === false); persist(); openSettingsModal(); };
   $('#btnExportSave').onclick = function(){
     $('#backupArea').value = exportBackupJson();
     $('#backupArea').select();

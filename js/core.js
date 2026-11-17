@@ -26,6 +26,22 @@ var envEvent = null, envCd = 9000, fogActiveMs = 0, sandstormMs = 0, portalCdTic
 var rngFn = Math.random;
 var activeChallenge = null;
 
+var activeRelics = [], dragonScaleUsed = false, phantomTarget = null;
+var secretEntrance = null, secretExit = null, inSecretRoom = false, secretTimerMs = 0, savedMainRoom = null;
+var rivalGhostTrace = null, rivalGhostIdx = 0, rivalGhostSnake = [], rivalGhostBeat = false, rivalGhostBest = 0;
+var activeArcadeEvent = null, arcadeEventCd = 16000;
+
+function hasRelic(id){ return activeRelics.indexOf(id) !== -1; }
+function updatePhantomTarget(){
+  if (!hasRelic('phantom_eye')){ phantomTarget = null; return; }
+  for (var i=0;i<items.length;i++){
+    if (items[i].type === 'relic_orb' || items[i].type === 'crystal' || items[i].type === 'gold'){
+      phantomTarget = { x:items[i].x, y:items[i].y }; return;
+    }
+  }
+  phantomTarget = items.length ? { x:items[0].x, y:items[0].y } : null;
+}
+
 function addShake(amount){ shakeMag = Math.max(shakeMag, amount); }
 function addShockwave(gx, gy, color, maxR){
   if (isLowFx()) return;
@@ -55,7 +71,8 @@ function currentStepMs(){
 
   base = Math.max(76, base);
   if (dashTimer > 0) base *= 0.56;
-  else if (onIce) base *= 0.72;
+  else if (combo >= 3) base *= 0.92;
+  if (onIce) base *= 0.72;
   else if (onSand) base *= 1.25;
   if (fx.slow > 0) base *= 1.32;
   return Math.max(52, Math.round(base));
@@ -150,16 +167,37 @@ function initHudHearts(){
 function updateHUD(){
   if ($('#hudScore')) $('#hudScore').textContent = faNum(score);
   if ($('#hudCombo')){
-    $('#hudCombo').textContent = '×' + faNum(Math.max(1, combo));
-    $('#hudCombo').style.color = combo >= 5 ? '#ffd43b' : (combo >= 3 ? '#46f88f' : '#e2e8f0');
+    var cLabel = '×' + faNum(Math.max(1, combo));
+    if (combo >= 10) cLabel += ' طلایی!';
+    else if (combo >= 5) cLabel += ' جنون!';
+    $('#hudCombo').textContent = cLabel;
+    $('#hudCombo').style.color = combo >= 10 ? '#ffd43b' : (combo >= 5 ? '#46f88f' : (combo >= 3 ? '#38bdf8' : '#e2e8f0'));
   }
   if ($('#hudEnergyBar')){
     $('#hudEnergyBar').style.width = Math.min(100, Math.round(energyPct)) + '%';
+  }
+  if ($('#hudRelics')){
+    $('#hudRelics').innerHTML = activeRelics.map(function(rid){
+      return pxImgTag(getRelicObj(rid).ico, 14);
+    }).join('');
+  }
+  if ($('#hudGhostDiff')){
+    if (rivalGhostTrace && rivalGhostTrace.length && !isReplay && !inSecretRoom){
+      var gSnap = rivalGhostTrace[Math.min(rivalGhostIdx, rivalGhostTrace.length - 1)];
+      var gSc = gSnap ? gSnap.score : 0;
+      var diff = score - gSc;
+      $('#hudGhostDiff').style.display = 'inline-block';
+      $('#hudGhostDiff').textContent = (diff >= 0 ? '+' : '') + faNum(diff) + ' شبح';
+      $('#hudGhostDiff').style.color = diff >= 0 ? '#46f88f' : '#fda4af';
+    } else {
+      $('#hudGhostDiff').style.display = 'none';
+    }
   }
 
   var stageEl = $('#hudStageBadge');
   if (stageEl){
     if (isReplay) stageEl.textContent = 'بازپخش (' + faNum(replaySpeed) + 'x)';
+    else if (inSecretRoom) stageEl.textContent = secretTimerMs > 0 ? ('مخفی ' + faNum(Math.ceil(secretTimerMs/1000)) + 'ث') : 'اتاق مخفی';
     else if (mode === 'timeattack') stageEl.textContent = faNum(Math.max(0, Math.ceil(arenaTimeLeft/1000))) + 'ث';
     else if (mode === 'bossrush') stageEl.textContent = 'باس ' + faNum(bossRushStage) + '/۴';
     else if (mode === 'dungeon') stageEl.textContent = 'طبقه ' + faNum(dungeonFloor);
@@ -211,6 +249,7 @@ function resetStageArrays(){
   fx = { ghost:0, slow:0, double:0, shield:0, magnet:0, trailType:'', trailMs:0 };
   dashTimer = 0; dashCd = 0; hotStayTicks = 0; onIce = false; onSand = false; portalCdTicks = 0;
   shrinkBorder = 0; fogActiveMs = 0; sandstormMs = 0;
+  secretEntrance = null; secretExit = null; inSecretRoom = false; secretTimerMs = 0; savedMainRoom = null;
 }
 
 function spawnSnakeAt(sx, sy){
@@ -284,6 +323,7 @@ function setupStageContent(){
   sandTiles = lay.sandTiles;
   crumbleTiles = lay.crumbleTiles;
   portals = lay.portals;
+  secretEntrance = lay.secretEntrance || null;
   if (portals.length) discover('portal');
   if (dWalls.length) discover('dwall');
 
@@ -291,6 +331,7 @@ function setupStageContent(){
   spawnItem('apple');
   spawnItem('gold');
   if (mode === 'timeattack') spawnItem('timer');
+  if (rngFn() < 0.35 && activeRelics.length < 4) spawnItem('relic_orb');
 
   /* اسپاون دشمن هوشمند بر اساس نوع حالت */
   if (mode === 'dungeon'){
@@ -307,6 +348,7 @@ function setupStageContent(){
   } else if (mode === 'endless'){
     rivals.push(spawnEnemySnake('rival', 15, 14));
   }
+  updatePhantomTarget();
   updateHUD();
 }
 
@@ -339,6 +381,19 @@ function startGame(chosenMode, chosenWorld, challengeObj){
   rewindsLeft = 1 + Math.floor((save.skills.reflex || 1) / 2);
   arenaTimeLeft = (save.timeAttackSec || 60) * 1000;
   runTrace = [];
+  activeRelics = [];
+  dragonScaleUsed = false;
+  phantomTarget = null;
+  activeArcadeEvent = null;
+  arcadeEventCd = 16000;
+
+  var rKey = world + '_' + mode;
+  var savedT = (save.rivalGhostEnabled !== false && save.bestTraces && save.bestTraces[rKey]) ? save.bestTraces[rKey] : null;
+  rivalGhostTrace = (savedT && Array.isArray(savedT.frames)) ? savedT.frames : null;
+  rivalGhostBest = savedT ? Number(savedT.score || 0) : 0;
+  rivalGhostIdx = 0;
+  rivalGhostSnake = [];
+  rivalGhostBeat = false;
 
   setupStageContent();
   applyControlLayout();
@@ -356,7 +411,7 @@ function startGame(chosenMode, chosenWorld, challengeObj){
 function triggerDash(){
   if (state !== 'play' || isReplay) return;
   if (dashCd > 0 || dashTimer > 0) return;
-  var cdReduc = roguePerks.rg_bolt ? 0.6 : Math.max(0.65, 1 - (save.skills.reflex - 1) * 0.07);
+  var cdReduc = (roguePerks.rg_bolt ? 0.6 : Math.max(0.65, 1 - (save.skills.reflex - 1) * 0.07)) * (hasRelic('broken_clock') ? 0.72 : 1);
   dashTimer = 520;
   dashCd = Math.round(dashMaxCd * cdReduc);
   save.dailyProgress.dashes++;
@@ -375,7 +430,7 @@ function triggerSkill(){
   var usedFullEnergy = (energyPct >= 100);
   if (usedFullEnergy) energyPct = 0;
   else {
-    var cdMult = roguePerks.rg_bolt ? 0.6 : Math.max(0.6, 1 - (save.skills.power - 1) * 0.08);
+    var cdMult = (roguePerks.rg_bolt ? 0.6 : Math.max(0.6, 1 - (save.skills.power - 1) * 0.08)) * (hasRelic('broken_clock') ? 0.72 : 1);
     skillCd = Math.round(skillMaxCd * cdMult);
   }
 
@@ -468,6 +523,19 @@ function takePlayerHit(reason){
   if (snake.length) addFloat(snake[0].x, snake[0].y, reason || '-۱ قلب!', '#ff4757');
   updateHUD();
   if (playerHp <= 0){
+    if (hasRelic('dragon_scale') && !dragonScaleUsed){
+      dragonScaleUsed = true;
+      playerHp = 1;
+      invulnT = 2600;
+      sfx.power();
+      vibrate([20, 30, 20]);
+      if (snake.length){
+        addShockwave(snake[0].x, snake[0].y, '#ffd43b', cell*3.4);
+        addFloat(snake[0].x, snake[0].y, 'پولک اژدها نجات داد!', '#ffd43b');
+      }
+      updateHUD();
+      return false;
+    }
     endRunGameOver();
     return true;
   }
@@ -476,32 +544,35 @@ function takePlayerHit(reason){
 
 function awardFood(type, gx, gy){
   combo = (comboTimer > 0) ? Math.min(15, combo + 1) : 1;
-  comboTimer = 3900;
+  comboTimer = hasRelic('phantom_eye') ? 5100 : 3900;
   if (combo > maxComboRun) maxComboRun = combo;
   if (combo > save.stats.maxComboEver) save.stats.maxComboEver = combo;
   if (combo === 3) save.dailyProgress.combos++;
   if (combo >= 3) sfx.combo(combo);
 
   var sk = getSkinObj(save.skin);
-  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1);
+  var comboTierMult = combo >= 2 ? 2 : 1; /* کمبوی ×۲ امتیاز پایه را دو برابر می‌کند */
+  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1) * comboTierMult;
   var cMult = 1 + Math.min(1.5, (combo - 1) * 0.15);
 
   foodsRun++;
   save.stats.totalApples++;
   save.dailyProgress.foods++;
-  energyPct = Math.min(100, energyPct + 14);
+  energyPct = Math.min(100, energyPct + (combo >= 5 ? 22 : 14));
 
   if (type === 'apple'){
     var pts = Math.round(15 * mult * cMult);
     score += pts;
     applesEaten++;
+    if (combo >= 10) save.gold += 2; /* حالت طلایی: سکه اضافه روی هر سیب */
     sfx.eat();
-    spawnParticles(gx, gy, '#ff4757', 8);
-    addFloat(gx, gy, '+'+faNum(pts) + (combo>=3 ? ' ×'+faNum(combo):''), '#46f88f');
+    spawnParticles(gx, gy, combo >= 10 ? '#ffd43b' : '#ff4757', 8);
+    addFloat(gx, gy, '+'+faNum(pts) + (combo>=10 ? ' طلایی!' : (combo>=5 ? ' جنون!' : (combo>=3 ? ' ×'+faNum(combo):''))), combo >= 10 ? '#ffd43b' : '#46f88f');
     snake.push({x:snake[snake.length-1].x, y:snake[snake.length-1].y});
   } else if (type === 'gold' || type === 'coin_drop'){
-    var ptsG = Math.round(35 * mult * cMult);
-    var gCoin = Math.round((2 + Math.floor(combo/3)) * (sk.bonusGold || 1));
+    var fangMult = hasRelic('golden_fang') ? 1.6 : 1;
+    var ptsG = Math.round(35 * mult * cMult * fangMult);
+    var gCoin = Math.round((2 + Math.floor(combo/3)) * (sk.bonusGold || 1) * fangMult);
     score += ptsG; save.gold += gCoin;
     sfx.gold();
     spawnParticles(gx, gy, '#ffd43b', 10);
@@ -512,6 +583,11 @@ function awardFood(type, gx, gy){
     sfx.crystal();
     spawnParticles(gx, gy, '#c084fc', 12);
     addFloat(gx, gy, '+۱ کریستال!', '#e9d5ff');
+  } else if (type === 'relic_orb'){
+    score += 45;
+    sfx.power();
+    openRelicDraft();
+    return;
   } else if (type === 'orb'){
     score += Math.round(40 * mult);
     energyPct = Math.min(100, energyPct + 35);
@@ -586,6 +662,7 @@ function awardFood(type, gx, gy){
       advanceStageFlow();
     }
   }
+  updatePhantomTarget();
   updateHUD();
 }
 
@@ -642,6 +719,101 @@ function openRogueDraft(){
     box.appendChild(card);
   });
   $('#draftModal').classList.add('show');
+}
+
+function openRelicDraft(){
+  var avail = RELICS.filter(function(r){ return !hasRelic(r.id); });
+  if (!avail.length){ score += 60; save.gold += 8; showToast('تمام رلیک‌ها فعالند! +۸ سکه'); return; }
+  state = 'paused';
+  var box = $('#draftOptions');
+  if (!box) return;
+  box.innerHTML = '';
+  var pool = avail.slice().sort(function(){ return Math.random()-0.5; }).slice(0, 3);
+  pool.forEach(function(r){
+    var card = document.createElement('div');
+    card.className = 'draft-card';
+    card.innerHTML = pxImgTag(r.ico, 28) + '<b>'+r.name+'</b><span>'+r.desc+'</span>';
+    card.onclick = function(){
+      sfx.power();
+      activeRelics.push(r.id);
+      if (r.id === 'broken_clock') rewindsLeft++;
+      $('#draftModal').classList.remove('show');
+      state = 'play';
+      updatePhantomTarget();
+      updateHUD();
+      showToast('رلیک فعال شد: ' + r.name);
+    };
+    box.appendChild(card);
+  });
+  $('#draftModal').classList.add('show');
+}
+
+function enterSecretRoom(){
+  if (inSecretRoom) return;
+  savedMainRoom = {
+    walls: walls, dWalls: dWalls, hotTiles: hotTiles, iceTiles: iceTiles,
+    sandTiles: sandTiles, crumbleTiles: crumbleTiles, portals: portals,
+    doorCell: doorCell, items: items, snake: snake.map(function(p){ return {x:p.x,y:p.y}; }),
+    prevSnake: prevSnake.map(function(p){ return {x:p.x,y:p.y}; }),
+    dir: dir, rivals: rivals
+  };
+  var sr = generateSecretRoom(rngFn);
+  inSecretRoom = true;
+  secretEntrance = null;
+  secretExit = sr.exit;
+  secretTimerMs = sr.timerMs || 0;
+  walls = sr.walls; dWalls = sr.dWalls; hotTiles = []; iceTiles = []; sandTiles = []; crumbleTiles = []; portals = []; doorCell = null;
+  items = sr.items;
+  rivals = sr.enemy ? [spawnEnemySnake(sr.enemy.type, sr.enemy.x, sr.enemy.y)] : [];
+  spawnSnakeAt(5, 9);
+  invulnT = 1200;
+  save.stats.secretsFound++;
+  discover('secret');
+  sfx.portal();
+  addShockwave(5, 9, '#a855f7', cell*3);
+  showToast(sr.kind === 'vault' ? 'خزانه مخفی (۱۵ ثانیه فرصت!)' : (sr.kind === 'guardian' ? 'اتاق نگهبان مخفی!' : 'اتاق گنج مخفی!'));
+  updatePhantomTarget();
+  updateHUD();
+}
+
+function exitSecretRoom(){
+  if (!inSecretRoom || !savedMainRoom) return;
+  var m = savedMainRoom;
+  walls = m.walls; dWalls = m.dWalls; hotTiles = m.hotTiles; iceTiles = m.iceTiles;
+  sandTiles = m.sandTiles; crumbleTiles = m.crumbleTiles; portals = m.portals;
+  doorCell = m.doorCell; items = m.items; rivals = m.rivals;
+  snake = m.snake; prevSnake = m.prevSnake; dir = m.dir; dirQueue = [m.dir];
+  inSecretRoom = false; secretExit = null; secretTimerMs = 0; savedMainRoom = null;
+  invulnT = 1400;
+  ensureApplesPresent();
+  sfx.portal();
+  updatePhantomTarget();
+  updateHUD();
+  showToast('بازگشت به نقشه اصلی');
+}
+
+function triggerArcadeEvent(){
+  if (inSecretRoom || boss) return;
+  var ev = pick(ARCADE_EVENTS);
+  activeArcadeEvent = ev;
+  showToast('رویداد: ' + ev.name);
+  if (ev.id === 'golden_rush'){
+    spawnItem('gold'); spawnItem('gold'); spawnItem('gold');
+  } else if (ev.id === 'darkness'){
+    fogActiveMs = 5500; fx.double = Math.max(fx.double, 5500);
+  } else if (ev.id === 'meteor_rain'){
+    for (var m=0;m<2;m++){
+      var fp = findFreeCell();
+      dWalls.push({x:fp.x, y:fp.y, hp:1, maxHp:1});
+      spawnParticles(fp.x, fp.y, '#f97316', 8);
+    }
+  } else if (ev.id === 'double_trouble' && rivals.length < 3){
+    var ep = findFreeCell();
+    rivals.push(spawnEnemySnake('hunter', ep.x, ep.y));
+  } else if (ev.id === 'treasure_hunt'){
+    spawnItem('crystal');
+    if (activeRelics.length < 4) spawnItem('relic_orb');
+  }
 }
 
 function triggerWorldEvent(){
@@ -855,6 +1027,16 @@ function stepSnakeTick(){
     }
   }
 
+  /* ورود به اتاق مخفی یا خروج از آن */
+  if (!inSecretRoom && secretEntrance && secretEntrance.x === nx && secretEntrance.y === ny){
+    enterSecretRoom();
+    return;
+  }
+  if (inSecretRoom && secretExit && secretExit.x === nx && secretExit.y === ny){
+    exitSecretRoom();
+    return;
+  }
+
   /* دروازه خروجی مرحله‌ای / سیاهچال */
   if (doorCell && doorCell.x === nx && doorCell.y === ny){
     var remKeys = items.filter(function(it){ return it.type==='key'; }).length;
@@ -960,7 +1142,7 @@ function stepSnakeTick(){
     }
   }
 
-  /* پاداش نزدیک به مرگ (Close Call) */
+  /* پاداش نزدیک به مرگ (Close Call + تغذیه کمبو) */
   if (closeCallCd <= 0){
     var nearDanger = false;
     [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(off){
@@ -970,6 +1152,9 @@ function stepSnakeTick(){
     });
     if (nearDanger && dirQueue.length >= 1){
       closeCallCd = 3200;
+      combo = (comboTimer > 0) ? Math.min(15, combo + 1) : 1;
+      comboTimer = hasRelic('phantom_eye') ? 5100 : 3900;
+      if (combo > maxComboRun) maxComboRun = combo;
       score += 25;
       save.stats.closeCalls++;
       sfx.closeCall();
@@ -982,10 +1167,11 @@ function stepSnakeTick(){
     trailCells.push({ x:snake[snake.length-1].x, y:snake[snake.length-1].y, kind:fx.trailType||'energy', ms:3500 });
   }
 
-  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس */
+  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس + هسته مغناطیس */
   var magRange = 0;
   if (fx.magnet > 0 || roguePerks.rg_magnet) magRange = 3;
   else if (combo >= 3) magRange = 1 + Math.floor(combo / 4);
+  if (hasRelic('magnet_core')) magRange += 2;
   if (save.skills.greed > 1) magRange += Math.floor((save.skills.greed - 1) / 2);
 
   for (var ii=items.length-1;ii>=0;ii--){
@@ -1004,14 +1190,29 @@ function stepSnakeTick(){
     }
   }
 
+  /* پیشروی شبح رقیب و جایزه سبقت */
+  if (!inSecretRoom && rivalGhostTrace && rivalGhostTrace.length){
+    if (rivalGhostIdx < rivalGhostTrace.length - 1) rivalGhostIdx++;
+    var gf = rivalGhostTrace[rivalGhostIdx];
+    rivalGhostSnake = gf ? gf.snake : [];
+    if (!rivalGhostBeat && rivalGhostBest > 0 && score > rivalGhostBest){
+      rivalGhostBeat = true;
+      score += 40;
+      save.stats.ghostWins++;
+      addFloat(nx, ny, 'سبقت از شبح! +۴۰', '#46f88f');
+    }
+  }
+
   /* ذخیره فریم بازپخش */
-  runTrace.push({
-    snake: snake.map(function(p){ return {x:p.x, y:p.y}; }),
-    dir: dir,
-    items: items.map(function(i){ return {x:i.x, y:i.y, type:i.type}; }),
-    score: score
-  });
-  if (runTrace.length > 600) runTrace.shift();
+  if (!inSecretRoom){
+    runTrace.push({
+      snake: snake.map(function(p){ return {x:p.x, y:p.y}; }),
+      dir: dir,
+      items: items.map(function(i){ return {x:i.x, y:i.y, type:i.type}; }),
+      score: score
+    });
+    if (runTrace.length > 600) runTrace.shift();
+  }
 
   stepRivals();
   updateHUD();
@@ -1066,7 +1267,18 @@ function finalizeRewards(isVictory){
     }
   }
 
-  if (runTrace.length > 5) lastRunTrace = runTrace.slice();
+  if (runTrace.length > 5){
+    lastRunTrace = runTrace.slice();
+    var rKey = world + '_' + mode;
+    if (!save.bestTraces) save.bestTraces = {};
+    var prevBestT = save.bestTraces[rKey];
+    if (!prevBestT || score > (prevBestT.score || 0)){
+      save.bestTraces[rKey] = {
+        score: score,
+        frames: runTrace.slice(-240).map(function(f){ return { snake:f.snake, score:f.score }; })
+      };
+    }
+  }
   persist();
   return { gold:earnedGold, crystals:earnedCrystals, xpRes:xpRes, chestNotice:chestNotice, chRewardTxt:chRewardTxt };
 }
@@ -1211,6 +1423,14 @@ function loop(t){
 
       envCd -= dt;
       if (envCd <= 0){ envCd = 11000; triggerWorldEvent(); }
+
+      arcadeEventCd -= dt;
+      if (arcadeEventCd <= 0){ arcadeEventCd = 19000; triggerArcadeEvent(); }
+
+      if (inSecretRoom && secretTimerMs > 0){
+        secretTimerMs -= dt;
+        if (secretTimerMs <= 0) exitSecretRoom();
+      }
 
       if (mode === 'timeattack'){
         arenaTimeLeft -= dt;

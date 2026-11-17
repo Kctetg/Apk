@@ -468,7 +468,55 @@ function initPixelIcons(){
       '..oKKKKKKRRoo.......','..oKKddKKKo.........','...odddddo..........','....ooooo...........',
       '....................','....................','....................','....................',
       '....................','....................','....................','....................'
-    ], { o:'#1e0909', K:'#57534e', d:'#292524', W:'#d6d3d1', R:'#ef4444', O:'#f97316', Y:'#fde047' }]
+    ], { o:'#1e0909', K:'#57534e', d:'#292524', W:'#d6d3d1', R:'#ef4444', O:'#f97316', Y:'#fde047' }],
+
+    relic_fang: [20, 20, [
+      '....................','.....oooo...........','....oYYYYoo.........','....oYYWWYYo........',
+      '.....oYYYYYYo.......','......oYYYYYYo......','.......oYYYddYo.....','........oYYYddo.....',
+      '.........oYYddo.....','..........oYYdo.....','...........oYdo.....','............ooo.....',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#422006', Y:'#ffd43b', d:'#d97706', W:'#fffbeb' }],
+
+    relic_eye: [20, 20, [
+      '....................','......oooooooo......','....ooPPPPPPPPoo....','..ooPPWWWWWWWWPPoo..',
+      '.oPPWWCCCCCCCCWWPPo.','.oPWWCCKKKKKKCCWWPo.','.oPWWCCKWWWWKCCWWPo.','.oPPWWCCCCCCCCWWPPo.',
+      '..ooPPWWWWWWWWPPoo..','....ooPPPPPPPPoo....','......oooooooo......','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#1e1b4b', P:'#a855f7', W:'#f8fafc', C:'#38bdf8', K:'#090d14' }],
+
+    relic_clock: [20, 20, [
+      '....................','......oooooooo......','....ooYYYYYYYYoo....','...oYYWWWWWWWWYYo...',
+      '..oYYWWKKKKKKWWYYo..','..oYYWKCCCCCCKWYYo..','..oYYWKCCWKKCKWYYo..','..oYYWKKCCWWWWKYYo..',
+      '...oYYWWWWWWWWYYo...','....ooYYYYYYYYoo....','......oooooooo......','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#422006', Y:'#fbbf24', W:'#f8fafc', K:'#1e293b', C:'#38bdf8' }],
+
+    relic_scale: [20, 20, [
+      '....................','......oooooooo......','....ooRRRRRRRRoo....','...oRRWWYYYYWWRRo...',
+      '..oRRWYYYYYYYYWRRo..','..oRRYYRRRRRRYYRRo..','...oRRYRRRRRRYRRo...',
+      '....oRRYYYYYYRRo....','.....oRRRRRRRRo.....','......oRRddRRo......','.......oooooo.......',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#450a0a', R:'#ef4444', d:'#991b1b', Y:'#fde047', W:'#fffbeb' }],
+
+    relic_magnet: [20, 20, [
+      '....................','....oooo....oooo....','...oYYYYo..oYYYYo...','...oRRRRo..oCCCCo...',
+      '...oRRRRo..oCCCCo...','...oRRRRo..oCCCCo...','...oRRRRooooCCCCo...',
+      '....oRRRRCCCCCCo....','.....oRRRCCCCCo.....','......oooooooo......','....................',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#0f172a', Y:'#ffd43b', R:'#ef4444', C:'#38bdf8' }],
+
+    secret_door: [20, 20, [
+      '....................','.....oooooooooo.....','....oPPPPPPPPPPo....','...oPPWWWWWWWWPPo...',
+      '..oPPWCCCCCCCCWPPo..','..oPPWCPPPPPPCWPPO..','..oPPWCPWWWWPCWPPO..','..oPPWCPWYYWPCWPPO..',
+      '..oPPWCPWWWWPCWPPO..','..oPPWCCCCCCCCWPPO..','..oPPWWWWWWWWWWPPO..','..oooooooooooooooo..',
+      '....................','....................','....................','....................',
+      '....................','....................','....................','....................'
+    ], { o:'#1e1b4b', P:'#9333ea', W:'#f3e8ff', C:'#38bdf8', Y:'#ffd43b', O:'#1e1b4b' }]
   };
 
   for (var key in defs){
@@ -589,7 +637,11 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
   var hlC = sk.head;
   var ribC = sk.dark;
 
+  var evo = opts.evoForm || 'basic';
+  var isGolden = !!opts.goldenCombo;
+
   function segCol(s){
+    if (isGolden && ((s + Math.floor((t||0)/140)) % 2 === 0)) return '#ffd43b';
     if (opts.rainbow){
       var h = Math.floor(((s * 24 + (t||0) / 6) % 360) / 15) * 15;
       return 'hsl('+h+',85%,56%)';
@@ -665,11 +717,32 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
         cctx.fillStyle = spotC;
         cctx.fillRect(Math.round(midX - spW * 0.5), Math.round(midY - spW * 0.4), spW, Math.max(2, Math.round(spW * 0.7)));
       }
+      if ((evo === 'armored' || evo === 'legend') && s3 % 2 === 0){
+        cctx.fillStyle = evo === 'legend' ? '#fde047' : '#cbd5e1';
+        var armS = Math.max(3, Math.round(r * 0.45));
+        cctx.fillRect(Math.round(midX - armS * 0.5), Math.round(midY - armS * 0.5), armS, armS);
+      }
     }
   }
 
+  /* دم شعله انرژی در فرم تکامل ۱۵ و افسانه‌ای */
+  if ((evo === 'energy_tail' || evo === 'legend') && n > 1){
+    var tp = pts[n - 1];
+    var pulseT = Math.max(2, Math.round(r * (0.45 + 0.15 * Math.sin((t||0)/95))));
+    cctx.fillStyle = evo === 'legend' ? '#ffd43b' : '#38bdf8';
+    cctx.fillRect(Math.round(tp.x - pulseT), Math.round(tp.y - pulseT), pulseT * 2, pulseT * 2);
+  }
+
   var hp = pts[0];
-  var heads = buildSnakeHeads(sk, opts.overrideBody, opts.overrideBelly);
+  if (evo === 'legend'){
+    cctx.save();
+    cctx.strokeStyle = 'rgba(255,212,59,' + (0.45 + 0.35 * Math.sin((t||0)/130)) + ')';
+    cctx.lineWidth = Math.max(1.5, cellSize * 0.09);
+    cctx.strokeRect(Math.round(hp.x - r * 1.45), Math.round(hp.y - r * 1.45), Math.round(r * 2.9), Math.round(r * 2.9));
+    cctx.restore();
+  }
+
+  var heads = buildSnakeHeads(sk, isGolden ? '#ffd43b' : opts.overrideBody, isGolden ? '#fef08a' : opts.overrideBelly);
   cctx.save();
   cctx.imageSmoothingEnabled = false;
   cctx.translate(Math.round(hp.x), Math.round(hp.y));
@@ -677,6 +750,11 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
     var wS = Math.round(cellSize * 1.18), hS = Math.round(cellSize * 0.96);
     if (dirStr === 'left') cctx.scale(-1, 1);
     cctx.drawImage(heads.side, -Math.round(wS * 0.42), -Math.round(hS * 0.5), wS, hS);
+    if (evo === 'glow_eyes' || evo === 'legend'){
+      cctx.fillStyle = evo === 'legend' ? '#fde047' : '#38bdf8';
+      var eS = Math.max(2, Math.round(cellSize * 0.16));
+      cctx.fillRect(Math.round(wS * 0.14), -Math.round(hS * 0.22), eS, eS);
+    }
     if (((t || 0) % 750) < 280){
       var tx = Math.round(wS * 0.54), px = Math.max(1, Math.round(cellSize * 0.08));
       cctx.fillStyle = '#e62e4c';
@@ -688,6 +766,12 @@ function drawSeamlessSnake(cctx, pts, dirStr, sk, cellSize, t, opts){
     var wU = Math.round(cellSize * 0.98), hU = Math.round(cellSize * 1.14);
     if (dirStr === 'down') cctx.scale(1, -1);
     cctx.drawImage(heads.ud, -Math.round(wU * 0.5), -Math.round(hU * 0.54), wU, hU);
+    if (evo === 'glow_eyes' || evo === 'legend'){
+      cctx.fillStyle = evo === 'legend' ? '#fde047' : '#38bdf8';
+      var eS2 = Math.max(2, Math.round(cellSize * 0.14));
+      cctx.fillRect(-Math.round(wU * 0.22), -Math.round(hU * 0.14), eS2, eS2);
+      cctx.fillRect(Math.round(wU * 0.08), -Math.round(hU * 0.14), eS2, eS2);
+    }
     if (((t || 0) % 750) < 280){
       var ty = -Math.round(hU * 0.56), px2 = Math.max(1, Math.round(cellSize * 0.08));
       cctx.fillStyle = '#e62e4c';

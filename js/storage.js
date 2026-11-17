@@ -84,6 +84,9 @@ function defaultSave(){
     skills: { reflex: 1, power: 1, greed: 1 },
     worldRecords: {},
     worldMastery: {},
+    bestTraces: {},
+    rivalGhostEnabled: true,
+    activeEvoForm: 'basic',
     levelRushIdx: 0,
     dailySeedKey: '',
     dailySeedBest: 0,
@@ -111,7 +114,9 @@ function defaultSave(){
       closeCalls: 0,
       maxComboEver: 0,
       noHitWins: 0,
-      portalsUsed: 0
+      portalsUsed: 0,
+      secretsFound: 0,
+      ghostWins: 0
     },
     settings: defaultSettings()
   };
@@ -150,6 +155,9 @@ var save = (function(){
     for (var st in def.settings) if (parsed.settings[st] === undefined) parsed.settings[st] = def.settings[st];
     if (!parsed.worldRecords) parsed.worldRecords = {};
     if (!parsed.worldMastery) parsed.worldMastery = {};
+    if (!parsed.bestTraces) parsed.bestTraces = {};
+    if (!parsed.activeEvoForm) parsed.activeEvoForm = 'basic';
+    if (parsed.rivalGhostEnabled === undefined) parsed.rivalGhostEnabled = true;
     if (!parsed.dailyProgress) parsed.dailyProgress = def.dailyProgress;
     if (!parsed.weeklyProgress) parsed.weeklyProgress = def.weeklyProgress;
     if (parsed.missionDayKey !== todayKey()){
