@@ -33,9 +33,6 @@ function makeSandbox() {
     translate() {},
     rotate() {},
     scale() {},
-    createRadialGradient() {
-      return { addColorStop() {} };
-    },
     clearRect() {}
   };
   function makeCanvas() {
@@ -131,94 +128,75 @@ function runTests() {
   const g = loadEngine();
   let passed = 0;
 
-  // 1. Rival Ghost Uniform Downsampling (Bug Fix verification)
-  const rawTrace = [];
-  for (let i = 0; i < 600; i++) {
-    rawTrace.push({ snake: [{ x: i % 19, y: Math.floor(i / 19) % 19 }], score: i * 5 });
+  // 1. 3-Stage Onboarding Tutorial Progression
+  const s1 = g.generateForestStage(1);
+  assert.strictEqual(s1.applesGoal, 5);
+  assert.strictEqual(s1.needKey, false);
+  assert.strictEqual(s1.walls.length, 0, 'Stage 1 has zero internal walls');
+  assert.ok(s1.tutorialHint.length > 0);
+
+  const s2 = g.generateForestStage(2);
+  assert.strictEqual(s2.applesGoal, 6);
+  assert.strictEqual(s2.needKey, false);
+  assert.ok(s2.walls.length > 0, 'Stage 2 introduces walls');
+
+  const s3 = g.generateForestStage(3);
+  assert.strictEqual(s3.needKey, true, 'Stage 3 introduces yellow key');
+  assert.ok(s3.keyPos && typeof s3.keyPos.x === 'number');
+  passed++;
+
+  // 2. Stage 4 Secret Switch Chamber & BFS Reachability Across Stages 1..20
+  const s4 = g.generateForestStage(4);
+  assert.strictEqual(s4.secretWalls.length, 1);
+  assert.strictEqual(s4.switches.length, 1);
+  assert.ok(s4.secretItems.length >= 2, 'Secret alcove contains reward items');
+
+  for (let st = 1; st <= 20; st++) {
+    const def = g.generateForestStage(st);
+    const targets = [def.doorPos];
+    if (def.keyPos) targets.push(def.keyPos);
+    assert.ok(
+      g.validateReachable(def.walls.concat(def.secretWalls), 4, 9, targets),
+      `Stage ${st} failed BFS reachability to key & green exit`
+    );
   }
-  const sampled = g.downsampleFrames(rawTrace, 240);
-  assert.strictEqual(sampled.length, 240, 'Sampled ghost trace must have 240 frames');
-  assert.strictEqual(sampled[0].score, 0, 'Sampled ghost must start at tick 0 (score 0), not tail');
-  assert.strictEqual(sampled[sampled.length - 1].score, 599 * 5, 'Sampled ghost must preserve final frame');
-  assert.ok(sampled[120].score > 1400 && sampled[120].score < 1600, 'Midpoint must align proportionally');
   passed++;
 
-  // 2. BFS Reachability & Maze Layout across all 6 Ranked Arenas
-  assert.strictEqual(g.WORLDS_ORDER.length, 6, 'Must have 6 arenas');
-  for (let a = 0; a < g.WORLDS_ORDER.length; a++) {
-    const wid = g.WORLDS_ORDER[a];
-    const wo = g.getWorldObj(wid);
-    assert.strictEqual(wo.arenaNum, a + 1, 'Arena number must match index');
-    assert.ok(wo.lvRange && wo.lvRange.length > 0, 'Arena must define level range');
-    for (let seed = 1; seed <= 3; seed++) {
-      const rand = g.mulberry32(seed * 1337 + a * 97);
-      const layout = g.generateWorldLayout(wid, seed, rand);
-      assert.ok(g.validateReachable(layout.walls, 4, 9), `Arena ${wid} seed ${seed} failed BFS reachability`);
-      assert.strictEqual(layout.secretWalls.length, 2, 'Each arena layout generates 2 secret breakable walls');
-      assert.strictEqual(layout.switches.length, 2, 'Each arena layout generates 2 ordered puzzle switches');
-      assert.strictEqual(layout.switches[0].order, 1);
-      assert.strictEqual(layout.switches[1].order, 2);
-    }
-  }
+  // 3. Every 5th Stage Special Milestone (5 = Guardian Secret Maze, 10 = Forest Dragon Boss)
+  const s5 = g.generateForestStage(5);
+  assert.strictEqual(s5.isSpecial, true);
+  assert.strictEqual(s5.specialKind, 'secret_maze');
+  assert.strictEqual(s5.hasGuardian, true);
+
+  const s10 = g.generateForestStage(10);
+  assert.strictEqual(s10.isSpecial, true);
+  assert.strictEqual(s10.specialKind, 'boss');
+  assert.strictEqual(s10.hasBoss, true);
+  assert.ok(s10.bossHp >= 3);
   passed++;
 
-  // 3. All 6 Secret Room types generate validly
-  const seenKinds = new Set();
-  for (let r = 0; r < 6; r++) {
-    const sr = g.generateSecretRoom(() => r / 6 + 0.01);
-    seenKinds.add(sr.kind);
-    assert.ok(sr.exit && typeof sr.exit.x === 'number', 'Secret room must have exit coordinate');
-    assert.ok(sr.items.length >= 3, `Secret room ${sr.kind} must contain items`);
-  }
-  assert.strictEqual(seenKinds.size, 6, 'All 6 secret room kinds must be reachable');
+  // 4. Strict Red Apple / Key / Exit Gate Unlock & End-to-End Pickup Invariant
+  g.startStage(3);
+  assert.strictEqual(g.exitUnlocked, false, 'Exit stays locked before goal + key');
+  g.awardPickup('apple', 5, 9);
+  g.awardPickup('apple', 6, 9);
+  g.awardPickup('apple', 7, 9);
+  g.awardPickup('key', 15, 3);
+  assert.strictEqual(g.exitUnlocked, true, 'Exit unlocks green once apples & key collected');
+  g.ensureGoalItemsPresent();
+  assert.ok(g.doorCell && g.doorCell.x === 17);
+  g.endStageWin();
+  assert.strictEqual(g.save.maxStageUnlocked >= 4, true, 'Winning stage 3 unlocks stage 4');
   passed++;
 
-  // 4. Fog of War radius & state toggle
-  g.save.fogEnabled = true;
-  g.inSecretRoom = false;
-  assert.strictEqual(g.isFogActive(), true, 'Fog must activate when save.fogEnabled is true');
-  g.exploredMap = {};
-  g.snake = [{ x: 9, y: 9 }, { x: 8, y: 9 }];
-  g.updateFogVisibility();
-  assert.strictEqual(g.isCellExplored(9, 9), true, 'Head cell must be explored');
-  assert.strictEqual(g.isCellExplored(12, 9), true, 'Cell within Manhattan distance 4 must be explored');
-  assert.strictEqual(g.isCellExplored(0, 0), false, 'Distant cell must remain in fog');
+  // 5. Stage-based Skin Unlocks & Records Tracking
+  const unlocked = g.checkStageSkinUnlocks(5);
+  assert.ok(g.save.ownedSkins.indexOf('viper') !== -1, 'Stage 3 skin unlocked');
+  assert.ok(g.save.ownedSkins.indexOf('frost') !== -1, 'Stage 5 skin unlocked');
+  assert.ok(unlocked.length >= 1, 'Stage 5 unlocks frost skin');
   passed++;
 
-  // 5. Tactical Cards Lv 1-3 & Unlocks + Arena Rank Tiers
-  assert.strictEqual(g.TACTICAL_CARDS.length, 8, 'Must define 8 tactical cards');
-  assert.strictEqual(g.getCardLevel('fire_dash'), 1);
-  g.save.cardLevels.fire_dash = 5;
-  assert.strictEqual(g.getCardLevel('fire_dash'), 3, 'Card level clamps cleanly to max Lv 3');
-  g.save.level = 10;
-  g.checkCardUnlocks();
-  assert.strictEqual(g.save.ownedCards.length, 8, 'All 8 cards unlock through level progression');
-
-  const mast = g.getWorldMastery('forest');
-  mast.scoreBadge = false; mast.noHitBadge = false; mast.comboBadge = false; mast.challengeDone = false;
-  assert.strictEqual(g.getArenaRankTier('forest').id, 'none');
-  mast.scoreBadge = true;
-  assert.strictEqual(g.getArenaRankTier('forest').id, 'bronze');
-  mast.comboBadge = true;
-  assert.strictEqual(g.getArenaRankTier('forest').id, 'silver');
-  mast.noHitBadge = true; mast.challengeDone = true;
-  assert.strictEqual(g.getArenaRankTier('forest').id, 'gold');
-  passed++;
-
-  // 6. Visual Evolution Forms & Relics
-  assert.strictEqual(g.EVO_FORMS.length, 5, 'Must define 5 evolution forms');
-  g.save.level = 20;
-  g.save.activeEvoForm = 'legend';
-  assert.strictEqual(g.getEffectiveEvoForm(), 'legend', 'Level 20 activates legend form');
-  g.save.level = 4;
-  assert.strictEqual(g.getEffectiveEvoForm(), 'basic', 'Low level gracefully falls back to basic form');
-
-  assert.strictEqual(g.RELICS.length, 5, 'Must define 5 run relics');
-  g.activeRelics = ['dragon_scale'];
-  assert.strictEqual(g.hasRelic('dragon_scale'), true);
-  passed++;
-
-  console.log(`ALL ${passed} MECHANICS TEST SUITES PASSED`);
+  console.log(`ALL ${passed} PIXEL FOREST LABYRINTH TEST SUITES PASSED`);
 }
 
 runTests();

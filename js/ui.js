@@ -1,10 +1,9 @@
 'use strict';
-/* ═══════════════ رابط کاربری ۵ تبه SNAKE: MAZE ROYALE ═══════════════ */
+/* ═══════════════ رابط کاربری ۳ تبه و خلوت SNAKE: PIXEL RUSH ═══════════════ */
 var toastTimer = null;
 var activeTab = 'tabPlay';
-var cardsSubTab = 'deck';
-var evoSubTab = 'forms';
-var colSubTab = 'missions';
+var skinSubTab = 'skins';
+var selectedStage = save.currentStage || 1;
 
 function showToast(msg){
   var el = $('#crToast');
@@ -13,23 +12,6 @@ function showToast(msg){
   el.classList.add('show');
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2200);
-}
-
-function fmtRemain(ms){
-  if (ms <= 0) return 'آماده!';
-  var s = Math.ceil(ms/1000);
-  var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  var mm = m < 10 ? '0'+m : ''+m;
-  var ss = sec < 10 ? '0'+sec : ''+sec;
-  if (h > 0) return faNum(h)+':'+faNum(mm)+':'+faNum(ss);
-  return faNum(m)+':'+faNum(ss);
-}
-
-function fmtDuration(ms){
-  if (!ms) return '—';
-  var s = Math.round(ms/1000);
-  if (s < 60) return faNum(s) + ' ثانیه';
-  return faNum(Math.floor(s/60)) + 'د ' + faNum(s%60) + 'ث';
 }
 
 function applyUiScale(){
@@ -48,28 +30,8 @@ function switchTab(tabId){
   renderMenu();
 }
 
-function recoverPendingRunIfAny(){
-  if (!save.pendingRun || !save.pendingRun.score || save.pendingRun.score < 30){
-    if (save.pendingRun){ save.pendingRun = null; persist(); }
-    return;
-  }
-  var sc = save.pendingRun.score;
-  var bonusG = Math.max(2, Math.floor(sc / 30));
-  var bonusXp = Math.max(5, Math.floor(sc / 16));
-  save.gold += bonusG;
-  addXP(bonusXp);
-  save.pendingRun = null;
-  checkCardUnlocks();
-  persist();
-  setTimeout(function(){
-    showToast('امتیاز دست ناتمام بازیابی شد: +' + faNum(bonusG) + ' سکه و +' + faNum(bonusXp) + ' XP');
-  }, 350);
-}
-
 function renderTopBar(){
-  var needXp = save.level * 100;
-  if ($('#tbLevel')) $('#tbLevel').textContent = faNum(save.level);
-  if ($('#tbXpBar')) $('#tbXpBar').style.width = Math.min(100, Math.round((save.xp / needXp) * 100)) + '%';
+  if ($('#tbStage')) $('#tbStage').textContent = 'مرحله ' + faNum(save.maxStageUnlocked || 1);
   if ($('#tbGold')) $('#tbGold').textContent = faNum(save.gold);
   if ($('#tbCrystals')) $('#tbCrystals').textContent = faNum(save.crystals);
   if ($('#btnMute')){
@@ -78,409 +40,66 @@ function renderTopBar(){
   }
 }
 
-/* ═══════════════ تب ۱: بازی، دک فعال و متر صندوق ═══════════════ */
+/* ═══════════════ تب ۱: مرحله‌ها و شروع بازی ═══════════════ */
 function renderHomeTab(){
-  var wo = getWorldObj(save.world);
-  var rec = getModeRecord(save.world, save.mode);
-  var tier = getArenaRankTier(save.world);
-  if ($('#homeWorldTitle')){
-    $('#homeWorldTitle').innerHTML =
-      pxImgTag('badge', 15) + ' آرنا ' + faNum(wo.arenaNum || 1) + ': <b>' + wo.name + '</b>' +
-      ' <span class="tier-pill" style="color:'+tier.color+'">' + tier.name + '</span>';
+  var maxSt = Math.max(1, save.maxStageUnlocked || 1);
+  if (selectedStage > maxSt) selectedStage = maxSt;
+  if (selectedStage < 1) selectedStage = 1;
+
+  var stPreview = generateForestStage(selectedStage);
+  if ($('#homeStageSub')){
+    $('#homeStageSub').textContent = stPreview.title + ' — ' + stPreview.goalText;
   }
-  if ($('#homeRecordTxt')){
-    $('#homeRecordTxt').textContent = 'رکورد: ' + faNum(rec.bestScore) +
-      '  •  کاپ: ' + faNum(save.arenaTrophies || 0) +
-      '  •  زمان: ' + fmtDuration(rec.bestTimeMs);
+  if ($('#btnPlayStage')){
+    $('#btnPlayStage').textContent = 'شروع مرحله ' + faNum(selectedStage);
   }
 
-  /* پیش‌نمایش دک ۳ کارت روی خانه */
-  var deckRow = $('#homeDeckRow');
-  if (deckRow){
-    deckRow.innerHTML = '';
-    var dk = save.deck || ['fire_dash','ice_trap','magnet_storm'];
-    dk.forEach(function(cid){
-      var c = getCardObj(cid);
-      var lv = getCardLevel(cid);
-      var cardEl = document.createElement('div');
-      cardEl.className = 'deck-mini';
-      cardEl.innerHTML = pxImgTag(c.ico, 20) + '<b>' + c.name + '</b><span>سطح ' + faNum(lv) + '</span>';
-      cardEl.onclick = function(){ sfx.click(); cardsSubTab = 'deck'; switchTab('tabCards'); };
-      deckRow.appendChild(cardEl);
-    });
-  }
+  var grid = $('#stageGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  var totalShown = Math.max(15, Math.ceil((maxSt + 2) / 3) * 3);
+  for (var i=1; i<=totalShown; i++){
+    (function(stNum){
+      var unlocked = stNum <= maxSt;
+      var cleared = stNum < maxSt;
+      var isSpec = (stNum % 5 === 0);
+      var noHit = save.noHitStages.indexOf(stNum) !== -1;
+      var secretOk = save.secretsFoundStages.indexOf(stNum) !== -1;
 
-  /* گرید ۵ حالت */
-  var grid = $('#homeModeGrid');
-  if (grid){
-    grid.innerHTML = '';
-    GAME_MODES.forEach(function(m){
-      var d = document.createElement('div');
-      d.className = 'mode-pill' + (save.mode === m.id ? ' active' : '');
-      d.innerHTML = pxImgTag(m.ico, 20) + '<span>' + m.name + '</span>';
-      d.onclick = function(){
-        sfx.click();
-        save.mode = m.id;
-        persist();
-        renderHomeTab();
-      };
-      grid.appendChild(d);
-    });
-  }
-
-  /* گزینه‌های سریع حالت انتخاب‌شده + تاگل مه هزارتو */
-  var optBox = $('#homeModeOpts');
-  if (optBox){
-    var mObj = getModeObj(save.mode);
-    var html = '<div class="mode-hint">' + mObj.hint + '</div><div class="opt-row">';
-    if (save.mode === 'timeattack'){
-      html += '<button class="mini-pill-btn'+(save.timeAttackSec===60?' on':'')+'" id="btnTa60">۶۰ ثانیه</button>' +
-              '<button class="mini-pill-btn'+(save.timeAttackSec===120?' on':'')+'" id="btnTa120">۱۲۰ ثانیه</button>';
-    } else if (save.mode === 'endless'){
-      html += '<button class="mini-pill-btn'+(!save.dailySeedMode?' on':'')+'" id="btnEndFree">آزاد</button>' +
-              '<button class="mini-pill-btn'+(save.dailySeedMode?' on':'')+'" id="btnEndDaily">بذر روزانه ('+faNum(save.dailySeedBest||0)+')</button>';
-    }
-    html += '<button class="mini-pill-btn'+(save.fogEnabled?' on':'')+'" id="btnToggleFog">مه هزارتو: '+(save.fogEnabled?'روشن':'خاموش')+'</button>';
-    html += '</div>';
-    optBox.innerHTML = html;
-    if ($('#btnTa60')) $('#btnTa60').onclick = function(){ sfx.click(); save.timeAttackSec = 60; persist(); renderHomeTab(); };
-    if ($('#btnTa120')) $('#btnTa120').onclick = function(){ sfx.click(); save.timeAttackSec = 120; persist(); renderHomeTab(); };
-    if ($('#btnEndFree')) $('#btnEndFree').onclick = function(){ sfx.click(); save.dailySeedMode = false; persist(); renderHomeTab(); };
-    if ($('#btnEndDaily')) $('#btnEndDaily').onclick = function(){ sfx.click(); save.dailySeedMode = true; persist(); renderHomeTab(); };
-    if ($('#btnToggleFog')) $('#btnToggleFog').onclick = function(){ sfx.click(); save.fogEnabled = !save.fogEnabled; persist(); renderHomeTab(); };
-  }
-
-  if ($('#btnLastReplay')){
-    $('#btnLastReplay').style.display = lastRunTrace ? 'inline-flex' : 'none';
-  }
-
-  var pct = Math.min(100, Math.max(0, save.chestMeter || 0));
-  if ($('#chestMeterPct')) $('#chestMeterPct').textContent = faNum(pct) + '٪';
-  if ($('#chestMeterFill')) $('#chestMeterFill').style.width = pct + '%';
-
-  renderSingleChestSlot();
-}
-
-function renderSingleChestSlot(){
-  var box = $('#singleChestSlot');
-  if (!box) return;
-  if (!save.slot){
-    box.className = 'chest-card empty';
-    box.innerHTML = '<div class="chest-meta"><b>جایگاه صندوق خالی است</b><span>با پیروزی یا پر کردن نوار اکتشاف صندوق طلایی بگیر!</span></div>';
-    box.onclick = null;
-    return;
-  }
-  var cDef = CHEST_TYPES[save.slot.type] || CHEST_TYPES.bronze;
-  var now = Date.now();
-  if (!save.slot.unlockAt && !save.slot.ready){
-    box.className = 'chest-card';
-    box.innerHTML = pxImgTag(cDef.ico, 34) +
-      '<div class="chest-meta"><b>'+cDef.name+'</b><span>آماده شروع شمارش ('+faNum(Math.round(cDef.unlockSec/60))+' دقیقه)</span></div>' +
-      '<span class="chest-cta">شروع</span>';
-    box.onclick = function(){
-      sfx.click();
-      save.slot.unlockAt = Date.now() + cDef.unlockSec * 1000;
-      persist();
-      renderSingleChestSlot();
-    };
-  } else {
-    var rem = save.slot.ready ? 0 : Math.max(0, save.slot.unlockAt - now);
-    if (rem <= 0){
-      save.slot.ready = true;
-      box.className = 'chest-card ready';
-      box.innerHTML = pxImgTag(cDef.ico, 34) +
-        '<div class="chest-meta"><b>'+cDef.name+' آماده باز شدن!</b><span>برای دریافت جایزه ضربه بزن</span></div>' +
-        '<span class="chest-cta gold">باز کن</span>';
-      box.onclick = function(){ openActiveChest(); };
-    } else {
-      box.className = 'chest-card counting';
-      box.innerHTML = pxImgTag(cDef.ico, 34) +
-        '<div class="chest-meta"><b>در حال باز شدن...</b><span>'+fmtRemain(rem)+'</span></div>' +
-        '<span class="chest-cta crystal">'+pxImgTag('crystal',13)+' '+faNum(cDef.crystalSkip)+' باز کردن فوری</span>';
-      box.onclick = function(){
-        if (save.crystals < cDef.crystalSkip){ showToast('کریستال کافی نداری!'); return; }
-        save.crystals -= cDef.crystalSkip;
-        openActiveChest();
-      };
-    }
-  }
-}
-
-function openActiveChest(){
-  if (!save.slot) return;
-  var cDef = CHEST_TYPES[save.slot.type] || CHEST_TYPES.bronze;
-  var g = cDef.gold[0] + Math.floor(Math.random() * (cDef.gold[1] - cDef.gold[0] + 1));
-  var cr = cDef.crystals[0] + Math.floor(Math.random() * (cDef.crystals[1] - cDef.crystals[0] + 1));
-  save.gold += g;
-  save.crystals += cr;
-  save.stats.chestsOpened++;
-  save.weeklyProgress.chests++;
-  addXP(cDef.xp);
-  checkCardUnlocks();
-  save.slot = null;
-  evaluateAchievements();
-  persist();
-  sfx.chest();
-  vibrate([20,30,20]);
-
-  if ($('#modalChestArt')) $('#modalChestArt').innerHTML = pxImgTag(cDef.ico, 56);
-  if ($('#modalChestTitle')) $('#modalChestTitle').textContent = cDef.name + ' باز شد!';
-  if ($('#modalLootList')){
-    $('#modalLootList').innerHTML =
-      '<div class="loot-row">' + pxImgTag('coin',20) + ' +' + faNum(g) + ' سکه</div>' +
-      (cr > 0 ? '<div class="loot-row">' + pxImgTag('crystal',20) + ' +' + faNum(cr) + ' کریستال</div>' : '') +
-      '<div class="loot-row">' + pxImgTag('dna',20) + ' +' + faNum(cDef.xp) + ' XP</div>';
-  }
-  $('#chestModal').classList.add('show');
-  renderMenu();
-}
-
-/* ═══════════════ تب ۲: آرناهای رتبه‌بندی‌شده و استادی نقشه ═══════════════ */
-function renderWorldsTab(){
-  var box = $('#worldsList');
-  if (!box) return;
-  box.innerHTML = '';
-  WORLDS_ORDER.forEach(function(wid){
-    var wo = WORLDS[wid];
-    var mast = getWorldMastery(wid);
-    var tier = getArenaRankTier(wid);
-    var rec = getModeRecord(wid, save.mode);
-    var selected = (save.world === wid);
-    var card = document.createElement('div');
-    card.className = 'world-card' + (selected ? ' active' : '');
-    card.style.borderColor = selected ? wo.accent : 'rgba(255,255,255,0.12)';
-    card.innerHTML =
-      '<div class="wc-head">' +
-        '<div><b>آرنا ' + faNum(wo.arenaNum || 1) + ': ' + wo.name + '</b>' +
-        '<div class="wc-sub">' + wo.lvRange + ' • ' + wo.subtitle + '</div></div>' +
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
-          '<span class="tier-pill" style="color:'+tier.color+'">رتبه ' + tier.name + ' ('+faNum(tier.count)+'/۴)</span>' +
-          '<span class="wc-boss">' + wo.bossName + '</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="wc-rules">' +
-        '<span>خطرها: ' + wo.hazards.join(' • ') + '</span>' +
-        '<span>آیتم ویژه: ' + wo.specialItem + '</span>' +
-        '<span>رویداد: ' + wo.eventDesc + '</span>' +
-      '</div>' +
-      '<div class="wc-badges">' +
-        '<span class="mbadge'+(mast.scoreBadge?' on':'')+'">' + pxImgTag('trophy',13) + ' امتیاز</span>' +
-        '<span class="mbadge'+(mast.noHitBadge?' on':'')+'">' + pxImgTag('shield',13) + ' بی‌خطا</span>' +
-        '<span class="mbadge'+(mast.comboBadge?' on':'')+'">' + pxImgTag('lightning',13) + ' کمبو</span>' +
-        '<span class="wc-best">رکورد: ' + faNum(rec.bestScore) + '</span>' +
-      '</div>' +
-      '<div class="wc-actions">' +
-        '<button class="btn-sm'+(selected?' on':'')+'" data-sel="'+wid+'">'+(selected?'آرنای انتخاب‌شده':'انتخاب آرنا')+'</button>' +
-        '<button class="btn-sm chall'+(mast.challengeDone?' done':'')+'" data-ch="'+wid+'">'+(mast.challengeDone?'چالش تکمیل شد':'شروع چالش')+'</button>' +
-      '</div>';
-
-    card.querySelector('[data-sel]').onclick = function(){
-      sfx.click();
-      save.world = wid;
-      persist();
-      renderMenu();
-      showToast('آرنای فعال: ' + wo.name);
-    };
-    card.querySelector('[data-ch]').onclick = function(){
-      sfx.click();
-      save.world = wid;
-      persist();
-      startGame('endless', wid, wo.challenge);
-    };
-    box.appendChild(card);
-  });
-}
-
-/* ═══════════════ تب ۳: کارت‌های تاکتیکی + ژن‌ها و مهارت ═══════════════ */
-function renderCardsTab(){
-  $$('#cardsSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === cardsSubTab);
-  });
-  var deckPane = $('#cardsDeckPane');
-  var genesPane = $('#cardsGenesPane');
-  if (deckPane) deckPane.style.display = (cardsSubTab === 'deck') ? 'flex' : 'none';
-  if (genesPane) genesPane.style.display = (cardsSubTab === 'genes') ? 'flex' : 'none';
-
-  if (cardsSubTab === 'deck'){
-    var bar = $('#activeDeckBar');
-    if (bar){
-      bar.innerHTML = '';
-      (save.deck || []).forEach(function(cid, idx){
-        var c = getCardObj(cid);
-        var lv = getCardLevel(cid);
-        var slotEl = document.createElement('div');
-        slotEl.className = 'deck-slot-pill';
-        slotEl.innerHTML = pxImgTag(c.ico, 22) + '<b>' + c.name + '</b><span style="color:var(--gold)">اسلات ' + faNum(idx+1) + ' • س' + faNum(lv) + '</span>';
-        bar.appendChild(slotEl);
-      });
-    }
-
-    var cl = $('#cardsList');
-    if (cl){
-      cl.innerHTML = '';
-      TACTICAL_CARDS.forEach(function(c){
-        var unlocked = (save.ownedCards || []).indexOf(c.id) !== -1;
-        var inDeck = (save.deck || []).indexOf(c.id) !== -1;
-        var lv = getCardLevel(c.id);
-        var upgCost = lv === 1 ? 120 : (lv === 2 ? 240 : 0);
-        var card = document.createElement('div');
-        card.className = 'evo-card' + (inDeck ? ' active' : '') + (!unlocked ? ' locked' : '');
-        card.innerHTML =
-          pxImgTag(c.ico, 28) +
-          '<div class="evo-info">' +
-            '<b>' + c.name + (unlocked ? ' (سطح ' + faNum(lv) + '/۳)' : '') + '</b>' +
-            '<span>' + c.desc + '</span>' +
-            '<small class="req-tag ' + (unlocked ? 'ok' : '') + '">' +
-              (unlocked ? (c.slotHint + (inDeck ? ' • در دک فعال' : ' • آماده نصب')) : ('باز شدن در سطح ' + faNum(c.needLv))) +
-            '</small>' +
-          '</div>' +
-          '<div style="display:flex;flex-direction:column;gap:4px;">' +
-            (unlocked ? '<button class="btn-sm'+(inDeck?' on':'')+'" data-eq="'+c.id+'">'+(inDeck?'در دک':'چیدمان')+'</button>' : '') +
-            (unlocked && upgCost > 0 ? '<button class="btn-sm chall" data-up="'+c.id+'">ارتقا ('+faNum(upgCost)+'س)</button>' : '') +
-          '</div>';
-
-        if (unlocked){
-          var eqBtn = card.querySelector('[data-eq]');
-          if (eqBtn) eqBtn.onclick = function(){
-            sfx.click();
-            if (!save.deck || save.deck.length !== 3) save.deck = ['fire_dash','ice_trap','magnet_storm'];
-            if (save.deck.indexOf(c.id) !== -1) return;
-            save.deck = [c.id, save.deck[0], save.deck[1]];
-            persist();
-            renderCardsTab();
-            showToast(c.name + ' در دک قرار گرفت!');
-          };
-          var upBtn = card.querySelector('[data-up]');
-          if (upBtn) upBtn.onclick = function(){
-            if (save.gold < upgCost){ showToast('سکه کافی نیست!'); return; }
-            sfx.power();
-            save.gold -= upgCost;
-            if (!save.cardLevels) save.cardLevels = {};
-            save.cardLevels[c.id] = Math.min(3, lv + 1);
-            persist();
-            renderTopBar();
-            renderCardsTab();
-            showToast(c.name + ' به سطح ' + faNum(save.cardLevels[c.id]) + ' ارتقا یافت!');
-          };
-        }
-        cl.appendChild(card);
-      });
-    }
-    return;
-  }
-
-  /* زیرتب ژن‌ها، ترکیب ۲تایی و مهارت‌های پایه */
-  if ($('#evoPointsBadge')) $('#evoPointsBadge').textContent = 'امتیاز تکامل: ' + faNum(save.evoPoints || 0);
-  var fusBox = $('#activeFusionBox');
-  if (fusBox){
-    var g1 = getGeneObj(save.genes[0]);
-    var g2 = getGeneObj(save.genes[1]);
-    var fInfo = getFusionInfo(g1.id, g2.id);
-    fusBox.innerHTML =
-      '<div class="fus-row">' +
-        '<div class="fus-slot">' + pxImgTag(g1.ico, 22) + '<span>' + g1.name + '</span></div>' +
-        '<span class="fus-plus">+</span>' +
-        '<div class="fus-slot">' + pxImgTag(g2.ico, 22) + '<span>' + g2.name + '</span></div>' +
-      '</div>' +
-      (fInfo ? '<div class="fus-res"><b>ترکیب فعال: ' + fInfo.name + '</b><span>' + fInfo.desc + '</span></div>' : '<div class="fus-res"><span>۲ ژن متفاوت انتخاب کن تا ترکیب ویژه بسازی!</span></div>');
-  }
-
-  var gList = $('#genesList');
-  if (gList){
-    gList.innerHTML = '';
-    GENES.forEach(function(g){
-      var unlocked = save.ownedGenes.indexOf(g.id) !== -1;
-      var slotIdx = save.genes.indexOf(g.id);
-      var card = document.createElement('div');
-      card.className = 'evo-card' + (slotIdx !== -1 ? ' active' : '') + (!unlocked ? ' locked' : '');
-      card.innerHTML =
-        pxImgTag(g.ico, 26) +
-        '<div class="evo-info"><b>'+g.name+'</b><span>'+g.desc+'</span>' +
-        (!unlocked ? '<small class="req-tag">باز شدن در: '+g.unlockText+'</small>' :
-          '<small class="req-tag ok">'+(slotIdx===0?'اسلات ۱':(slotIdx===1?'اسلات ۲':'آماده نصب'))+'</small>') +
+      var tile = document.createElement('div');
+      tile.className = 'stage-tile' + (selectedStage === stNum ? ' active' : '') + (isSpec ? ' special' : '') + (!unlocked ? ' locked' : '');
+      tile.innerHTML =
+        '<b>مرحله ' + faNum(stNum) + '</b>' +
+        '<span>' + (isSpec ? (stNum % 10 === 0 ? 'باس ویژه' : 'هزارتوی ویژه') : (cleared ? 'تکمیل‌شده' : (unlocked ? 'آماده بازی' : 'قفل'))) + '</span>' +
+        '<div class="tile-marks">' +
+          (noHit ? pxImgTag('shield', 12) : '') +
+          (secretOk ? pxImgTag('crystal', 12) : '') +
         '</div>';
       if (unlocked){
-        card.onclick = function(){
+        tile.onclick = function(){
           sfx.click();
-          if (save.genes[0] === g.id || save.genes[1] === g.id) return;
-          save.genes = [g.id, save.genes[0]];
-          persist();
-          renderCardsTab();
-          showToast(g.name + ' نصب شد!');
+          selectedStage = stNum;
+          renderHomeTab();
         };
       }
-      gList.appendChild(card);
-    });
-  }
-
-  var sList = $('#skillsList');
-  if (sList){
-    sList.innerHTML = '';
-    SKILLS.forEach(function(sk){
-      var lv = save.skills[sk.id] || 1;
-      var maxed = lv >= sk.maxLv;
-      var card = document.createElement('div');
-      card.className = 'skill-row';
-      card.innerHTML =
-        '<div><b>'+sk.name+' (سطح '+faNum(lv)+'/'+faNum(sk.maxLv)+')</b><span>'+sk.desc+'</span></div>' +
-        '<button class="btn-sm" '+(maxed||!save.evoPoints?'disabled':'')+'>'+(maxed?'حداکثر':'ارتقا (۱ امتیاز)')+'</button>';
-      card.querySelector('button').onclick = function(){
-        if (maxed || !save.evoPoints) return;
-        sfx.power();
-        save.evoPoints--;
-        save.skills[sk.id] = lv + 1;
-        persist();
-        renderCardsTab();
-      };
-      sList.appendChild(card);
-    });
+      grid.appendChild(tile);
+    })(i);
   }
 }
 
-/* ═══════════════ تب ۴: تکامل ظاهری، اسکین و اکسسوری ═══════════════ */
-function renderEvoTab(){
-  $$('#evoSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === evoSubTab);
+/* ═══════════════ تب ۲: ظاهر مار (اسکین و اکسسوری) ═══════════════ */
+function renderSkinsTab(){
+  $$('#skinSubTabs .sub-pill').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-sub') === skinSubTab);
   });
-  var formsPane = $('#evoFormsPane');
-  var cosPane = $('#evoCosmeticsPane');
-  if (formsPane) formsPane.style.display = (evoSubTab === 'forms') ? 'flex' : 'none';
-  if (cosPane) cosPane.style.display = (evoSubTab !== 'forms') ? 'flex' : 'none';
+  var box = $('#skinListContent');
+  if (!box) return;
+  box.innerHTML = '';
 
-  if (evoSubTab === 'forms'){
-    var efList = $('#evoFormsList');
-    if (efList){
-      efList.innerHTML = '';
-      if (!save.activeEvoForm) save.activeEvoForm = 'basic';
-      EVO_FORMS.forEach(function(ef){
-        var unlocked = save.level >= ef.needLv;
-        var active = getEffectiveEvoForm() === ef.id;
-        var btn = document.createElement('button');
-        btn.className = 'evo-form-btn' + (active ? ' on' : '') + (!unlocked ? ' locked' : '');
-        btn.innerHTML =
-          '<b style="font-size:12px;color:'+(active?'var(--gold)':'var(--text)')+'">'+ef.name+'</b>' +
-          '<span style="font-size:10px;color:var(--muted);">'+ef.desc+'</span>' +
-          '<small class="req-tag '+(unlocked?'ok':'')+'">'+(active?'فرم فعال':(unlocked?'آماده انتخاب':'نیازمند لول '+faNum(ef.needLv)))+'</small>';
-        if (unlocked){
-          btn.onclick = function(){
-            sfx.click();
-            save.activeEvoForm = ef.id;
-            persist();
-            renderEvoTab();
-            showToast('فرم ظاهری: ' + ef.name);
-          };
-        }
-        efList.appendChild(btn);
-      });
-    }
-    return;
-  }
-
-  if (!cosPane) return;
-  cosPane.innerHTML = '';
-  if (evoSubTab === 'skins'){
+  if (skinSubTab === 'skins'){
     SKINS.forEach(function(sk){
-      var owned = save.ownedSkins.indexOf(sk.id) !== -1;
+      var owned = save.ownedSkins.indexOf(sk.id) !== -1 || (save.maxStageUnlocked >= (sk.needStage || 999));
+      if (owned && save.ownedSkins.indexOf(sk.id) === -1) save.ownedSkins.push(sk.id);
       var eq = save.skin === sk.id;
       var isCrys = sk.currency === 'crystals';
       var card = document.createElement('div');
@@ -488,7 +107,7 @@ function renderEvoTab(){
       card.innerHTML =
         '<div class="swatch" style="background:'+(sk.body==='rainbow'?'linear-gradient(90deg,#ef4444,#eab308,#22c55e,#3b82f6)':sk.body)+'"></div>' +
         '<div class="ic-info"><b>'+sk.name+'</b><span>'+sk.desc+'</span></div>' +
-        '<button class="btn-sm'+(eq?' on':'')+'">'+(eq?'نصب‌شده':(owned?'انتخاب':faNum(sk.price)+' '+(isCrys?'کریستال':'سکه')))+'</button>';
+        '<button class="btn-sm'+(eq?' on':'')+'">'+(eq?'انتخاب‌شده':(owned?'انتخاب':faNum(sk.price)+' '+(isCrys?'کریستال':'سکه')))+'</button>';
       card.querySelector('button').onclick = function(){
         if (owned){ sfx.click(); save.skin = sk.id; persist(); renderMenu(); return; }
         if (isCrys){
@@ -500,7 +119,7 @@ function renderEvoTab(){
         }
         sfx.chest(); save.ownedSkins.push(sk.id); save.skin = sk.id; persist(); renderMenu();
       };
-      cosPane.appendChild(card);
+      box.appendChild(card);
     });
   } else {
     ACCESSORIES.forEach(function(ac){
@@ -512,7 +131,7 @@ function renderEvoTab(){
       card.innerHTML =
         pxImgTag(ac.ico, 28) +
         '<div class="ic-info"><b>'+ac.name+'</b><span>'+ac.desc+'</span></div>' +
-        '<button class="btn-sm'+(eq?' on':'')+'">'+(eq?'نصب‌شده':(owned?'انتخاب':faNum(ac.price)+' '+(isCrys?'کریستال':'سکه')))+'</button>';
+        '<button class="btn-sm'+(eq?' on':'')+'">'+(eq?'انتخاب‌شده':(owned?'انتخاب':faNum(ac.price)+' '+(isCrys?'کریستال':'سکه')))+'</button>';
       card.querySelector('button').onclick = function(){
         if (owned){ sfx.click(); save.acc = ac.id; persist(); renderMenu(); return; }
         if (isCrys){
@@ -524,123 +143,23 @@ function renderEvoTab(){
         }
         sfx.chest(); save.ownedAcc.push(ac.id); save.acc = ac.id; persist(); renderMenu();
       };
-      cosPane.appendChild(card);
+      box.appendChild(card);
     });
   }
 }
 
-/* ═══════════════ تب ۵: گنجینه (مأموریت، روزانه، آلبوم، دستاورد، فروشگاه) ═══════════════ */
-function renderCollectionTab(){
-  $$('#colSubTabs .sub-pill').forEach(function(b){
-    b.classList.toggle('on', b.getAttribute('data-sub') === colSubTab);
-  });
-  var box = $('#colContent');
+/* ═══════════════ تب ۳: رکوردها ═══════════════ */
+function renderRecordsTab(){
+  var box = $('#recordsGrid');
   if (!box) return;
-  box.innerHTML = '';
-
-  if (colSubTab === 'missions'){
-    function addSection(title, list, srcObj, claimedArr){
-      var h = document.createElement('div');
-      h.className = 'sec-hdr'; h.textContent = title;
-      box.appendChild(h);
-      list.forEach(function(m){
-        var cur = Math.min(m.target, srcObj[m.stat] || 0);
-        var claimed = claimedArr.indexOf(m.id) !== -1;
-        var ready = !claimed && cur >= m.target;
-        var row = document.createElement('div');
-        row.className = 'mis-card';
-        row.innerHTML =
-          '<div class="mis-meta"><b>'+m.title+'</b><span>'+faNum(cur)+' / '+faNum(m.target)+'</span></div>' +
-          '<button class="btn-sm'+(ready?' on':'')+'" '+(ready?'':'disabled')+'>' +
-            (claimed ? 'گرفته‌شد' : (ready ? 'دریافت +' + faNum(m.gold) + 'س' : faNum(m.crystals)+' کریستال')) +
-          '</button>';
-        row.querySelector('button').onclick = function(){
-          if (!ready) return;
-          sfx.chest();
-          claimedArr.push(m.id);
-          save.gold += m.gold; save.crystals += m.crystals;
-          persist(); renderMenu();
-        };
-        box.appendChild(row);
-      });
-    }
-    addSection('مأموریت‌های روزانه', DAILY_MISSIONS, save.dailyProgress, save.claimedDailyMissions);
-    addSection('مأموریت‌های هفتگی', WEEKLY_MISSIONS, save.weeklyProgress, save.claimedWeeklyMissions);
-    addSection('مأموریت‌های مخفی', SECRET_MISSIONS, save.stats, save.claimedSecretMissions);
-  } else if (colSubTab === 'daily'){
-    var now = Date.now();
-    var canClaim = (now - (save.lastDailyTs || 0)) >= 20 * 3600 * 1000;
-    DAILY_REWARDS.forEach(function(d){
-      var isToday = (d.day === save.dailyDay);
-      var row = document.createElement('div');
-      row.className = 'mis-card' + (isToday && canClaim ? ' eq' : '');
-      row.innerHTML =
-        pxImgTag(d.chest ? 'chest_'+d.chest : 'gift', 24) +
-        '<div class="mis-meta"><b>روز '+faNum(d.day)+'</b><span>'+d.label+'</span></div>' +
-        '<button class="btn-sm'+(isToday && canClaim ? ' on' : '')+'" '+(isToday && canClaim ? '' : 'disabled')+'>' +
-          (d.day < save.dailyDay ? 'دریافت‌شده' : (isToday ? (canClaim ? 'دریافت' : 'فردا') : 'قفل')) +
-        '</button>';
-      row.querySelector('button').onclick = function(){
-        if (!isToday || !canClaim) return;
-        sfx.chest();
-        save.gold += d.gold; save.crystals += d.crystals;
-        if (d.chest && !save.slot) setSingleChest(d.chest);
-        save.lastDailyTs = Date.now();
-        save.dailyDay = (save.dailyDay % 7) + 1;
-        persist(); renderMenu();
-      };
-      box.appendChild(row);
-    });
-  } else if (colSubTab === 'bestiary'){
-    BESTIARY.forEach(function(b){
-      var seen = save.discovered.indexOf(b.id) !== -1;
-      var card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML =
-        pxImgTag(b.ico, 28) +
-        '<div class="ic-info"><b>'+(seen?b.name:'مورد ناشناخته')+'</b><span>'+(seen?b.desc:'در طول بازی با آن روبه‌رو شو تا ثبت شود!')+'</span></div>';
-      box.appendChild(card);
-    });
-  } else if (colSubTab === 'ach'){
-    ACHIEVEMENTS.forEach(function(a){
-      var done = save.achievements.indexOf(a.id) !== -1;
-      var card = document.createElement('div');
-      card.className = 'item-card' + (done ? ' eq' : '');
-      card.innerHTML =
-        pxImgTag(done ? 'badge' : 'trophy', 26) +
-        '<div class="ic-info"><b>'+a.name+'</b><span>'+a.desc+'</span></div>' +
-        '<span class="ach-rew">'+(done?'دریافت‌شده':'+'+faNum(a.rewardCrystals)+' کریستال')+'</span>';
-      box.appendChild(card);
-    });
-  } else {
-    ['bronze','silver','gold'].forEach(function(cid){
-      var c = CHEST_TYPES[cid];
-      var isCrys = c.shopCrystals > 0;
-      var card = document.createElement('div');
-      card.className = 'mis-card';
-      card.innerHTML =
-        pxImgTag(c.ico, 28) +
-        '<div class="mis-meta"><b>'+c.name+'</b><span>جایزه سکه، کریستال و XP</span></div>' +
-        '<button class="btn-sm">'+(isCrys ? faNum(c.shopCrystals)+' کریستال' : faNum(c.shopGold)+' سکه')+'</button>';
-      card.querySelector('button').onclick = function(){
-        if (save.slot !== null){ showToast('اول صندوق فعلی را باز کن!'); return; }
-        if (isCrys){
-          if (save.crystals < c.shopCrystals){ showToast('کریستال کافی نیست'); return; }
-          save.crystals -= c.shopCrystals;
-        } else {
-          if (save.gold < c.shopGold){ showToast('سکه کافی نیست'); return; }
-          save.gold -= c.shopGold;
-        }
-        setSingleChest(cid);
-        sfx.gold(); persist(); renderMenu();
-        showToast(c.name + ' به جایگاه اضافه شد!');
-      };
-      box.appendChild(card);
-    });
-  }
+  box.innerHTML =
+    '<div class="rec-card">' + pxImgTag('trophy', 24) + '<b>' + faNum(save.best || 0) + '</b><span>بهترین امتیاز</span></div>' +
+    '<div class="rec-card">' + pxImgTag('timer', 24) + '<b>' + fmtDuration(save.bestTimeMs) + '</b><span>سریع‌ترین زمان مرحله</span></div>' +
+    '<div class="rec-card">' + pxImgTag('shield', 24) + '<b>' + faNum(save.noHitStages.length) + '</b><span>مرحله بدون برخورد</span></div>' +
+    '<div class="rec-card">' + pxImgTag('crystal', 24) + '<b>' + faNum(save.secretsFoundStages.length) + '</b><span>مسیر مخفی کشف‌شده</span></div>';
 }
 
-/* ═══════════════ تنظیمات و راهنما ═══════════════ */
+/* ═══════════════ تنظیمات ═══════════════ */
 function openSettingsModal(){
   var st = save.settings;
   var body = $('#settingsBody');
@@ -651,7 +170,7 @@ function openSettingsModal(){
       '<button class="mini-pill-btn'+(st.control==='swipe'?' on':'')+'" data-ctrl="swipe">سوایپ</button>' +
       '<button class="mini-pill-btn'+(st.control==='dpad'?' on':'')+'" data-ctrl="dpad">دکمه</button>' +
     '</div></div>' +
-    '<div class="set-row"><span>سرعت بازی</span><div>' +
+    '<div class="set-row"><span>سرعت حرکت</span><div>' +
       '<button class="mini-pill-btn'+(st.speed==='chill'?' on':'')+'" data-spd="chill">آرام</button>' +
       '<button class="mini-pill-btn'+(st.speed==='normal'?' on':'')+'" data-spd="normal">عادی</button>' +
       '<button class="mini-pill-btn'+(st.speed==='fast'?' on':'')+'" data-spd="fast">تند</button>' +
@@ -661,15 +180,13 @@ function openSettingsModal(){
       '<button class="mini-pill-btn'+(st.uiSize==='md'?' on':'')+'" data-sz="md">متوسط</button>' +
       '<button class="mini-pill-btn'+(st.uiSize==='lg'?' on':'')+'" data-sz="lg">بزرگ</button>' +
     '</div></div>' +
-    '<div class="set-row"><span>افکت‌ها و صدا</span><div>' +
+    '<div class="set-row"><span>صدا و لرزش</span><div>' +
       '<button class="mini-pill-btn'+(st.sound?' on':'')+'" id="tglSound">صدا</button>' +
       '<button class="mini-pill-btn'+(st.music?' on':'')+'" id="tglMusic">موسیقی</button>' +
       '<button class="mini-pill-btn'+(st.vibrate?' on':'')+'" id="tglVib">لرزش</button>' +
-      '<button class="mini-pill-btn'+(st.lowFx?' on':'')+'" id="tglLowFx">حالت سبک</button>' +
-      '<button class="mini-pill-btn'+(save.rivalGhostEnabled!==false?' on':'')+'" id="tglGhost">شبح رقیب</button>' +
     '</div></div>' +
     '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:6px;">' +
-      '<span>پشتیبان‌گیری و بازیابی (کد ذخیره)</span>' +
+      '<span>پشتیبان‌گیری ذخیره</span>' +
       '<textarea id="backupArea" rows="2" placeholder="کد پشتیبان را اینجا جای‌گذاری کن..."></textarea>' +
       '<div style="display:flex;gap:6px;">' +
         '<button class="btn-sm" id="btnExportSave">ساخت کد</button>' +
@@ -683,20 +200,19 @@ function openSettingsModal(){
   $('#tglSound').onclick = function(){ st.sound = !st.sound; persist(); syncAudioSettings(); renderTopBar(); openSettingsModal(); };
   $('#tglMusic').onclick = function(){ st.music = !st.music; persist(); syncAudioSettings(); openSettingsModal(); };
   $('#tglVib').onclick = function(){ st.vibrate = !st.vibrate; persist(); openSettingsModal(); };
-  $('#tglLowFx').onclick = function(){ st.lowFx = !st.lowFx; persist(); openSettingsModal(); };
-  $('#tglGhost').onclick = function(){ save.rivalGhostEnabled = (save.rivalGhostEnabled === false); persist(); openSettingsModal(); };
   $('#btnExportSave').onclick = function(){
     $('#backupArea').value = exportBackupJson();
     $('#backupArea').select();
     try{ document.execCommand('copy'); }catch(e){}
-    showToast('کد ذخیره آماده و کپی شد');
+    showToast('کد ذخیره کپی شد');
   };
   $('#btnImportSave').onclick = function(){
     if (importBackupJson($('#backupArea').value)){
-      renderMenu(); applyUiScale(); showToast('ذخیره با موفقیت بازیابی شد!');
+      selectedStage = save.currentStage || 1;
+      renderMenu(); applyUiScale(); showToast('ذخیره بازیابی شد!');
       $('#settingsModal').classList.remove('show');
     } else {
-      showToast('کد پشتیبان نامعتبر است');
+      showToast('کد نامعتبر است');
     }
   };
   $('#settingsModal').classList.add('show');
@@ -705,20 +221,10 @@ function openSettingsModal(){
 function renderMenu(){
   renderTopBar();
   if (activeTab === 'tabPlay') renderHomeTab();
-  else if (activeTab === 'tabWorlds') renderWorldsTab();
-  else if (activeTab === 'tabCards') renderCardsTab();
-  else if (activeTab === 'tabEvo') renderEvoTab();
-  else if (activeTab === 'tabCollection') renderCollectionTab();
+  else if (activeTab === 'tabSkins') renderSkinsTab();
+  else if (activeTab === 'tabRecords') renderRecordsTab();
 }
 
-/* تایمر زنده تک‌جایگاه صندوق در پس‌زمینه */
-setInterval(function(){
-  if (state === 'menu' && activeTab === 'tabPlay' && save.slot && save.slot.unlockAt && !save.slot.ready){
-    renderSingleChestSlot();
-  }
-}, 1000);
-
-/* اتصال رویدادهای ثابت */
 function wireEvents(){
   $$('.nav-tab').forEach(function(btn){
     btn.onclick = function(){
@@ -726,59 +232,45 @@ function wireEvents(){
       switchTab(btn.getAttribute('data-tab'));
     };
   });
-  $$('#cardsSubTabs .sub-pill').forEach(function(b){
-    b.onclick = function(){ sfx.click(); cardsSubTab = b.getAttribute('data-sub'); renderCardsTab(); };
-  });
-  $$('#evoSubTabs .sub-pill').forEach(function(b){
-    b.onclick = function(){ sfx.click(); evoSubTab = b.getAttribute('data-sub'); renderEvoTab(); };
-  });
-  $$('#colSubTabs .sub-pill').forEach(function(b){
-    b.onclick = function(){ sfx.click(); colSubTab = b.getAttribute('data-sub'); renderCollectionTab(); };
+  $$('#skinSubTabs .sub-pill').forEach(function(b){
+    b.onclick = function(){ sfx.click(); skinSubTab = b.getAttribute('data-sub'); renderSkinsTab(); };
   });
 
-  if ($('#btnQuickPlay')) $('#btnQuickPlay').onclick = function(){ startGame(save.mode, save.world); };
-  if ($('#btnLastReplay')) $('#btnLastReplay').onclick = function(){ startReplay(1); };
-  if ($('#hudStageBadge')) $('#hudStageBadge').onclick = function(){ if (isReplay) cycleReplaySpeed(); };
-
-  if ($('#btnDash')) $('#btnDash').onclick = function(){ triggerDash(); };
-  if ($('#btnSkill')) $('#btnSkill').onclick = function(){ triggerSkill(); };
-  if ($('#btnRewind')) $('#btnRewind').onclick = function(){ triggerRewind(); };
-
+  if ($('#btnPlayStage')) $('#btnPlayStage').onclick = function(){ sfx.click(); startStage(selectedStage); };
   if ($('#btnPause')) $('#btnPause').onclick = function(){ pauseGame(); };
+  if ($('#btnPauseBottom')) $('#btnPauseBottom').onclick = function(){ pauseGame(); };
   if ($('#btnResume')) $('#btnResume').onclick = function(){ state = 'play'; showOv(null); startMusic(); };
-  if ($('#btnQuitMenu')) $('#btnQuitMenu').onclick = function(){ state = 'menu'; isReplay = false; stopMusic(); showScreen('menuScreen'); renderMenu(); };
-  if ($('#btnRetry')) $('#btnRetry').onclick = function(){ startGame(mode, world, activeChallenge); };
-  if ($('#btnReplayLast')) $('#btnReplayLast').onclick = function(){ startReplay(1); };
+  if ($('#btnRestartPause')) $('#btnRestartPause').onclick = function(){ startStage(currentStageNum); };
+  if ($('#btnQuitMenu')) $('#btnQuitMenu').onclick = function(){ state = 'menu'; stopMusic(); showScreen('menuScreen'); selectedStage = save.currentStage || currentStageNum; renderMenu(); };
+
+  if ($('#btnRetry')) $('#btnRetry').onclick = function(){ startStage(currentStageNum); };
   if ($('#btnBackMenuOver')) $('#btnBackMenuOver').onclick = function(){ state = 'menu'; stopMusic(); showScreen('menuScreen'); renderMenu(); };
-  if ($('#btnAgain')) $('#btnAgain').onclick = function(){ startGame(mode, world, activeChallenge); };
-  if ($('#btnBackMenuWin')) $('#btnBackMenuWin').onclick = function(){ state = 'menu'; stopMusic(); showScreen('menuScreen'); renderMenu(); };
+
+  if ($('#btnNextStage')) $('#btnNextStage').onclick = function(){ selectedStage = currentStageNum + 1; startStage(selectedStage); };
+  if ($('#btnAgain')) $('#btnAgain').onclick = function(){ startStage(currentStageNum); };
+  if ($('#btnBackMenuWin')) $('#btnBackMenuWin').onclick = function(){ state = 'menu'; stopMusic(); showScreen('menuScreen'); selectedStage = save.currentStage || 1; renderMenu(); };
 
   if ($('#btnMute')) $('#btnMute').onclick = function(){ save.settings.sound = !save.settings.sound; persist(); syncAudioSettings(); renderTopBar(); };
   if ($('#btnSettings')) $('#btnSettings').onclick = function(){ sfx.click(); openSettingsModal(); };
+  if ($('#btnOpenSettingsTab')) $('#btnOpenSettingsTab').onclick = function(){ sfx.click(); openSettingsModal(); };
   if ($('#btnCloseSettings')) $('#btnCloseSettings').onclick = function(){ $('#settingsModal').classList.remove('show'); };
   if ($('#btnGuide')) $('#btnGuide').onclick = function(){ sfx.click(); $('#guideModal').classList.add('show'); };
+  if ($('#btnOpenGuideTab')) $('#btnOpenGuideTab').onclick = function(){ sfx.click(); $('#guideModal').classList.add('show'); };
   if ($('#btnCloseGuide')) $('#btnCloseGuide').onclick = function(){ $('#guideModal').classList.remove('show'); };
-  if ($('#btnCloseChestModal')) $('#btnCloseChestModal').onclick = function(){ $('#chestModal').classList.remove('show'); };
 
-  /* آیکون‌های پیکسلی HUD و نوار ناوبری */
-  if ($('#icoDashBtn')) $('#icoDashBtn').innerHTML = pxImgTag('dash_ico', 18);
-  if ($('#icoSkillBtn')) $('#icoSkillBtn').innerHTML = pxImgTag('dna', 18);
-  if ($('#icoRewindBtn')) $('#icoRewindBtn').innerHTML = pxImgTag('rewind', 18);
-  if ($('#icoHudCombo')) $('#icoHudCombo').innerHTML = pxImgTag('lightning', 14);
+  /* آیکون‌های پیکسلی */
   if ($('#btnSettings')) $('#btnSettings').innerHTML = pxImgTag('gear', 18);
   if ($('#btnGuide')) $('#btnGuide').innerHTML = pxImgTag('book', 18);
   if ($('#btnPause')) $('#btnPause').innerHTML = pxImgTag('pause_ico', 18);
+  if ($('#icoPauseBottom')) $('#icoPauseBottom').innerHTML = pxImgTag('pause_ico', 16);
   if ($('#tbCoinIco')) $('#tbCoinIco').innerHTML = pxImgTag('coin', 15);
   if ($('#tbCryIco')) $('#tbCryIco').innerHTML = pxImgTag('crystal', 15);
   if ($('#navIcoPlay')) $('#navIcoPlay').innerHTML = pxImgTag('snake_ico', 20);
-  if ($('#navIcoWorlds')) $('#navIcoWorlds').innerHTML = pxImgTag('portal', 20);
-  if ($('#navIcoCards')) $('#navIcoCards').innerHTML = pxImgTag('card_ico', 20);
-  if ($('#navIcoEvo')) $('#navIcoEvo').innerHTML = pxImgTag('dna', 20);
-  if ($('#navIcoCol')) $('#navIcoCol').innerHTML = pxImgTag('trophy', 20);
+  if ($('#navIcoSkins')) $('#navIcoSkins').innerHTML = pxImgTag('badge', 20);
+  if ($('#navIcoRec')) $('#navIcoRec').innerHTML = pxImgTag('trophy', 20);
 }
 
 wireEvents();
-checkCardUnlocks();
-recoverPendingRunIfAny();
+checkStageSkinUnlocks(save.maxStageUnlocked || 1);
 applyUiScale();
 renderMenu();

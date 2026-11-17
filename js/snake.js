@@ -548,7 +548,23 @@ function initPixelIcons(){
       '...oYYYYYYYYYYYYo...','....oooooooooooo....','....................','....................',
       '....................','....................','....................','....................',
       '....................','....................','....................','....................'
-    ], { o:'#1e1b4b', P:'#7c3aed', W:'#f5f3ff', C:'#22d3ee', Y:'#ffd43b', R:'#ef4444' }]
+    ], { o:'#1e1b4b', P:'#7c3aed', W:'#f5f3ff', C:'#22d3ee', Y:'#ffd43b', R:'#ef4444' }],
+
+    door_locked: [20, 20, [
+      '..oooooooooooooooo..','.oSSSSSSSSSSSSSSSSo.','.oSSdddddddddddddSo.','.oSdMMMMMMMMMMMMdSo.',
+      '.oSdMMddddddddMMdSo.','.oSdMdSSSSSSSSdMdSo.','.oSdMdSddddddSdMdSo.','.oSdMdSSSSSSSSdMdSo.',
+      '.oSdMdSSYYYYSSdMdSo.','.oSdMdSSYKKYSSdMdSo.','.oSdMdSSYYYYSSdMdSo.','.oSdMdSSSSSSSSdMdSo.',
+      '.oSdMdSSSSSSSSdMdSo.','.oSdMMMMMMMMMMMMdSo.','.oSddddddddddddddSo.','.oSSSSSSSSSSSSSSSSo.',
+      '..oooooooooooooooo..','....................','....................','....................'
+    ], { o:'#0f172a', S:'#64748b', d:'#334155', M:'#475569', Y:'#fbbf24', K:'#1e293b' }],
+
+    door_open: [20, 20, [
+      '..oooooooooooooooo..','.oGGGGGGGGGGGGGGGGo.','.oGGWWWWWWWWWWWWGGo.','.oGWggggggggggggWGo.',
+      '.oGWgLLLLLLLLLLgWGo.','.oGWgLWWWWWWWWLgWGo.','.oGWgLWGGGGGGWLgWGo.','.oGWgLWGWWWWGWLgWGo.',
+      '.oGWgLWGWWWWGWLgWGo.','.oGWgLWGWWWWGWLgWGo.','.oGWgLWGGGGGGWLgWGo.','.oGWgLWWWWWWWWLgWGo.',
+      '.oGWgLLLLLLLLLLgWGo.','.oGWggggggggggggWGo.','.oGGWWWWWWWWWWWWGGo.','.oGGGGGGGGGGGGGGGGo.',
+      '..oooooooooooooooo..','....................','....................','....................'
+    ], { o:'#052e16', G:'#22c55e', g:'#16a34a', L:'#46f88f', W:'#dcfce7' }]
   };
 
   for (var key in defs){
@@ -566,14 +582,14 @@ function pxImgTag(name, sizePx){
   return '<img class="px-img" src="'+url+'" width="'+s+'" height="'+s+'" alt="">';
 }
 
-/* ═══════════════ اسکین‌ها و اکسسوری‌های ۲ ارزی (سکه + کریستال) ═══════════════ */
+/* ═══════════════ اسکین‌ها و اکسسوری‌های قابل آزادسازی با پیشرفت مراحل ═══════════════ */
 var SKINS = [
-  { id:'neon',   name:'مار جنگلی',   rarity:'common', currency:'gold', price:0,   head:'#85c278', body:'#68a862', spot:'#2d5932', belly:'#ede1b0', dark:'#3f703b', desc:'مار پیکسلی اصیل با خال‌های جنگلی', bonusScore:1.0,  bonusGold:1.0,  dmg:1 },
-  { id:'viper',  name:'افعی آتشین',  rarity:'rare',   currency:'gold', price:110, head:'#ff944d', body:'#e85d22', spot:'#7a1c0a', belly:'#ffe3b3', dark:'#a83210', desc:'+۱۰٪ امتیاز بیشتر در مراحل',          bonusScore:1.10, bonusGold:1.0,  dmg:1 },
-  { id:'frost',  name:'مار یخی',     rarity:'rare',   currency:'gold', price:160, head:'#7dd3fc', body:'#38bdf8', spot:'#075985', belly:'#e0f2fe', dark:'#0284c7', desc:'+۱۰٪ سکه طلا و بدنه یخی',            bonusScore:1.05, bonusGold:1.10, dmg:1 },
-  { id:'shadow', name:'شبح سایه',    rarity:'epic',   currency:'gold', price:230, head:'#c084fc', body:'#9333ea', spot:'#3b0764', belly:'#f3e8ff', dark:'#6b21a8', desc:'+۲ ثانیه مدت روح عبور از دیوار',     bonusScore:1.10, bonusGold:1.10, dmg:1, ghostExtra:2000 },
-  { id:'royal',  name:'مار طلایی',   rarity:'epic',   currency:'gold', price:320, head:'#fde047', body:'#eab308', spot:'#713f12', belly:'#fef9c3', dark:'#a16207', desc:'+۲۰٪ سکه طلا از هر بازی',            bonusScore:1.15, bonusGold:1.20, dmg:1 },
-  { id:'cosmic', name:'مار کیهانی',  rarity:'legend', currency:'crystals', price:18, head:'#ffffff', body:'rainbow', spot:'#1e1b4b', belly:'#fef08a', dark:'#312e81', desc:'آسیب دوبرابر به باس و هاله رنگین', bonusScore:1.20, bonusGold:1.25, dmg:2 }
+  { id:'neon',   name:'مار جنگلی',   needStage:1,  rarity:'common', currency:'gold', price:0,   head:'#85c278', body:'#68a862', spot:'#2d5932', belly:'#ede1b0', dark:'#3f703b', desc:'مار پیکسلی اصیل جنگل', bonusScore:1.0, bonusGold:1.0, dmg:1 },
+  { id:'viper',  name:'افعی آتشین',  needStage:3,  rarity:'rare',   currency:'gold', price:60,  head:'#ff944d', body:'#e85d22', spot:'#7a1c0a', belly:'#ffe3b3', dark:'#a83210', desc:'آزادسازی خودکار در مرحله ۳', bonusScore:1.05, bonusGold:1.0, dmg:1 },
+  { id:'frost',  name:'مار یخی',     needStage:5,  rarity:'rare',   currency:'gold', price:90,  head:'#7dd3fc', body:'#38bdf8', spot:'#075985', belly:'#e0f2fe', dark:'#0284c7', desc:'آزادسازی خودکار در مرحله ۵', bonusScore:1.05, bonusGold:1.05, dmg:1 },
+  { id:'shadow', name:'شبح سایه',    needStage:8,  rarity:'epic',   currency:'gold', price:130, head:'#c084fc', body:'#9333ea', spot:'#3b0764', belly:'#f3e8ff', dark:'#6b21a8', desc:'آزادسازی خودکار در مرحله ۸', bonusScore:1.10, bonusGold:1.05, dmg:1 },
+  { id:'royal',  name:'مار طلایی',   needStage:10, rarity:'epic',   currency:'gold', price:180, head:'#fde047', body:'#eab308', spot:'#713f12', belly:'#fef9c3', dark:'#a16207', desc:'آزادسازی خودکار در مرحله ۱۰', bonusScore:1.10, bonusGold:1.15, dmg:1 },
+  { id:'cosmic', name:'مار کیهانی',  needStage:15, rarity:'legend', currency:'crystals', price:8, head:'#ffffff', body:'rainbow', spot:'#1e1b4b', belly:'#fef08a', dark:'#312e81', desc:'آزادسازی خودکار در مرحله ۱۵', bonusScore:1.15, bonusGold:1.20, dmg:1 }
 ];
 
 var ACCESSORIES = [

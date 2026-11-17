@@ -2,6 +2,12 @@
 var $ = function(s){ return document.querySelector(s); };
 var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
 function faNum(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); }
+function fmtDuration(ms){
+  if (!ms) return '—';
+  var s = Math.round(ms/1000);
+  if (s < 60) return faNum(s) + ' ثانیه';
+  return faNum(Math.floor(s/60)) + 'د ' + faNum(s%60) + 'ث';
+}
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 function clamp01(v){ return Math.max(0, Math.min(1, v)); }
 function hashStr(str){
@@ -47,7 +53,8 @@ function weekKey(){
   return d.getFullYear() + '-W' + wk;
 }
 
-var SAVE_KEY = 'snake-pixel-rush-v3';
+var SAVE_KEY = 'snake-forest-v4';
+var PREV_KEY = 'snake-pixel-rush-v3';
 var LEGACY_KEY = 'neon-snake-royale-v2';
 
 function defaultSettings(){
@@ -58,73 +65,50 @@ function defaultSettings(){
     sound: true,
     music: true,
     lowFx: false,
-    uiSize: 'md'       /* 'sm' | 'md' | 'lg' */
+    uiSize: 'md'
   };
 }
 
 function defaultSave(){
   return {
-    version: 3,
-    gold: 40,
-    crystals: 3,
-    xp: 0,
+    version: 4,
+    currentStage: 1,
+    maxStageUnlocked: 1,
+    tutorialStepDone: 0,
+    gold: 20,
+    crystals: 0,
     level: 1,
-    evoPoints: 1,
+    xp: 0,
     best: Number(lsGet('neon-snake-plus-best') || 0),
+    bestTimeMs: 0,
+    stageBestScores: {},
+    noHitStages: [],
+    secretsFoundStages: [],
     skin: 'neon',
     acc: 'none',
     ownedSkins: ['neon'],
     ownedAcc: ['none'],
-    mode: 'endless',
     world: 'forest',
-    timeAttackSec: 60,
-    dailySeedMode: false,
-    genes: ['fire', 'frost'],
-    ownedGenes: ['fire'],
-    skills: { reflex: 1, power: 1, greed: 1 },
+    mode: 'stage',
+    /* فیلدهای خنثی‌شده برای سازگاری عقب‌رو */
     worldRecords: {},
     worldMastery: {},
     bestTraces: {},
-    rivalGhostEnabled: true,
-    activeEvoForm: 'basic',
+    skills: { reflex: 1, power: 1, greed: 1 },
+    genes: ['fire', 'frost'],
+    ownedGenes: ['fire'],
     deck: ['fire_dash', 'ice_trap', 'magnet_storm'],
     ownedCards: ['fire_dash', 'ice_trap', 'magnet_storm'],
     cardLevels: { fire_dash: 1, ice_trap: 1, magnet_storm: 1 },
-    mapPieces: 0,
-    arenaTrophies: 0,
-    fogEnabled: false,
-    chestMeter: 0,
-    pendingRun: null,
-    levelRushIdx: 0,
-    dailySeedKey: '',
-    dailySeedBest: 0,
     discovered: [],
     achievements: [],
-    slot: { type: 'bronze', unlockAt: 0, ready: false },
-    dailyDay: 1,
-    lastDailyTs: 0,
-    lastShopGiftTs: 0,
-    missionDayKey: todayKey(),
-    missionWeekKey: weekKey(),
-    dailyProgress: { games: 0, foods: 0, dashes: 0, combos: 0 },
-    weeklyProgress: { bossWins: 0, chests: 0, rivals: 0, scoreSum: 0 },
-    claimedDailyMissions: [],
-    claimedWeeklyMissions: [],
-    claimedSecretMissions: [],
     stats: {
       gamesPlayed: 0,
       totalApples: 0,
-      bellyVisits: 0,
       bossWins: 0,
-      chestsOpened: 0,
-      rivalsDefeated: 0,
-      wallsBroken: 0,
-      closeCalls: 0,
-      maxComboEver: 0,
       noHitWins: 0,
-      portalsUsed: 0,
       secretsFound: 0,
-      ghostWins: 0
+      stagesCleared: 0
     },
     settings: defaultSettings()
   };
@@ -133,58 +117,23 @@ function defaultSave(){
 var save = (function(){
   var def = defaultSave();
   try {
-    var raw = lsGet(SAVE_KEY);
-    if (!raw){
-      var oldRaw = lsGet(LEGACY_KEY);
-      if (oldRaw){
-        var oldP = JSON.parse(oldRaw);
-        def.gold = Math.max(def.gold, Number(oldP.gold || 0));
-        def.crystals = Math.max(def.crystals, Number(oldP.gems || 0));
-        def.xp = Number(oldP.xp || 0);
-        def.level = Math.max(1, Number(oldP.level || 1));
-        def.best = Math.max(def.best, Number(oldP.best || 0));
-        if (Array.isArray(oldP.ownedSkins)) def.ownedSkins = oldP.ownedSkins;
-        if (Array.isArray(oldP.ownedAcc)) def.ownedAcc = oldP.ownedAcc;
-        if (oldP.skin) def.skin = oldP.skin;
-        if (oldP.acc) def.acc = oldP.acc;
-        if (oldP.stats){
-          for (var sk in oldP.stats) if (def.stats[sk] !== undefined) def.stats[sk] = oldP.stats[sk];
-        }
-        return def;
-      }
-      return def;
-    }
+    var raw = lsGet(SAVE_KEY) || lsGet(PREV_KEY) || lsGet(LEGACY_KEY);
+    if (!raw) return def;
     var parsed = JSON.parse(raw);
     for (var k in def) if (parsed[k] === undefined) parsed[k] = def[k];
     if (!parsed.stats) parsed.stats = def.stats;
-    for (var sk2 in def.stats) if (parsed.stats[sk2] === undefined) parsed.stats[sk2] = def.stats[sk2];
-    if (!parsed.skills) parsed.skills = def.skills;
+    for (var sk in def.stats) if (parsed.stats[sk] === undefined) parsed.stats[sk] = def.stats[sk];
     if (!parsed.settings) parsed.settings = defaultSettings();
     for (var st in def.settings) if (parsed.settings[st] === undefined) parsed.settings[st] = def.settings[st];
-    if (!parsed.worldRecords) parsed.worldRecords = {};
-    if (!parsed.worldMastery) parsed.worldMastery = {};
-    if (!parsed.bestTraces) parsed.bestTraces = {};
-    if (!parsed.activeEvoForm) parsed.activeEvoForm = 'basic';
-    if (parsed.rivalGhostEnabled === undefined) parsed.rivalGhostEnabled = true;
-    if (!Array.isArray(parsed.deck) || parsed.deck.length !== 3) parsed.deck = def.deck.slice();
-    if (!Array.isArray(parsed.ownedCards)) parsed.ownedCards = def.ownedCards.slice();
-    if (!parsed.cardLevels) parsed.cardLevels = def.cardLevels;
-    if (parsed.mapPieces === undefined) parsed.mapPieces = 0;
-    if (parsed.arenaTrophies === undefined) parsed.arenaTrophies = 0;
-    if (parsed.fogEnabled === undefined) parsed.fogEnabled = false;
-    if (parsed.chestMeter === undefined) parsed.chestMeter = 0;
-    if (!parsed.dailyProgress) parsed.dailyProgress = def.dailyProgress;
-    if (!parsed.weeklyProgress) parsed.weeklyProgress = def.weeklyProgress;
-    if (parsed.missionDayKey !== todayKey()){
-      parsed.missionDayKey = todayKey();
-      parsed.dailyProgress = { games: 0, foods: 0, dashes: 0, combos: 0 };
-      parsed.claimedDailyMissions = [];
-    }
-    if (parsed.missionWeekKey !== weekKey()){
-      parsed.missionWeekKey = weekKey();
-      parsed.weeklyProgress = { bossWins: 0, chests: 0, rivals: 0, scoreSum: 0 };
-      parsed.claimedWeeklyMissions = [];
-    }
+    if (!Array.isArray(parsed.ownedSkins) || !parsed.ownedSkins.length) parsed.ownedSkins = ['neon'];
+    if (!Array.isArray(parsed.ownedAcc) || !parsed.ownedAcc.length) parsed.ownedAcc = ['none'];
+    if (!Array.isArray(parsed.noHitStages)) parsed.noHitStages = [];
+    if (!Array.isArray(parsed.secretsFoundStages)) parsed.secretsFoundStages = [];
+    if (!parsed.stageBestScores || typeof parsed.stageBestScores !== 'object') parsed.stageBestScores = {};
+    parsed.currentStage = Math.max(1, Number(parsed.currentStage || 1));
+    parsed.maxStageUnlocked = Math.max(parsed.currentStage, Number(parsed.maxStageUnlocked || 1));
+    parsed.tutorialStepDone = Math.max(0, Number(parsed.tutorialStepDone || 0));
+    parsed.world = 'forest';
     return parsed;
   } catch(e){
     return def;
@@ -207,6 +156,7 @@ function importBackupJson(raw){
     var def = defaultSave();
     for (var k in def) if (parsed[k] === undefined) parsed[k] = def[k];
     if (!parsed.settings) parsed.settings = defaultSettings();
+    parsed.world = 'forest';
     save = parsed;
     persist();
     return true;

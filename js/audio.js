@@ -50,6 +50,7 @@ function noiseBurst(dur, vol){
 var sfx = {
   eat:      function(){ tone(640, .055); tone(960, .07, .045, .045); },
   gold:     function(){ tone(784, .08); tone(988, .08, .06); tone(1175, .09, .12); },
+  key:      function(){ tone(880, .06, 0, .05, 'triangle'); tone(1175, .10, .05, .055, 'triangle'); },
   crystal:  function(){ tone(880, .08, 0, .05, 'triangle'); tone(1320, .11, .06, .05, 'triangle'); },
   dash:     function(){ tone(420, .06, 0, .05, 'sawtooth'); tone(820, .08, .04, .04, 'square'); noiseBurst(.07, .04); },
   portal:   function(){ [380,570,850,1240].forEach(function(f,i){ tone(f, .07, i*.05, .05, 'triangle'); }); },

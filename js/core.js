@@ -1,128 +1,60 @@
 'use strict';
-/* ═══════════════ هسته گیم‌پلی SNAKE: PIXEL RUSH ═══════════════ */
+/* ═══════════════ هسته گیم‌پلی ساده و متمرکز SNAKE: PIXEL RUSH ═══════════════ */
 var cell = 20, state = 'menu';
-var mode = 'endless', world = 'forest', level = 1;
+var currentStageNum = 1, activeStage = null;
 var snake = [], prevSnake = [], dir = 'right', dirQueue = [], items = [];
 var score = 0, tickAcc = 0, lastT = 0;
-var particles = [], floatTexts = [], shockwaves = [];
-var combo = 0, comboTimer = 0, maxComboRun = 0, foodsRun = 0, runStartTs = 0, runTookHit = false;
-var fx = { ghost:0, slow:0, double:0, shield:0, magnet:0, trailType:'', trailMs:0 };
-var applesEaten = 0, stageGoal = 8;
+var particles = [], floatTexts = [];
+var foodsRun = 0, runStartTs = 0, runTookHit = false;
+var applesEaten = 0, stageGoal = 5;
+var hasKey = true, exitUnlocked = false, secretOpened = false;
 var boss = null, pShots = [], bossShots = [];
 var playerHp = 3, maxPlayerHp = 3, invulnT = 0;
 var shakeMag = 0;
 
-var walls = [], dWalls = [], secretWalls = [], switches = [], hotTiles = [], iceTiles = [], sandTiles = [], crumbleTiles = [];
-var portals = [], doorCell = null, trailCells = [];
-var rivals = [], historyBuf = [], shadowSnake = [];
-var runTrace = [], fullGhostTrace = [], runTicks = 0, lastRunTrace = null, replayIdx = 0, replayTrace = null, isReplay = false, replaySpeed = 1;
+var walls = [], secretWalls = [], switches = [], secretReserved = {}, doorCell = null;
+var rivals = [];
+var MAX_PARTICLES = 36, MAX_FLOATS = 8;
+var hintTimer = null;
 
-var dashTimer = 0, dashCd = 0, dashMaxCd = 3500;
-var energyPct = 0;
-var skillCd = 0, skillMaxCd = 8500, rewindsLeft = 2;
-var roguePerks = {}, dungeonFloor = 1, bossRushStage = 1, levelRushIdx = 0;
-var arenaTimeLeft = 60000, shrinkBorder = 0, onIce = false, onSand = false, hotStayTicks = 0;
-var envEvent = null, envCd = 9000, fogActiveMs = 0, sandstormMs = 0, portalCdTicks = 0, closeCallCd = 0;
-var rngFn = Math.random;
-var activeChallenge = null;
-
-var activeRelics = [], dragonScaleUsed = false, phantomTarget = null;
-var secretEntrance = null, secretExit = null, inSecretRoom = false, secretTimerMs = 0, savedMainRoom = null;
-var rivalGhostTrace = null, rivalGhostTotalTicks = 0, rivalGhostSnake = [], rivalGhostBeat = false, rivalGhostBest = 0;
-var activeArcadeEvent = null, arcadeEventCd = 16000;
-var exploredMap = {}, fogRevealAll = false, perfLowMode = false, slowFrameStreak = 0;
-var MAX_PARTICLES = 45, MAX_SHOCKWAVES = 6, MAX_FLOATS = 10;
-
-function hasCard(id){ return !!(save.deck && save.deck.indexOf(id) !== -1); }
-function cardLv(id){ return getCardLevel(id); }
-
-function isFogActive(){
-  if (inSecretRoom) return false;
-  return !!(world === 'shadow' || save.fogEnabled || mode === 'dungeon');
-}
-function isCellExplored(x, y){
-  return !!exploredMap[x + ',' + y];
-}
-function updateFogVisibility(){
-  if (!snake.length) return;
-  var hx = snake[0].x, hy = snake[0].y;
-  var visR = hasRelic('phantom_eye') ? 5 : 4;
-  for (var dy=-visR; dy<=visR; dy++){
-    for (var dx=-visR; dx<=visR; dx++){
-      if (Math.abs(dx) + Math.abs(dy) <= visR){
-        var vx = (hx + dx + COLS) % COLS, vy = (hy + dy + ROWS) % ROWS;
-        exploredMap[vx + ',' + vy] = true;
-      }
-    }
-  }
-}
-
-function downsampleFrames(frames, maxLen){
-  if (!frames || !frames.length) return [];
-  if (frames.length <= maxLen) return frames.slice();
-  var out = [];
-  for (var i=0; i<maxLen; i++){
-    var idx = Math.round(i * (frames.length - 1) / (maxLen - 1));
-    out.push(frames[idx]);
-  }
-  return out;
-}
-
-function saveEmergencyCheckpoint(){
-  if (state === 'play' && !isReplay){
-    save.pendingRun = { world:world, mode:mode, score:score, foodsRun:foodsRun, ts:Date.now() };
-  }
-  persist();
-}
-
-function hasRelic(id){ return activeRelics.indexOf(id) !== -1; }
-function updatePhantomTarget(){
-  if (!hasRelic('phantom_eye')){ phantomTarget = null; return; }
-  for (var i=0;i<items.length;i++){
-    if (items[i].type === 'relic_orb' || items[i].type === 'map_piece' || items[i].type === 'crystal' || items[i].type === 'gold'){
-      phantomTarget = { x:items[i].x, y:items[i].y }; return;
-    }
-  }
-  phantomTarget = items.length ? { x:items[0].x, y:items[0].y } : null;
-}
-
-function addShake(amount){ shakeMag = Math.max(shakeMag, amount); }
-function addShockwave(gx, gy, color, maxR){
-  if (isLowFx() || perfLowMode || shockwaves.length >= MAX_SHOCKWAVES) return;
-  shockwaves.push({ x:(gx+0.5)*cell, y:(gy+0.5)*cell, r:cell*0.2, maxR:maxR||cell*2.4, color:color, life:1 });
-}
 function spawnParticles(gx, gy, color, n){
-  if (isLowFx() || perfLowMode) return;
+  if (isLowFx()) return;
   var avail = MAX_PARTICLES - particles.length;
   if (avail <= 0) return;
   var count = Math.min(n || 8, avail);
   for (var i=0;i<count;i++){
-    var ang = Math.random()*Math.PI*2, spd = 1.2 + Math.random()*2.5;
-    particles.push({ x:(gx+0.5)*cell, y:(gy+0.5)*cell, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, color:color, size:Math.max(2, cell*0.2), life:1, decay:0.036 });
+    var ang = Math.random()*Math.PI*2, spd = 1.0 + Math.random()*2.0;
+    particles.push({ x:(gx+0.5)*cell, y:(gy+0.5)*cell, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, color:color, size:Math.max(2, cell*0.18), life:1, decay:0.045 });
   }
 }
 function addFloat(gx, gy, txt, color){
   if (floatTexts.length >= MAX_FLOATS) floatTexts.shift();
-  floatTexts.push({ x:(gx+0.5)*cell, y:gy*cell, vy:-0.6, text:txt, color:color, life:1 });
+  floatTexts.push({ x:(gx+0.5)*cell, y:gy*cell, vy:-0.55, text:txt, color:color, life:1 });
+}
+
+function showHudHint(msg, persistMs){
+  var el = $('#hudHintPill');
+  if (!el) return;
+  if (hintTimer) clearTimeout(hintTimer);
+  if (!msg){
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  if (persistMs > 0){
+    hintTimer = setTimeout(function(){
+      if (el) el.style.display = 'none';
+    }, persistMs);
+  }
 }
 
 function currentStepMs(){
-  var wo = getWorldObj(world);
-  var base = 152 * wo.speedMult;
+  var base = 158 - Math.min(34, currentStageNum * 2);
   if (save.settings && save.settings.speed === 'fast') base *= 0.82;
   else if (save.settings && save.settings.speed === 'chill') base *= 1.18;
-
-  if (mode === 'endless') base -= Math.min(48, Math.floor(score / 40) * 3);
-  else if (mode === 'timeattack') base -= Math.min(35, Math.floor(foodsRun * 1.4));
-  else if (mode === 'dungeon') base -= Math.min(35, dungeonFloor * 5);
-
-  base = Math.max(76, base);
-  if (dashTimer > 0) base *= 0.56;
-  else if (combo >= 3) base *= 0.92;
-  if (onIce) base *= 0.72;
-  else if (onSand) base *= 1.25;
-  if (fx.slow > 0) base *= 1.32;
-  return Math.max(52, Math.round(base));
+  return Math.max(92, Math.round(base));
 }
 
 function resize(){
@@ -159,18 +91,18 @@ function pauseGame(){
 
 function cellBlockedByWall(x, y){
   for (var i=0;i<walls.length;i++) if (walls[i].x===x && walls[i].y===y) return true;
-  for (var j=0;j<dWalls.length;j++) if (dWalls[j].x===x && dWalls[j].y===y) return true;
   for (var k=0;k<secretWalls.length;k++) if (secretWalls[k].x===x && secretWalls[k].y===y) return true;
   return false;
 }
 
 function isFreeCell(x, y){
-  if (x < shrinkBorder || x >= COLS - shrinkBorder || y < shrinkBorder || y >= ROWS - shrinkBorder) return false;
+  if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
   if (cellBlockedByWall(x, y)) return false;
+  if (!secretOpened && secretReserved[keyOf(x, y)]) return false;
   if (doorCell && doorCell.x === x && doorCell.y === y) return false;
   for (var i=0;i<snake.length;i++) if (snake[i].x===x && snake[i].y===y) return false;
   for (var j=0;j<items.length;j++) if (items[j].x===x && items[j].y===y) return false;
-  for (var p=0;p<portals.length;p++) if (portals[p].x===x && portals[p].y===y) return false;
+  for (var sw=0;sw<switches.length;sw++) if (switches[sw].x===x && switches[sw].y===y) return false;
   for (var r=0;r<rivals.length;r++){
     for (var s=0;s<rivals[r].body.length;s++) if (rivals[r].body[s].x===x && rivals[r].body[s].y===y) return false;
   }
@@ -179,12 +111,12 @@ function isFreeCell(x, y){
 
 function findFreeCell(){
   var free = [];
-  for (var y=shrinkBorder; y<ROWS-shrinkBorder; y++){
-    for (var x=shrinkBorder; x<COLS-shrinkBorder; x++){
+  for (var y=0; y<ROWS; y++){
+    for (var x=0; x<COLS; x++){
       if (isFreeCell(x, y)) free.push({x:x, y:y});
     }
   }
-  if (free.length) return free[Math.floor(rngFn() * free.length)];
+  if (free.length) return free[Math.floor(Math.random() * free.length)];
   return { x: Math.floor(COLS/2), y: Math.floor(ROWS/2) };
 }
 
@@ -194,10 +126,17 @@ function spawnItem(type){
   return p;
 }
 
-function ensureApplesPresent(){
-  if (boss) return;
-  var hasApple = items.some(function(it){ return it.type === 'apple'; });
-  if (!hasApple) spawnItem('apple');
+function ensureGoalItemsPresent(){
+  if (!activeStage) return;
+  if (activeStage.hasBoss){
+    if (boss && boss.hp > 0 && !items.some(function(it){ return it.type === 'fireball'; })){
+      spawnItem('fireball');
+    }
+    return;
+  }
+  if (applesEaten < stageGoal && !items.some(function(it){ return it.type === 'apple'; })){
+    spawnItem('apple');
+  }
 }
 
 function initHudHearts(){
@@ -206,1322 +145,480 @@ function initHudHearts(){
   box.innerHTML = '';
   for (var i=0;i<maxPlayerHp;i++){
     var img = document.createElement('img');
-    img.className = 'px-img'; img.width = 16; img.height = 16;
+    img.className = 'px-img'; img.width = 15; img.height = 15;
     img.src = (i < playerHp) ? PX_URLS.heart_full : PX_URLS.heart_empty;
     box.appendChild(img);
   }
 }
 
-function updateHUD(){
-  if ($('#hudScore')) $('#hudScore').textContent = faNum(score);
-  if ($('#hudCombo')){
-    var cLabel = '×' + faNum(Math.max(1, combo));
-    if (combo >= 10) cLabel += ' طلایی!';
-    else if (combo >= 5) cLabel += ' جنون!';
-    $('#hudCombo').textContent = cLabel;
-    $('#hudCombo').style.color = combo >= 10 ? '#ffd43b' : (combo >= 5 ? '#46f88f' : (combo >= 3 ? '#38bdf8' : '#e2e8f0'));
-  }
-  if ($('#hudEnergyBar')){
-    $('#hudEnergyBar').style.width = Math.min(100, Math.round(energyPct)) + '%';
-  }
-  if ($('#hudRelics')){
-    $('#hudRelics').innerHTML = activeRelics.map(function(rid){
-      return pxImgTag(getRelicObj(rid).ico, 14);
-    }).join('');
-  }
-  if ($('#hudGhostDiff')){
-    if (rivalGhostTrace && rivalGhostTrace.length && !isReplay && !inSecretRoom){
-      var gIdx = Math.min(rivalGhostTrace.length - 1, Math.floor((runTicks / Math.max(1, rivalGhostTotalTicks || rivalGhostTrace.length)) * rivalGhostTrace.length));
-      var gSnap = rivalGhostTrace[gIdx];
-      var gSc = gSnap ? gSnap.score : 0;
-      var diff = score - gSc;
-      $('#hudGhostDiff').style.display = 'inline-block';
-      $('#hudGhostDiff').textContent = (diff >= 0 ? '+' : '') + faNum(diff) + ' شبح';
-      $('#hudGhostDiff').style.color = diff >= 0 ? '#46f88f' : '#fda4af';
-    } else {
-      $('#hudGhostDiff').style.display = 'none';
-    }
-  }
-
-  var stageEl = $('#hudStageBadge');
-  if (stageEl){
-    if (isReplay) stageEl.textContent = 'بازپخش (' + faNum(replaySpeed) + 'x)';
-    else if (inSecretRoom) stageEl.textContent = secretTimerMs > 0 ? ('مخفی ' + faNum(Math.ceil(secretTimerMs/1000)) + 'ث') : 'اتاق مخفی';
-    else if (mode === 'timeattack') stageEl.textContent = faNum(Math.max(0, Math.ceil(arenaTimeLeft/1000))) + 'ث';
-    else if (mode === 'bossrush') stageEl.textContent = 'باس ' + faNum(bossRushStage) + '/۴';
-    else if (mode === 'dungeon') stageEl.textContent = 'طبقه ' + faNum(dungeonFloor);
-    else if (mode === 'levelrush'){
-      var st = LEVEL_RUSH_STAGES[levelRushIdx] || LEVEL_RUSH_STAGES[0];
-      if (st.type === 'puzzle'){
-        var remKeys = items.filter(function(it){ return it.type==='key'; }).length;
-        stageEl.textContent = 'کلید: ' + faNum(remKeys);
-      } else if (boss){
-        stageEl.textContent = 'باس جهان';
-      } else {
-        stageEl.textContent = 'مرحله ' + faNum(levelRushIdx+1) + ': ' + faNum(applesEaten) + '/' + faNum(stageGoal);
-      }
-    } else {
-      stageEl.textContent = getWorldObj(world).name + (save.dailySeedMode ? ' • بذر' : '');
-    }
-  }
-
-  /* دکمه‌های اکشن: دش، مهارت، بازگشت زمان */
-  var bDash = $('#btnDash');
-  if (bDash){
-    var dTxt = dashTimer > 0 ? 'دش!' : (dashCd > 0 ? faNum(Math.ceil(dashCd/1000))+'ث' : 'دش');
-    $('#txtDashBtn').textContent = dTxt;
-    bDash.disabled = dashCd > 0 && dashTimer <= 0;
-    bDash.classList.toggle('ready', dashCd <= 0);
-  }
-  var bSkill = $('#btnSkill');
-  if (bSkill){
-    var sTxt = skillCd > 0 ? faNum(Math.ceil(skillCd/1000))+'ث' : (energyPct >= 100 ? 'انرژی!' : 'مهارت');
-    $('#txtSkillBtn').textContent = sTxt;
-    bSkill.disabled = skillCd > 0 && energyPct < 100;
-    bSkill.classList.toggle('ready', skillCd <= 0 || energyPct >= 100);
-  }
-  var bRew = $('#btnRewind');
-  if (bRew){
-    $('#txtRewindBtn').textContent = 'زمان (' + faNum(rewindsLeft) + ')';
-    bRew.disabled = rewindsLeft <= 0 || historyBuf.length < 3;
-    bRew.classList.toggle('ready', rewindsLeft > 0 && historyBuf.length >= 3);
-  }
-
-  initHudHearts();
-}
-
-function resetStageArrays(){
-  items = []; walls = []; dWalls = []; secretWalls = []; switches = []; hotTiles = []; iceTiles = []; sandTiles = [];
-  crumbleTiles = []; portals = []; doorCell = null; trailCells = [];
-  rivals = []; pShots = []; bossShots = []; boss = null; shadowSnake = [];
-  particles = []; floatTexts = []; shockwaves = [];
-  fx = { ghost:0, slow:0, double:0, shield:0, magnet:0, trailType:'', trailMs:0 };
-  dashTimer = 0; dashCd = 0; hotStayTicks = 0; onIce = false; onSand = false; portalCdTicks = 0;
-  shrinkBorder = 0; fogActiveMs = 0; sandstormMs = 0;
-  secretEntrance = null; secretExit = null; inSecretRoom = false; secretTimerMs = 0; savedMainRoom = null;
-  exploredMap = {}; fogRevealAll = false;
-}
-
-function spawnSnakeAt(sx, sy){
-  snake = [{x:sx,y:sy}, {x:sx-1,y:sy}, {x:sx-2,y:sy}, {x:sx-3,y:sy}];
-  prevSnake = snake.map(function(p){ return {x:p.x, y:p.y}; });
-  dir = 'right'; dirQueue = ['right'];
-  historyBuf = [];
-}
-
-function setupStageContent(){
-  resetStageArrays();
-  spawnSnakeAt(4, 9);
-  var wo = getWorldObj(world);
-
-  if (mode === 'bossrush'){
-    var bHp = 6 + bossRushStage * 3;
-    boss = createBossInstance(bossRushStage, bHp, 0.72);
-    boss.hazardTiles = [];
-    discover('d' + bossRushStage);
-    spawnItem('fireball');
-    spawnItem('fireball');
-    if (bossRushStage >= 2) spawnItem('superfire');
-    if (bossRushStage >= 3) spawnItem('shield');
-    updateHUD();
-    return;
-  }
-
-  if (mode === 'levelrush'){
-    var st = LEVEL_RUSH_STAGES[levelRushIdx] || LEVEL_RUSH_STAGES[0];
-    if (st.walls) st.walls.forEach(function(w){ walls.push({x:w[0], y:w[1]}); });
-    if (st.dWalls) st.dWalls.forEach(function(dw){ dWalls.push({x:dw[0], y:dw[1], hp:2, maxHp:2}); });
-    if (st.crumble) st.crumble.forEach(function(c){ crumbleTiles.push({x:c[0], y:c[1], step:0}); });
-    if (st.portals) st.portals.forEach(function(p){
-      portals.push({x:p[0], y:p[1], tx:p[2], ty:p[3], color:'a'});
-      portals.push({x:p[2], y:p[3], tx:p[0], ty:p[1], color:'a'});
-    });
-    if (st.keys) st.keys.forEach(function(k){ items.push({x:k[0], y:k[1], type:'key'}); });
-    if (st.door) doorCell = { x:st.door[0], y:st.door[1] };
-    stageGoal = st.goalApples || 8;
-    applesEaten = 0;
-
-    if (st.type === 'boss'){
-      boss = createBossInstance(wo.bossKey, 8 + wo.bossKey * 2, 0.74);
-      boss.hazardTiles = [];
-      discover('d' + wo.bossKey);
-      spawnItem('fireball');
-      spawnItem('fireball');
-      spawnItem('superfire');
-    } else {
-      spawnItem('apple');
-      if (st.type === 'goal') spawnItem('gold');
-      if (st.enemies){
-        st.enemies.forEach(function(et, idx){
-          var pos = idx === 0 ? {x:15, y:4} : {x:15, y:14};
-          rivals.push(spawnEnemySnake(et, pos.x, pos.y));
-          discover(et);
-        });
-      }
-    }
-    updateHUD();
-    return;
-  }
-
-  /* حالت‌های Endless, TimeAttack, Dungeon از ژنراتور BFS-Verified استفاده می‌کنند */
-  var stageScale = (mode === 'dungeon') ? dungeonFloor : (1 + Math.floor(score / 250));
-  var lay = generateWorldLayout(world, stageScale, rngFn);
-  walls = lay.walls;
-  dWalls = lay.dWalls;
-  secretWalls = lay.secretWalls || [];
-  switches = lay.switches || [];
-  hotTiles = lay.hotTiles;
-  iceTiles = lay.iceTiles;
-  sandTiles = lay.sandTiles;
-  crumbleTiles = lay.crumbleTiles;
-  portals = lay.portals;
-  secretEntrance = lay.secretEntrance || null;
-  if (portals.length) discover('portal');
-  if (dWalls.length) discover('dwall');
-
-  spawnItem('apple');
-  spawnItem('apple');
-  spawnItem('gold');
-  if (mode === 'timeattack') spawnItem('timer');
-  if (rngFn() < 0.35 && activeRelics.length < 4) spawnItem('relic_orb');
-  if (rngFn() < 0.55) spawnItem('map_piece');
-
-  /* اسپاون دشمن هوشمند بر اساس نوع حالت */
-  if (mode === 'dungeon'){
-    var aiPool = ['hunter', 'rival', 'guardian'];
-    rivals.push(spawnEnemySnake(aiPool[dungeonFloor % aiPool.length], 15, 4));
-    if (dungeonFloor >= 2) rivals.push(spawnEnemySnake('guardian', 15, 14));
-    doorCell = { x:17, y:9 };
-    items.push({ x:14, y:9, type:'key' });
-    if (dungeonFloor >= 3) items.push({ x:9, y:3, type:'key' });
-    spawnItem('crystal');
-  } else if (mode === 'timeattack'){
-    rivals.push(spawnEnemySnake('rival', 15, 4));
-    rivals.push(spawnEnemySnake('hunter', 15, 14));
-  } else if (mode === 'endless'){
-    rivals.push(spawnEnemySnake('rival', 15, 14));
-  }
-  updateFogVisibility();
-  updatePhantomTarget();
-  updateHUD();
-}
-
-function startGame(chosenMode, chosenWorld, challengeObj){
-  mode = chosenMode || save.mode || 'endless';
-  world = chosenWorld || save.world || 'forest';
-  save.mode = mode;
-  save.world = world;
-  activeChallenge = challengeObj || null;
-  isReplay = false;
-
-  if (mode === 'endless' && save.dailySeedMode){
-    var dk = todayKey();
-    if (save.dailySeedKey !== dk){ save.dailySeedKey = dk; save.dailySeedBest = 0; }
-    rngFn = mulberry32(hashStr('maze-royale-' + dk + '-' + world));
+function updateExitState(){
+  if (!activeStage) return false;
+  var prev = exitUnlocked;
+  if (activeStage.hasBoss){
+    exitUnlocked = (!boss || boss.hp <= 0);
   } else {
-    rngFn = Math.random;
+    exitUnlocked = (applesEaten >= stageGoal) && hasKey;
   }
+  if (!prev && exitUnlocked){
+    sfx.portal();
+    showHudHint('در سبز باز شد! به سمت خروجی برو.', 2800);
+    if (doorCell) spawnParticles(doorCell.x, doorCell.y, '#46f88f', 12);
+  }
+  return exitUnlocked;
+}
 
-  save.stats.gamesPlayed++;
-  save.dailyProgress.games++;
+function updateHUD(){
+  if ($('#hudStageBadge')) $('#hudStageBadge').textContent = 'مرحله ' + faNum(currentStageNum);
+  if ($('#hudScore')) $('#hudScore').textContent = 'امتیاز: ' + faNum(score);
+
+  if ($('#hudGoalText') && activeStage){
+    $('#hudGoalText').textContent = activeStage.goalText;
+  }
+  if ($('#hudProgressText') && activeStage){
+    var parts = [];
+    if (activeStage.hasBoss){
+      var leftHp = boss ? boss.hp : 0;
+      var hitDone = activeStage.bossHp - leftHp;
+      parts.push('ضربه به اژدها: ' + faNum(hitDone) + ' از ' + faNum(activeStage.bossHp));
+    } else {
+      if (stageGoal > 0){
+        parts.push('سیب‌ها: ' + faNum(Math.min(applesEaten, stageGoal)) + ' از ' + faNum(stageGoal));
+      }
+      if (activeStage.needKey){
+        parts.push('کلید: ' + (hasKey ? '۱/۱' : '۰/۱'));
+      }
+    }
+    if (exitUnlocked) parts.push('در سبز باز است');
+    $('#hudProgressText').textContent = parts.join('  •  ');
+  }
+}
+
+function resetSnakeToSpawn(){
+  snake = [{x:4,y:9},{x:3,y:9},{x:2,y:9}];
+  prevSnake = snake.map(function(p){ return {x:p.x, y:p.y}; });
+  dir = 'right';
+  dirQueue = [];
+}
+
+function spawnGuardianEnemy(){
+  var gSkin = { id:'guardian', head:'#f87171', body:'#dc2626', spot:'#7f1d1d', belly:'#fecaca', dark:'#991b1b' };
+  rivals = [{
+    type: 'guardian',
+    dir: 'down',
+    hp: 99,
+    frozenMs: 0,
+    skinObj: gSkin,
+    body: [{x:14,y:6},{x:14,y:5},{x:14,y:4}],
+    prev: [{x:14,y:6},{x:14,y:5},{x:14,y:4}],
+    tickSkip: 0
+  }];
+}
+
+function startStage(stageNum){
+  currentStageNum = Math.max(1, Number(stageNum || 1));
+  save.currentStage = currentStageNum;
   persist();
 
-  level = 1; dungeonFloor = 1; bossRushStage = 1; levelRushIdx = 0;
-  score = 0; combo = 0; comboTimer = 0; maxComboRun = 0; foodsRun = 0;
-  runStartTs = Date.now(); runTookHit = false;
-  energyPct = 0; skillCd = 0; envCd = 8500; closeCallCd = 0;
-  roguePerks = {};
-  maxPlayerHp = 3; playerHp = 3; invulnT = 0;
-  rewindsLeft = 1 + Math.floor((save.skills.reflex || 1) / 2) + (hasCard('time_echo') ? (cardLv('time_echo') >= 3 ? 2 : 1) : 0);
-  arenaTimeLeft = (save.timeAttackSec || 60) * 1000;
-  runTrace = [];
-  fullGhostTrace = [];
-  runTicks = 0;
-  activeRelics = [];
-  dragonScaleUsed = false;
-  phantomTarget = null;
-  activeArcadeEvent = null;
-  arcadeEventCd = 16000;
-
-  var rKey = world + '_' + mode;
-  var savedT = (save.rivalGhostEnabled !== false && save.bestTraces && save.bestTraces[rKey]) ? save.bestTraces[rKey] : null;
-  rivalGhostTrace = (savedT && Array.isArray(savedT.frames) && savedT.frames.length) ? savedT.frames : null;
-  rivalGhostTotalTicks = savedT ? Number(savedT.totalTicks || (rivalGhostTrace ? rivalGhostTrace.length : 0)) : 0;
-  rivalGhostBest = savedT ? Number(savedT.score || 0) : 0;
-  rivalGhostSnake = [];
-  rivalGhostBeat = false;
-
-  setupStageContent();
-  applyControlLayout();
+  activeStage = generateForestStage(currentStageNum);
   state = 'play';
   showScreen('gameScreen');
   showOv(null);
   resize();
+  applyControlLayout();
+
+  walls = activeStage.walls.slice();
+  secretWalls = activeStage.secretWalls.slice();
+  switches = activeStage.switches.map(function(s){ return {x:s.x, y:s.y, order:s.order, active:false}; });
+  secretReserved = activeStage.secretReserved || {};
+  doorCell = { x: activeStage.doorPos.x, y: activeStage.doorPos.y };
+
+  resetSnakeToSpawn();
+  items = [];
+  particles = [];
+  floatTexts = [];
+  pShots = [];
+  bossShots = [];
+  rivals = [];
+  boss = null;
+
+  score = 0;
+  foodsRun = 0;
+  applesEaten = 0;
+  stageGoal = activeStage.applesGoal;
+  hasKey = !activeStage.needKey;
+  exitUnlocked = false;
+  secretOpened = false;
+  playerHp = 3; maxPlayerHp = 3; invulnT = 0;
+  runTookHit = false;
+  runStartTs = Date.now();
+  tickAcc = 0;
+
+  if (activeStage.keyPos){
+    items.push({ x: activeStage.keyPos.x, y: activeStage.keyPos.y, type: 'key' });
+  }
+  if (activeStage.hasGuardian){
+    spawnGuardianEnemy();
+  }
+  if (activeStage.hasBoss){
+    boss = {
+      key: 1,
+      hp: activeStage.bossHp,
+      maxHp: activeStage.bossHp,
+      x: 0.5,
+      y: 0.22,
+      vx: 0.16,
+      faceL: false,
+      fireShow: 0,
+      hitFlash: 0,
+      shootCd: 2200
+    };
+  }
+
+  ensureGoalItemsPresent();
+  updateExitState();
+  initHudHearts();
+  updateHUD();
+
+  /* پیام آموزشی کوتاه فقط در مراحل ۱ تا ۳ و فقط قبل از یادگیری */
+  if (currentStageNum <= 3 && (save.tutorialStepDone || 0) < currentStageNum && activeStage.tutorialHint){
+    showHudHint(activeStage.tutorialHint, 4500);
+  } else if (activeStage.isSpecial){
+    showHudHint(activeStage.hasBoss ? 'از گلوله‌های آبی دوری کن و گوی قرمز بردار!' : 'مرحله ویژه: سنگ معما مسیر مخفی را باز می‌کند!', 3600);
+  } else {
+    showHudHint('', 0);
+  }
+
+  save.stats.gamesPlayed++;
+  persist();
   startMusic();
-  sfx.start();
-
-  if (activeChallenge) showToast(activeChallenge.title);
-  else showToast(getWorldObj(world).name + ' — ' + getModeObj(mode).name);
-}
-
-function triggerDash(){
-  if (state !== 'play' || isReplay) return;
-  if (dashCd > 0 || dashTimer > 0) return;
-  var cdReduc = (roguePerks.rg_bolt ? 0.6 : Math.max(0.65, 1 - (save.skills.reflex - 1) * 0.07)) * (hasRelic('broken_clock') ? 0.72 : 1);
-  dashTimer = 520 + (hasCard('fire_dash') ? cardLv('fire_dash') * 70 : 0);
-  dashCd = Math.round(dashMaxCd * cdReduc);
-  save.dailyProgress.dashes++;
-  if (hasCard('fire_dash')){
-    fx.trailType = 'fire';
-    fx.trailMs = Math.max(fx.trailMs, 1500 + cardLv('fire_dash') * 500);
-  }
-  sfx.dash();
-  vibrate(14);
-  if (snake.length){
-    addShockwave(snake[0].x, snake[0].y, hasCard('fire_dash') ? '#ff6b2b' : '#38bdf8', cell*2.2);
-    spawnParticles(snake[0].x, snake[0].y, hasCard('fire_dash') ? '#ff6b2b' : '#38bdf8', 10);
-  }
-  updateHUD();
-}
-
-function triggerSkill(){
-  if (state !== 'play' || isReplay) return;
-  if (skillCd > 0 && energyPct < 100) return;
-  var usedFullEnergy = (energyPct >= 100);
-  if (usedFullEnergy) energyPct = 0;
-  else {
-    var cdMult = (roguePerks.rg_bolt ? 0.6 : Math.max(0.6, 1 - (save.skills.power - 1) * 0.08)) * (hasRelic('broken_clock') ? 0.72 : 1);
-    skillCd = Math.round(skillMaxCd * cdMult);
-  }
-
-  var g1 = save.genes[0] || 'fire';
-  var g2 = save.genes[1] || g1;
-  var dur = 3600 + (save.skills.power - 1) * 550;
-  var h = snake[0];
-  sfx.power();
-  vibrate(18);
-  addShockwave(h.x, h.y, getGeneObj(g1).color, cell*3.2);
-
-  [g1, g2].forEach(function(gid){
-    if (gid === 'fire' || gid === 'toxic' || gid === 'electric'){
-      fx.trailType = usedFullEnergy ? 'energy' : gid;
-      fx.trailMs = Math.max(fx.trailMs, dur);
-      if (gid === 'electric'){
-        for (var i=dWalls.length-1;i>=0;i--){
-          var dw = dWalls[i];
-          if (Math.abs(dw.x-h.x)+Math.abs(dw.y-h.y) <= 3){
-            dWalls.splice(i,1);
-            save.stats.wallsBroken++;
-            score += 25;
-            spawnParticles(dw.x, dw.y, '#fde047', 10);
-          }
-        }
-        rivals.forEach(function(rv){
-          if (rv.body.length && Math.abs(rv.body[0].x-h.x)+Math.abs(rv.body[0].y-h.y) <= 5){
-            rv.hp--; rv.frozenMs = 1500;
-          }
-        });
-      }
-    }
-    if (gid === 'frost'){
-      rivals.forEach(function(rv){ rv.frozenMs = 4200; });
-      fx.slow = Math.max(fx.slow, 2500);
-    }
-    if (gid === 'magnet'){ fx.magnet = Math.max(fx.magnet, dur + 2000); }
-    if (gid === 'armor'){ fx.shield = Math.max(fx.shield, roguePerks.rg_ghost ? dur*2 : dur); }
-    if (gid === 'ghost'){ fx.ghost = Math.max(fx.ghost, roguePerks.rg_ghost ? dur*2 : dur); }
-    if (gid === 'shadow'){ fx.double = Math.max(fx.double, dur); }
-  });
-
-  /* اجرای افکت کارت‌های تاکتیکی تجهیزشده در دک ۳تایی */
-  if (hasCard('ice_trap')){
-    var fzDur = 2400 + cardLv('ice_trap') * 800;
-    rivals.forEach(function(rv){ rv.frozenMs = Math.max(rv.frozenMs, fzDur); });
-    fx.slow = Math.max(fx.slow, 1800 + cardLv('ice_trap') * 500);
-  }
-  if (hasCard('shadow_step')){
-    fx.ghost = Math.max(fx.ghost, 1800 + cardLv('shadow_step') * 700);
-  }
-  if (hasCard('thunder_pulse')){
-    var pulseR = 2 + cardLv('thunder_pulse');
-    for (var ti=dWalls.length-1;ti>=0;ti--){
-      if (Math.abs(dWalls[ti].x-h.x)+Math.abs(dWalls[ti].y-h.y) <= pulseR){
-        spawnParticles(dWalls[ti].x, dWalls[ti].y, '#fde047', 8);
-        dWalls.splice(ti, 1); save.stats.wallsBroken++; score += 20;
-      }
-    }
-    rivals.forEach(function(rv){
-      if (rv.body.length && Math.abs(rv.body[0].x-h.x)+Math.abs(rv.body[0].y-h.y) <= pulseR + 2){
-        rv.hp--; rv.frozenMs = Math.max(rv.frozenMs, 1400);
-      }
-    });
-  }
-  if (hasCard('golden_rush')){
-    fx.double = Math.max(fx.double, 3200 + cardLv('golden_rush') * 900);
-  }
-  if (hasCard('phantom_clone')){
-    fx.double = Math.max(fx.double, 2600 + cardLv('phantom_clone') * 800);
-  }
-
-  if (boss){
-    pShots.push({ x:h.x, y:h.y, vx:0.38, vy:0, super:usedFullEnergy, dmg: usedFullEnergy ? 2 : 1 });
-    sfx.shoot();
-  }
-  updateHUD();
-}
-
-function triggerRewind(){
-  if (state !== 'play' || isReplay || rewindsLeft <= 0 || historyBuf.length < 3) return;
-  rewindsLeft--;
-  var idx = Math.max(0, historyBuf.length - 12);
-  var snap = historyBuf[idx];
-  historyBuf.length = idx;
-  snake = snap.snake.map(function(p){ return {x:p.x, y:p.y}; });
-  prevSnake = snake.map(function(p){ return {x:p.x, y:p.y}; });
-  dir = snap.dir;
-  dirQueue = [dir];
-  invulnT = 1400;
-  hotStayTicks = 0;
-  sfx.rewind();
-  vibrate([12,30,12]);
-  if (snake.length){
-    addShockwave(snake[0].x, snake[0].y, '#38bdf8', cell*2.8);
-    addFloat(snake[0].x, snake[0].y, 'بازگشت زمان!', '#7dd3fc');
-  }
-  updateHUD();
 }
 
 function takePlayerHit(reason){
-  if (invulnT > 0 || dashTimer > 0) return false;
-  if (fx.shield > 0){
-    fx.shield = 0;
-    invulnT = 1300;
-    sfx.hit();
-    addShake(0.45);
-    if (snake.length) addFloat(snake[0].x, snake[0].y, 'سپر شکست!', '#60a5fa');
-    updateHUD();
-    return false;
-  }
+  if (invulnT > 0 || state !== 'play') return false;
   runTookHit = true;
   playerHp--;
-  invulnT = 1700;
-  combo = 0;
+  initHudHearts();
   sfx.hit();
-  vibrate([30,30,30]);
-  addShake(0.75);
-  if (snake.length) addFloat(snake[0].x, snake[0].y, reason || '-۱ قلب!', '#ff4757');
-  updateHUD();
+  vibrate(80);
+  shakeMag = 0.5;
+  invulnT = 1400;
+  addFloat(snake[0].x, snake[0].y, reason || 'برخورد!', '#ff4757');
   if (playerHp <= 0){
-    if (hasRelic('dragon_scale') && !dragonScaleUsed){
-      dragonScaleUsed = true;
-      playerHp = 1;
-      invulnT = 2600;
-      sfx.power();
-      vibrate([20, 30, 20]);
-      if (snake.length){
-        addShockwave(snake[0].x, snake[0].y, '#ffd43b', cell*3.4);
-        addFloat(snake[0].x, snake[0].y, 'پولک اژدها نجات داد!', '#ffd43b');
-      }
-      updateHUD();
-      return false;
-    }
-    endRunGameOver();
+    endStageOver();
     return true;
   }
+  resetSnakeToSpawn();
   return false;
 }
 
-function awardFood(type, gx, gy){
-  combo = (comboTimer > 0) ? Math.min(15, combo + 1) : 1;
-  comboTimer = hasRelic('phantom_eye') ? 5100 : 3900;
-  if (combo > maxComboRun) maxComboRun = combo;
-  if (combo > save.stats.maxComboEver) save.stats.maxComboEver = combo;
-  if (combo === 3) save.dailyProgress.combos++;
-  if (combo >= 3) sfx.combo(combo);
-
-  var sk = getSkinObj(save.skin);
-  var comboTierMult = combo >= 2 ? 2 : 1; /* کمبوی ×۲ امتیاز پایه را دو برابر می‌کند */
-  var cardScoreMult = hasCard('golden_rush') ? (1.12 + cardLv('golden_rush') * 0.06) : 1;
-  var mult = (fx.double > 0 ? 2 : 1) * (roguePerks.rg_combo ? 1.5 : 1) * (sk.bonusScore || 1) * comboTierMult * cardScoreMult;
-  var cMult = 1 + Math.min(1.5, (combo - 1) * 0.15);
-
-  foodsRun++;
-  save.stats.totalApples++;
-  save.dailyProgress.foods++;
-  energyPct = Math.min(100, energyPct + (combo >= 5 ? 22 : 14));
-
-  if (type === 'apple'){
-    var pts = Math.round(15 * mult * cMult);
-    score += pts;
-    applesEaten++;
-    if (combo >= 10) save.gold += 2; /* حالت طلایی: سکه اضافه روی هر سیب */
-    sfx.eat();
-    spawnParticles(gx, gy, combo >= 10 ? '#ffd43b' : '#ff4757', 8);
-    addFloat(gx, gy, '+'+faNum(pts) + (combo>=10 ? ' طلایی!' : (combo>=5 ? ' جنون!' : (combo>=3 ? ' ×'+faNum(combo):''))), combo >= 10 ? '#ffd43b' : '#46f88f');
-    snake.push({x:snake[snake.length-1].x, y:snake[snake.length-1].y});
-  } else if (type === 'gold' || type === 'coin_drop'){
-    var fangMult = hasRelic('golden_fang') ? 1.6 : 1;
-    var ptsG = Math.round(35 * mult * cMult * fangMult);
-    var gCoin = Math.round((2 + Math.floor(combo/3)) * (sk.bonusGold || 1) * fangMult);
-    score += ptsG; save.gold += gCoin;
-    sfx.gold();
-    spawnParticles(gx, gy, '#ffd43b', 10);
-    addFloat(gx, gy, '+'+faNum(gCoin)+' سکه', '#ffd43b');
-  } else if (type === 'crystal'){
-    save.crystals += 1;
-    score += Math.round(50 * mult);
-    sfx.crystal();
-    spawnParticles(gx, gy, '#c084fc', 12);
-    addFloat(gx, gy, '+۱ کریستال!', '#e9d5ff');
-  } else if (type === 'map_piece'){
-    save.mapPieces = (save.mapPieces || 0) + 1;
-    discover('map_pc');
-    score += 45;
-    save.chestMeter = Math.min(100, (save.chestMeter || 0) + 25);
-    sfx.crystal();
-    spawnParticles(gx, gy, '#fde68a', 12);
-    if (save.mapPieces % 3 === 0){
-      fogRevealAll = true;
-      addFloat(gx, gy, 'مه نقشه کنار رفت!', '#fde68a');
-    } else {
-      addFloat(gx, gy, 'قطعه نقشه ('+faNum(save.mapPieces%3)+'/۳)', '#fde68a');
-    }
-  } else if (type === 'shop_heart'){
-    if (save.gold >= 15){
-      save.gold -= 15;
-      playerHp = Math.min(maxPlayerHp + 1, playerHp + 1);
-      if (playerHp > maxPlayerHp) maxPlayerHp = playerHp;
-      sfx.win(); addFloat(gx, gy, '+۱ قلب (۱۵س)', '#46f88f');
-    } else addFloat(gx, gy, 'نیاز به ۱۵ سکه', '#fda4af');
-  } else if (type === 'shop_shield'){
-    if (save.gold >= 12){
-      save.gold -= 12; fx.shield = Math.max(fx.shield, 9000);
-      sfx.power(); addFloat(gx, gy, 'سپر خریداری شد!', '#38bdf8');
-    } else addFloat(gx, gy, 'نیاز به ۱۲ سکه', '#fda4af');
-  } else if (type === 'shop_relic'){
-    if (save.gold >= 25){
-      save.gold -= 25; openRelicDraft(); return;
-    } else addFloat(gx, gy, 'نیاز به ۲۵ سکه', '#fda4af');
-  } else if (type === 'relic_orb'){
-    score += 45;
-    sfx.power();
-    openRelicDraft();
-    return;
-  } else if (type === 'orb'){
-    score += Math.round(40 * mult);
-    energyPct = Math.min(100, energyPct + 35);
-    sfx.power();
-    spawnParticles(gx, gy, '#38bdf8', 10);
-    addFloat(gx, gy, '+انرژی!', '#7dd3fc');
-  } else if (type === 'ghost'){
-    fx.ghost = 5000 + (sk.ghostExtra || 0);
-    sfx.power();
-    addFloat(gx, gy, 'حالت روح!', '#93c5fd');
-  } else if (type === 'slow'){
-    fx.slow = 4500;
-    sfx.power();
-    addFloat(gx, gy, 'آرامش!', '#38bdf8');
-  } else if (type === 'double'){
-    fx.double = 6000;
-    sfx.power();
-    addFloat(gx, gy, 'امتیاز ×۲!', '#ffd43b');
-  } else if (type === 'shield'){
-    fx.shield = 7500;
-    sfx.power();
-    addFloat(gx, gy, 'سپر فعال!', '#60a5fa');
-  } else if (type === 'heart'){
-    if (playerHp < maxPlayerHp) playerHp++;
-    else score += 45;
-    sfx.win();
-    addFloat(gx, gy, '+۱ قلب', '#ff4757');
-  } else if (type === 'timer'){
-    arenaTimeLeft += 4000;
-    score += 20;
-    sfx.gold();
-    addFloat(gx, gy, '+۴ ثانیه!', '#46f88f');
-  } else if (type === 'fireball' || type === 'superfire'){
-    var isSup = (type === 'superfire');
-    if (boss){
-      pShots.push({ x:gx, y:gy, vx:0.42, vy:0, super:isSup, dmg: (isSup?2:1) * (sk.dmg||1) });
-      sfx.shoot();
-      addFloat(gx, gy, isSup ? 'شلیک ویژه!' : 'شلیک!', '#ff9800');
-    } else {
-      score += 30;
-      energyPct = Math.min(100, energyPct + 25);
-      sfx.power();
-    }
-  } else if (type === 'key'){
-    sfx.gold();
-    spawnParticles(gx, gy, '#ffd43b', 12);
-    var leftK = items.filter(function(it){ return it.type==='key'; }).length;
-    addFloat(gx, gy, leftK === 0 ? 'دروازه باز شد!' : 'کلید گرفته شد!', '#ffd43b');
-  } else if (type === 'bomb' || type === 'acid'){
-    sfx.bomb();
-    spawnParticles(gx, gy, '#ef4444', 12);
-    takePlayerHit('تله!');
-  }
-
-  /* مدیریت اسپاون مداوم آیتم‌ها */
-  if (type === 'apple'){
-    ensureApplesPresent();
-    if (rngFn() < 0.28) spawnItem('gold');
-    if (rngFn() < 0.08) spawnItem('crystal');
-    if (rngFn() < 0.14) spawnItem(pick(['ghost','slow','double','shield','orb']));
-    if (mode === 'timeattack' && rngFn() < 0.18) spawnItem('timer');
-  } else if ((type === 'fireball' || type === 'superfire') && boss){
-    if (items.filter(function(x){ return x.type==='fireball'||x.type==='superfire'; }).length < 2){
-      spawnItem(rngFn() < 0.25 ? 'superfire' : 'fireball');
-    }
-  }
-
-  /* بررسی ارتقای مرحله در حالت مرحله‌ای */
-  if (mode === 'levelrush' && !boss){
-    var st = LEVEL_RUSH_STAGES[levelRushIdx];
-    if (st && st.type === 'goal' && applesEaten >= stageGoal){
-      advanceStageFlow();
-    }
-  }
-  updatePhantomTarget();
-  updateHUD();
-}
-
-function advanceStageFlow(){
-  if (mode === 'levelrush'){
-    if (levelRushIdx < LEVEL_RUSH_STAGES.length - 1){
-      levelRushIdx++;
-      sfx.win();
-      showToast(LEVEL_RUSH_STAGES[levelRushIdx].title);
-      setupStageContent();
-    } else {
-      endRunWin();
-    }
-  } else if (mode === 'dungeon'){
-    dungeonFloor++;
-    if (dungeonFloor > 4){
-      endRunWin();
-    } else {
-      openRogueDraft();
-    }
-  } else if (mode === 'bossrush'){
-    bossRushStage++;
-    if (bossRushStage > 4){
-      endRunWin();
-    } else {
-      if (playerHp < maxPlayerHp) playerHp++;
-      sfx.win();
-      showToast('باس بعدی: ' + DRAGON_STYLE[bossRushStage].name);
-      setupStageContent();
-    }
-  }
-}
-
-function openRogueDraft(){
-  state = 'paused';
-  var box = $('#draftOptions');
-  if (!box) return;
-  box.innerHTML = '';
-  var pool = ROGUE_CARDS.slice().sort(function(){ return Math.random()-0.5; }).slice(0, 3);
-  pool.forEach(function(c){
-    var card = document.createElement('div');
-    card.className = 'draft-card';
-    card.innerHTML = pxImgTag(c.ico, 28) + '<b>'+c.title+'</b><span>'+c.desc+'</span>';
-    card.onclick = function(){
-      sfx.power();
-      roguePerks[c.id] = true;
-      if (c.id === 'rg_hp'){ maxPlayerHp++; playerHp = Math.min(maxPlayerHp, playerHp + 1); }
-      if (c.id === 'rg_rewind'){ rewindsLeft += 2; }
-      $('#draftModal').classList.remove('show');
-      state = 'play';
-      setupStageContent();
-      showToast('قدرت سیاهچال: ' + c.title);
-    };
-    box.appendChild(card);
-  });
-  $('#draftModal').classList.add('show');
-}
-
-function openRelicDraft(){
-  var avail = RELICS.filter(function(r){ return !hasRelic(r.id); });
-  if (!avail.length){ score += 60; save.gold += 8; showToast('تمام رلیک‌ها فعالند! +۸ سکه'); return; }
-  state = 'paused';
-  var box = $('#draftOptions');
-  if (!box) return;
-  box.innerHTML = '';
-  var pool = avail.slice().sort(function(){ return Math.random()-0.5; }).slice(0, 3);
-  pool.forEach(function(r){
-    var card = document.createElement('div');
-    card.className = 'draft-card';
-    card.innerHTML = pxImgTag(r.ico, 28) + '<b>'+r.name+'</b><span>'+r.desc+'</span>';
-    card.onclick = function(){
-      sfx.power();
-      activeRelics.push(r.id);
-      if (r.id === 'broken_clock') rewindsLeft++;
-      $('#draftModal').classList.remove('show');
-      state = 'play';
-      updatePhantomTarget();
-      updateHUD();
-      showToast('رلیک فعال شد: ' + r.name);
-    };
-    box.appendChild(card);
-  });
-  $('#draftModal').classList.add('show');
-}
-
-function enterSecretRoom(){
-  if (inSecretRoom) return;
-  savedMainRoom = {
-    walls: walls, dWalls: dWalls, secretWalls: secretWalls, switches: switches, hotTiles: hotTiles, iceTiles: iceTiles,
-    sandTiles: sandTiles, crumbleTiles: crumbleTiles, portals: portals,
-    doorCell: doorCell, items: items, snake: snake.map(function(p){ return {x:p.x,y:p.y}; }),
-    prevSnake: prevSnake.map(function(p){ return {x:p.x,y:p.y}; }),
-    dir: dir, rivals: rivals
-  };
-  var sr = generateSecretRoom(rngFn);
-  inSecretRoom = true;
-  secretEntrance = null;
-  secretExit = sr.exit;
-  secretTimerMs = sr.timerMs || 0;
-  walls = sr.walls; dWalls = sr.dWalls; secretWalls = []; switches = []; hotTiles = []; iceTiles = []; sandTiles = []; crumbleTiles = []; portals = []; doorCell = null;
-  items = sr.items;
-  rivals = sr.enemy ? [spawnEnemySnake(sr.enemy.type, sr.enemy.x, sr.enemy.y)] : [];
-  if (sr.bossKey){
-    boss = createBossInstance(sr.bossKey, 5, 0.72);
-    boss.hazardTiles = [];
-  }
-  spawnSnakeAt(5, 9);
-  invulnT = 1200;
-  save.stats.secretsFound++;
-  save.chestMeter = Math.min(100, (save.chestMeter || 0) + 20);
-  discover('secret');
-  sfx.portal();
-  addShockwave(5, 9, '#a855f7', cell*3);
-  var srTitles = { vault:'خزانه مخفی (۱۵ث فرصت!)', guardian:'اتاق نگهبان مخفی!', shrine:'محراب رلیک مخفی!', merchant:'فروشگاه پنهان هزارتو!', secret_boss:'نبرد باس مخفی!', treasure:'اتاق گنج مخفی!' };
-  showToast(srTitles[sr.kind] || 'اتاق مخفی!');
-  updatePhantomTarget();
-  updateHUD();
-}
-
-function exitSecretRoom(){
-  if (!inSecretRoom || !savedMainRoom) return;
-  var m = savedMainRoom;
-  walls = m.walls; dWalls = m.dWalls; secretWalls = m.secretWalls || []; switches = m.switches || [];
-  hotTiles = m.hotTiles; iceTiles = m.iceTiles; sandTiles = m.sandTiles; crumbleTiles = m.crumbleTiles;
-  portals = m.portals; doorCell = m.doorCell; items = m.items; rivals = m.rivals;
-  boss = null; pShots = []; bossShots = [];
-  snake = m.snake; prevSnake = m.prevSnake; dir = m.dir; dirQueue = [m.dir];
-  inSecretRoom = false; secretExit = null; secretTimerMs = 0; savedMainRoom = null;
-  invulnT = 1400;
-  ensureApplesPresent();
-  sfx.portal();
-  updateFogVisibility();
-  updatePhantomTarget();
-  updateHUD();
-  showToast('بازگشت به نقشه اصلی');
-}
-
-function triggerArcadeEvent(){
-  if (inSecretRoom || boss) return;
-  var ev = pick(ARCADE_EVENTS);
-  activeArcadeEvent = ev;
-  showToast('رویداد: ' + ev.name);
-  if (ev.id === 'golden_rush'){
-    spawnItem('gold'); spawnItem('gold'); spawnItem('gold');
-  } else if (ev.id === 'darkness'){
-    fogActiveMs = 5500; fx.double = Math.max(fx.double, 5500);
-  } else if (ev.id === 'meteor_rain'){
-    for (var m=0;m<2;m++){
-      var fp = findFreeCell();
-      dWalls.push({x:fp.x, y:fp.y, hp:1, maxHp:1});
-      spawnParticles(fp.x, fp.y, '#f97316', 8);
-    }
-  } else if (ev.id === 'double_trouble' && rivals.length < 3){
-    var ep = findFreeCell();
-    rivals.push(spawnEnemySnake('hunter', ep.x, ep.y));
-  } else if (ev.id === 'treasure_hunt'){
-    spawnItem('crystal');
-    if (activeRelics.length < 4) spawnItem('relic_orb');
-  }
-}
-
-function triggerWorldEvent(){
-  var wo = getWorldObj(world);
-  if (world === 'forest'){
-    spawnItem('apple'); spawnItem('gold');
-    addFloat(9, 2, 'شکوفه بارانی!', '#46f88f');
-  } else if (world === 'lava'){
-    var p = findFreeCell();
-    hotTiles.push({x:p.x, y:p.y});
-    addFloat(p.x, p.y, 'فوران مذاب!', '#ff6b2b');
-  } else if (world === 'ice'){
-    spawnItem('crystal');
-    addFloat(9, 2, 'تلالو کریستال یخ!', '#38bdf8');
-  } else if (world === 'shadow'){
-    fogActiveMs = 4500; fx.double = Math.max(fx.double, 4500);
-    addFloat(9, 2, 'کسوف سایه (×۲ امتیاز)!', '#c084fc');
-  } else if (world === 'desert'){
-    sandstormMs = 5000;
-    spawnItem('gold'); spawnItem('gold');
-    addFloat(9, 2, 'واحه طوفان شن!', '#ffd43b');
-  } else if (world === 'digital'){
-    spawnItem('crystal');
-    addFloat(9, 2, 'بسته داده جدید!', '#22d3ee');
-  }
-}
-
-function stepRivals(){
-  rivals.forEach(function(rv, idx){
-    if (rv.frozenMs > 0) return;
-    if (!rv.body.length) return;
+function stepGuardian(){
+  rivals.forEach(function(rv){
+    rv.tickSkip = (rv.tickSkip + 1) % 2;
+    if (rv.tickSkip !== 0) return; /* حرکت آرام‌تر و قابل پیش‌بینی برای نگهبان */
     rv.prev = rv.body.map(function(p){ return {x:p.x, y:p.y}; });
-    var head = rv.body[0];
-    var tgt = chooseEnemyTarget(rv, snake[0], items);
-
-    var opts = ['up','down','left','right'].filter(function(d){ return d !== OPPO[rv.dir]; });
-    var bestD = rv.dir, bestScore = 1e9;
-    opts.forEach(function(d){
-      var v = DIRS[d];
-      var nx = (head.x + v.x + COLS) % COLS, ny = (head.y + v.y + ROWS) % ROWS;
-      if (cellBlockedByWall(nx, ny)) return;
-      var selfHit = rv.body.some(function(s){ return s.x===nx && s.y===ny; });
-      if (selfHit) return;
-      var sc = Math.abs(nx - tgt.x) + Math.abs(ny - tgt.y);
-      if (sc < bestScore){ bestScore = sc; bestD = d; }
-    });
-    rv.dir = bestD;
-    var mv = DIRS[rv.dir];
-    var nh = { x:(head.x+mv.x+COLS)%COLS, y:(head.y+mv.y+ROWS)%ROWS };
-    rv.body.unshift(nh);
-    var ate = false;
-    for (var i=items.length-1;i>=0;i--){
-      var it = items[i];
-      if (it.x===nh.x && it.y===nh.y && (it.type==='apple'||it.type==='gold')){
-        items.splice(i,1); ate = true;
-        if (it.type==='apple') ensureApplesPresent();
-        break;
-      }
+    var h = rv.body[0];
+    var candDirs = [rv.dir, 'down', 'left', 'up', 'right'];
+    var chosen = null;
+    for (var i=0;i<candDirs.length;i++){
+      var d = candDirs[i];
+      if (d === OPPO[rv.dir]) continue;
+      var nx = h.x + DIRS[d].x, ny = h.y + DIRS[d].y;
+      if (nx < 9 || nx >= COLS - 1 || ny < 2 || ny >= ROWS - 2) continue;
+      if (cellBlockedByWall(nx, ny)) continue;
+      if (doorCell && doorCell.x===nx && doorCell.y===ny) continue;
+      chosen = { x:nx, y:ny, d:d };
+      break;
     }
-    if (!ate) rv.body.pop();
-
-    /* برخورد رقیب با ردپای انرژی یا ژن */
-    trailCells.forEach(function(tr){
-      if (tr.x===nh.x && tr.y===nh.y){
-        rv.hp--; rv.frozenMs = 900;
-        spawnParticles(nh.x, nh.y, '#ffd43b', 6);
-      }
-    });
-    if (rv.hp <= 0){
-      items.push({x:nh.x, y:nh.y, type:'coin_drop'});
-      save.stats.rivalsDefeated++;
-      save.weeklyProgress.rivals++;
-      score += 65;
-      addFloat(nh.x, nh.y, 'شکار رقیب +۶۵!', '#46f88f');
-      rivals.splice(idx, 1);
+    if (!chosen){
+      rv.dir = OPPO[rv.dir];
+      return;
+    }
+    rv.dir = chosen.d;
+    rv.body.unshift({ x:chosen.x, y:chosen.y });
+    rv.body.pop();
+    if (snake.length && snake[0].x === chosen.x && snake[0].y === chosen.y){
+      takePlayerHit('نگهبان!');
     }
   });
 }
 
 function stepBossLogic(dt){
   if (!boss) return;
-  boss.hitFlash = Math.max(0, boss.hitFlash - dt);
-  boss.fireShow = Math.max(0, boss.fireShow - dt);
-  boss.phaseFlash = Math.max(0, boss.phaseFlash - dt);
+  if (boss.fireShow > 0) boss.fireShow = Math.max(0, boss.fireShow - dt);
+  if (boss.hitFlash > 0) boss.hitFlash = Math.max(0, boss.hitFlash - dt);
 
-  var spdMult = boss.phase === 3 ? 1.55 : (boss.phase === 2 ? 1.25 : 1.0);
-  boss.y += boss.vy * 0.00018 * dt * spdMult;
-  if (boss.y < 0.16){ boss.y = 0.16; boss.vy = 1; }
-  if (boss.y > 0.84){ boss.y = 0.84; boss.vy = -1; }
+  /* حرکت افقی قابل یادگیری باس */
+  boss.x += boss.vx * (dt / 1000);
+  if (boss.x < 0.22){ boss.x = 0.22; boss.vx = Math.abs(boss.vx); }
+  if (boss.x > 0.78){ boss.x = 0.78; boss.vx = -Math.abs(boss.vx); }
+  boss.faceL = boss.vx < 0;
 
-  boss.fireTimer -= dt;
-  if (boss.fireTimer <= 0){
-    boss.fireTimer = Math.max(680, (1750 - boss.phase * 280));
-    boss.fireShow = 380;
-    sfx.fire();
-    var m = pixelMouthPoint(boss.x * COLS, boss.y * ROWS, 2.0, boss.faceL);
-    var isRock = (boss.key === 4);
-    var isIce = (boss.key === 1 && boss.phase >= 2);
-    var isLight = (boss.key === 3);
+  boss.shootCd -= dt;
+  if (boss.shootCd <= 0 && snake.length){
+    boss.shootCd = Math.max(1500, 2500 - currentStageNum * 25);
+    boss.fireShow = 350;
+    var bx = boss.x * COLS, by = boss.y * ROWS;
+    var tx = snake[0].x + 0.5, ty = snake[0].y + 0.5;
+    var ang = Math.atan2(ty - by, tx - bx);
+    var spd = 4.6;
+    bossShots.push({ x:bx, y:by, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd });
+  }
 
-    var shotsCount = boss.phase === 3 ? 3 : (boss.phase === 2 ? 2 : 1);
-    for (var s=0; s<shotsCount; s++){
-      var spread = (s - (shotsCount - 1)/2) * 0.055;
-      bossShots.push({
-        x: boss.x * COLS - 1.2,
-        y: boss.y * ROWS,
-        vx: -0.011 * spdMult,
-        vy: spread,
-        isRock: isRock,
-        isIce: isIce,
-        isLightning: isLight
-      });
+  for (var i=bossShots.length-1; i>=0; i--){
+    var s = bossShots[i];
+    s.x += s.vx * (dt / 1000);
+    s.y += s.vy * (dt / 1000);
+    if (s.x < 0 || s.x >= COLS || s.y < 0 || s.y >= ROWS){
+      bossShots.splice(i, 1); continue;
+    }
+    var gx = Math.floor(s.x), gy = Math.floor(s.y);
+    if (walls.some(function(w){ return w.x===gx && w.y===gy; })){
+      bossShots.splice(i, 1); continue;
+    }
+    if (snake.length && Math.hypot(s.x - (snake[0].x+0.5), s.y - (snake[0].y+0.5)) < 0.75){
+      bossShots.splice(i, 1);
+      takePlayerHit('پرتابه اژدها!');
     }
   }
 
-  /* الگوی خاص فاز ۲ و ۳ باس (مثل مناطق خطر یا بلوک سنگی غول) */
-  boss.specialTimer -= dt;
-  if (boss.specialTimer <= 0 && boss.phase >= 2){
-    boss.specialTimer = 4200;
-    if (boss.key === 4 && dWalls.length < 10){
-      var p = findFreeCell();
-      dWalls.push({x:p.x, y:p.y, hp:2, maxHp:2});
-      addFloat(p.x, p.y, 'سنگ غول!', '#94a3b8');
-    } else if (boss.key === 2){
-      boss.hazardTiles = [];
-      for (var k=0;k<4;k++){
-        var hp = findFreeCell();
-        boss.hazardTiles.push({x:hp.x, y:hp.y});
-      }
-    }
-  }
-
-  /* حرکت پرتابه‌های بازیکن به باس */
-  for (var pi=pShots.length-1;pi>=0;pi--){
-    var ps = pShots[pi];
-    ps.x += ps.vx * dt * 0.03;
-    ps.y += ps.vy * dt * 0.03;
-    if (Math.abs(ps.x - boss.x * COLS) < 1.6 && Math.abs(ps.y - boss.y * ROWS) < 1.8){
-      boss.hp -= ps.dmg;
-      boss.hitFlash = 350;
-      sfx.bosshit();
-      addShake(0.5);
-      spawnParticles(ps.x, ps.y, '#ffd43b', 12);
+  for (var pi=pShots.length-1; pi>=0; pi--){
+    var p = pShots[pi];
+    var txB = boss.x * COLS, tyB = boss.y * ROWS;
+    var dAng = Math.atan2(tyB - p.y, txB - p.x);
+    p.x += Math.cos(dAng) * 14 * (dt / 1000);
+    p.y += Math.sin(dAng) * 14 * (dt / 1000);
+    if (Math.hypot(p.x - txB, p.y - tyB) < 1.25){
       pShots.splice(pi, 1);
-      updateBossPhase(boss, addFloat);
+      boss.hp--;
+      boss.hitFlash = 450;
+      score += 60;
+      sfx.hit();
+      spawnParticles(txB, tyB, '#ffd43b', 14);
+      addFloat(txB, tyB, 'ضربه! -۱', '#ffd43b');
       if (boss.hp <= 0){
-        boss = null;
         save.stats.bossWins++;
-        save.weeklyProgress.bossWins++;
-        score += 250;
-        save.gold += 30;
-        save.crystals += 2;
-        sfx.win();
-        advanceStageFlow();
-        return;
+        score += 150;
+        bossShots = [];
+        boss = null;
+        updateExitState();
+        updateHUD();
+        break;
       }
-    } else if (ps.x > COLS + 1){
-      pShots.splice(pi, 1);
-    }
-  }
-
-  /* حرکت پرتابه‌های باس */
-  for (var bi=bossShots.length-1;bi>=0;bi--){
-    var bs = bossShots[bi];
-    bs.x += bs.vx * dt;
-    bs.y += bs.vy * dt;
-    if (bs.x < -1 || bs.y < -1 || bs.y > ROWS + 1){ bossShots.splice(bi, 1); continue; }
-    var hx = snake[0].x, hy = snake[0].y;
-    if (Math.abs(bs.x - (hx+0.5)) < 0.72 && Math.abs(bs.y - (hy+0.5)) < 0.72){
-      bossShots.splice(bi, 1);
-      takePlayerHit('اصابت باس!');
+      updateHUD();
     }
   }
 }
 
+function awardPickup(type, nx, ny){
+  var sk = getSkinObj(save.skin);
+  if (type === 'apple'){
+    foodsRun++;
+    applesEaten++;
+    save.stats.totalApples++;
+    score += Math.round(20 * (sk.bonusScore || 1));
+    snake.push({ x:snake[snake.length-1].x, y:snake[snake.length-1].y });
+    sfx.eat();
+    vibrate(14);
+    spawnParticles(nx, ny, '#ff4757', 8);
+    addFloat(nx, ny, '+۲۰', '#46f88f');
+  } else if (type === 'key'){
+    hasKey = true;
+    score += 40;
+    sfx.key();
+    vibrate(25);
+    spawnParticles(nx, ny, '#ffd43b', 12);
+    addFloat(nx, ny, 'کلید زرد!', '#ffd43b');
+    if (!exitUnlocked) showHudHint('کلید را گرفتی! حالا سیب‌ها را کامل کن و به در سبز برو.', 2500);
+  } else if (type === 'crystal'){
+    save.crystals += 1;
+    score += 50;
+    sfx.chest();
+    spawnParticles(nx, ny, '#c084fc', 12);
+    addFloat(nx, ny, '+۱ کریستال', '#c084fc');
+  } else if (type === 'gold'){
+    save.gold += 15;
+    score += 35;
+    sfx.gold();
+    spawnParticles(nx, ny, '#ffd43b', 10);
+    addFloat(nx, ny, '+۱۵ سکه', '#ffd43b');
+  } else if (type === 'fireball'){
+    pShots.push({ x:nx, y:ny });
+    sfx.fire();
+    spawnParticles(nx, ny, '#ff9800', 8);
+    addFloat(nx, ny, 'شلیک!', '#ff9800');
+  }
+
+  ensureGoalItemsPresent();
+  updateExitState();
+}
+
 function stepSnakeTick(){
-  if (!snake.length) return;
+  if (state !== 'play' || !snake.length) return;
   prevSnake = snake.map(function(p){ return {x:p.x, y:p.y}; });
 
-  /* ثبت تاریخچه برای Rewind و Shadow Snake */
-  historyBuf.push({ snake: snake.map(function(p){ return {x:p.x, y:p.y}; }), dir: dir });
-  if (historyBuf.length > 40) historyBuf.shift();
-
-  if (world === 'shadow' && historyBuf.length >= 16){
-    shadowSnake = historyBuf[historyBuf.length - 16].snake;
-  } else {
-    shadowSnake = [];
+  if (dirQueue.length){
+    var nd = dirQueue.shift();
+    if (nd !== OPPO[dir]) dir = nd;
   }
 
-  if (dirQueue.length > 1) dirQueue.shift();
-  dir = dirQueue[0] || dir;
-  var mv = DIRS[dir];
-  var nx = (snake[0].x + mv.x + COLS) % COLS;
-  var ny = (snake[0].y + mv.y + ROWS) % ROWS;
+  var nx = snake[0].x + DIRS[dir].x;
+  var ny = snake[0].y + DIRS[dir].y;
 
-  /* کاهش قفل پورتال */
-  if (portalCdTicks > 0) portalCdTicks--;
-
-  /* جفت پورتال دوقلو */
-  if (portalCdTicks === 0){
-    for (var pti=0;pti<portals.length;pti++){
-      var pt = portals[pti];
-      if (pt.x === nx && pt.y === ny){
-        nx = pt.tx; ny = pt.ty;
-        portalCdTicks = 3;
-        save.stats.portalsUsed++;
-        sfx.portal();
-        addShockwave(nx, ny, '#22d3ee', cell*2.5);
-        break;
-      }
-    }
-  }
-
-  /* ورود به اتاق مخفی یا خروج از آن */
-  if (!inSecretRoom && secretEntrance && secretEntrance.x === nx && secretEntrance.y === ny){
-    enterSecretRoom();
-    return;
-  }
-  if (inSecretRoom && secretExit && secretExit.x === nx && secretExit.y === ny){
-    exitSecretRoom();
+  /* دیوار مرزی یا دیوار سنگی */
+  if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS || cellBlockedByWall(nx, ny)){
+    takePlayerHit('برخورد با دیوار!');
     return;
   }
 
-  /* دروازه خروجی مرحله‌ای / سیاهچال */
-  if (doorCell && doorCell.x === nx && doorCell.y === ny){
-    var remKeys = items.filter(function(it){ return it.type==='key'; }).length;
-    if (remKeys === 0){
-      advanceStageFlow();
-      return;
-    } else {
-      takePlayerHit('دروازه قفل است!');
+  /* برخورد با بدن خود مار */
+  for (var s=0; s<snake.length-1; s++){
+    if (snake[s].x === nx && snake[s].y === ny){
+      takePlayerHit('برخورد با خود!');
       return;
     }
   }
 
-  /* دیوار مخفی (با دش یا حالت روح می‌شکند و گنج می‌دهد!) */
-  for (var swi=secretWalls.length-1;swi>=0;swi--){
-    var sw = secretWalls[swi];
-    if (sw.x === nx && sw.y === ny){
-      if (dashTimer > 0 || fx.ghost > 0){
-        secretWalls.splice(swi, 1);
-        save.stats.wallsBroken++;
-        items.push({ x:nx, y:ny, type: sw.reward || 'crystal' });
-        sfx.wallBreak();
-        spawnParticles(nx, ny, '#a855f7', 12);
-        addFloat(nx, ny, 'دیوار مخفی کشف شد!', '#e9d5ff');
-      } else {
-        takePlayerHit('دیوار مخفی!');
+  /* برخورد با مار نگهبان */
+  for (var ri=0; ri<rivals.length; ri++){
+    var rb = rivals[ri].body;
+    for (var rs=0; rs<rb.length; rs++){
+      if (rb[rs].x === nx && rb[rs].y === ny){
+        takePlayerHit('نگهبان!');
         return;
-      }
-    }
-  }
-
-  /* دیوار تخریب‌پذیر (با دش می‌شکند!) */
-  for (var dwi=dWalls.length-1;dwi>=0;dwi--){
-    var dw = dWalls[dwi];
-    if (dw.x === nx && dw.y === ny){
-      if (dashTimer > 0 || fx.ghost > 0){
-        if (dashTimer > 0){
-          dWalls.splice(dwi, 1);
-          save.stats.wallsBroken++;
-          score += 30;
-          sfx.wallBreak();
-          spawnParticles(nx, ny, '#94a3b8', 12);
-          addFloat(nx, ny, 'شکست! +۳۰', '#ffd43b');
-        }
-      } else {
-        if (takePlayerHit('برخورد به بلوک!')) return;
-        return;
-      }
-    }
-  }
-
-  /* دیوار صلب و محدوده */
-  var outBounds = (nx < shrinkBorder || nx >= COLS - shrinkBorder || ny < shrinkBorder || ny >= ROWS - shrinkBorder);
-  var hitSolidWall = walls.some(function(w){ return w.x===nx && w.y===ny; });
-  if ((outBounds || hitSolidWall) && fx.ghost <= 0){
-    takePlayerHit('دیوار!');
-    return;
-  }
-
-  /* برخورد با بدنه خود یا سایه یا دشمن */
-  if (fx.ghost <= 0){
-    var selfHit = false;
-    for (var s=0;s<snake.length-1;s++) if (snake[s].x===nx && snake[s].y===ny) selfHit = true;
-    if (selfHit){ takePlayerHit('برخورد به خود!'); return; }
-  }
-
-  for (var sh=0;sh<shadowSnake.length;sh++){
-    if (shadowSnake[sh].x===nx && shadowSnake[sh].y===ny && fx.ghost <= 0 && !hasCard('phantom_clone')){
-      takePlayerHit('همزاد سایه!');
-      return;
-    }
-  }
-
-  for (var ri=0;ri<rivals.length;ri++){
-    var rv = rivals[ri];
-    for (var rs=0;rs<rv.body.length;rs++){
-      if (rv.body[rs].x===nx && rv.body[rs].y===ny){
-        if (dashTimer > 0){
-          /* با دش دشمن ضربه می‌خورد! */
-          rv.hp--; rv.frozenMs = 1000;
-          spawnParticles(nx, ny, '#ef4444', 10);
-          if (rv.hp <= 0){
-            items.push({x:nx, y:ny, type:'coin_drop'});
-            rivals.splice(ri, 1);
-            save.stats.rivalsDefeated++; save.weeklyProgress.rivals++;
-            score += 80;
-            addFloat(nx, ny, 'ضربه دش! +۸۰', '#ffd43b');
-          }
-        } else {
-          takePlayerHit('مار دشمن!');
-          return;
-        }
-        break;
       }
     }
   }
 
   /* حرکت مار */
-  snake.unshift({x:nx, y:ny});
+  snake.unshift({ x:nx, y:ny });
   snake.pop();
 
-  /* کاشی‌های ویژه جهان */
-  onIce = iceTiles.some(function(t){ return t.x===nx && t.y===ny; });
-  onSand = sandTiles.some(function(t){ return t.x===nx && t.y===ny; });
-  var onHot = hotTiles.some(function(t){ return t.x===nx && t.y===ny; }) ||
-              (boss && boss.hazardTiles && boss.hazardTiles.some(function(t){ return t.x===nx && t.y===ny; }));
-  if (onHot){
-    hotStayTicks++;
-    if (hotStayTicks >= 2){
-      hotStayTicks = 0;
-      takePlayerHit('مذاب سوزان!');
-    }
-  } else {
-    hotStayTicks = 0;
-  }
-
-  for (var ci=crumbleTiles.length-1;ci>=0;ci--){
-    var cr = crumbleTiles[ci];
-    if (cr.x===nx && cr.y===ny){
-      cr.step++;
-      if (cr.step >= 2){ walls.push({x:cr.x, y:cr.y}); crumbleTiles.splice(ci, 1); }
-    }
-  }
-
-  /* معمای محیطی: کلیدهای زمینی به ترتیب */
-  if (switches.length){
-    var nextOrd = 1;
-    switches.forEach(function(pz){ if (pz.active) nextOrd++; });
-    for (var pzi=0; pzi<switches.length; pzi++){
-      var pz = switches[pzi];
-      if (!pz.active && pz.x === nx && pz.y === ny){
-        if (pz.order === nextOrd){
-          pz.active = true;
-          sfx.power();
-          addFloat(nx, ny, 'معما '+faNum(pz.order)+'/'+faNum(switches.length), '#38bdf8');
-          if (switches.every(function(x){ return x.active; })){
-            score += 75;
-            spawnItem('crystal');
-            spawnItem('map_piece');
-            addFloat(nx, ny, 'معمای هزارتو حل شد! +۷۵', '#46f88f');
-          }
-        } else {
-          switches.forEach(function(x){ x.active = false; });
-          addFloat(nx, ny, 'ترتیب اشتباه! ریست شد', '#fda4af');
-        }
-        break;
+  /* بررسی کلید فشاری معما و باز شدن مسیر مخفی */
+  for (var si=0; si<switches.length; si++){
+    var sw = switches[si];
+    if (!sw.active && sw.x === nx && sw.y === ny){
+      sw.active = true;
+      secretOpened = true;
+      secretWalls = [];
+      if (activeStage && activeStage.secretItems){
+        activeStage.secretItems.forEach(function(sit){
+          items.push({ x:sit.x, y:sit.y, type:sit.type });
+        });
       }
+      score += 45;
+      sfx.wallBreak();
+      vibrate([15,20,15]);
+      spawnParticles(nx, ny, '#46f88f', 12);
+      showHudHint('مسیر مخفی در گوشه نقشه باز شد!', 2800);
+      addFloat(nx, ny, 'مسیر مخفی!', '#46f88f');
     }
   }
 
-  /* پاداش نزدیک به مرگ (Close Call + تغذیه کمبو) */
-  if (closeCallCd <= 0){
-    var nearDanger = false;
-    [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(off){
-      var ax = (nx+off[0]+COLS)%COLS, ay = (ny+off[1]+ROWS)%ROWS;
-      if (walls.some(function(w){ return w.x===ax && w.y===ay; })) nearDanger = true;
-      if (items.some(function(it){ return it.x===ax && it.y===ay && it.type==='bomb'; })) nearDanger = true;
-    });
-    if (nearDanger && dirQueue.length >= 1){
-      closeCallCd = 3200;
-      combo = (comboTimer > 0) ? Math.min(15, combo + 1) : 1;
-      comboTimer = hasRelic('phantom_eye') ? 5100 : 3900;
-      if (combo > maxComboRun) maxComboRun = combo;
-      score += 25;
-      save.stats.closeCalls++;
-      sfx.closeCall();
-      addFloat(nx, ny, 'فرار میلی‌متری! +۲۵', '#38bdf8');
-    }
-  }
-
-  /* ردپای فعال انرژی/ژن */
-  if (fx.trailMs > 0){
-    trailCells.push({ x:snake[snake.length-1].x, y:snake[snake.length-1].y, kind:fx.trailType||'energy', ms:3500 });
-  }
-
-  /* جذب خودکار با زنجیره کمبو + ژن مغناطیس + هسته مغناطیس + کارت طوفان مغناطیس */
-  var magRange = 0;
-  if (fx.magnet > 0 || roguePerks.rg_magnet) magRange = 3;
-  else if (combo >= 3) magRange = 1 + Math.floor(combo / 4);
-  if (hasRelic('magnet_core')) magRange += 2;
-  if (hasCard('magnet_storm')) magRange += (cardLv('magnet_storm') >= 2 ? 2 : 1);
-  if (save.skills.greed > 1) magRange += Math.floor((save.skills.greed - 1) / 2);
-
-  for (var ii=items.length-1;ii>=0;ii--){
+  /* جمع‌آوری آیتم‌ها */
+  for (var ii=items.length-1; ii>=0; ii--){
     var it = items[ii];
-    var dist = Math.abs(it.x - nx) + Math.abs(it.y - ny);
-    if (it.x===nx && it.y===ny){
+    if (it.x === nx && it.y === ny){
       items.splice(ii, 1);
-      awardFood(it.type, nx, ny);
-    } else if (magRange > 0 && dist <= magRange && (it.type==='apple'||it.type==='gold'||it.type==='crystal'||it.type==='coin_drop'||it.type==='map_piece')){
-      it.x += Math.sign(nx - it.x);
-      it.y += Math.sign(ny - it.y);
-      if (it.x===nx && it.y===ny){
-        items.splice(ii, 1);
-        awardFood(it.type, nx, ny);
-      }
+      awardPickup(it.type, nx, ny);
     }
   }
 
-  /* به‌روزرسانی مه هزارتو و ثبت یکنواخت مسیر برای شبح رقیب از فریم صفر */
-  updateFogVisibility();
-  runTicks++;
-
-  if (!inSecretRoom && rivalGhostTrace && rivalGhostTrace.length){
-    var gIdx = Math.min(rivalGhostTrace.length - 1, Math.floor((runTicks / Math.max(1, rivalGhostTotalTicks || rivalGhostTrace.length)) * rivalGhostTrace.length));
-    var gf = rivalGhostTrace[gIdx];
-    rivalGhostSnake = gf ? gf.snake : [];
-    if (!rivalGhostBeat && rivalGhostBest > 0 && score > rivalGhostBest){
-      rivalGhostBeat = true;
-      score += 40;
-      save.stats.ghostWins++;
-      addFloat(nx, ny, 'سبقت از شبح! +۴۰', '#46f88f');
-    }
+  /* بررسی خروج از در سبز */
+  if (doorCell && doorCell.x === nx && doorCell.y === ny && exitUnlocked){
+    endStageWin();
+    return;
   }
 
-  /* ذخیره فریم بازپخش و شبح رقیب از ابتدای Run */
-  if (!inSecretRoom){
-    var frameObj = { snake: snake.map(function(p){ return {x:p.x, y:p.y}; }), score: score };
-    fullGhostTrace.push(frameObj);
-    if (fullGhostTrace.length > 480){
-      fullGhostTrace = fullGhostTrace.filter(function(_, idx){
-        return idx === 0 || idx === fullGhostTrace.length - 1 || idx % 2 === 0;
-      });
-    }
-    runTrace.push({
-      snake: frameObj.snake,
-      dir: dir,
-      items: items.map(function(i){ return {x:i.x, y:i.y, type:i.type}; }),
-      score: score
-    });
-    if (runTrace.length > 600) runTrace.shift();
-    if (runTicks % 12 === 0) saveEmergencyCheckpoint();
-  }
-
-  stepRivals();
+  stepGuardian();
   updateHUD();
 }
 
-function finalizeRewards(isVictory){
-  stopMusic();
-  var sk = getSkinObj(save.skin);
-  var durMs = Date.now() - runStartTs;
-  if (score > save.best) save.best = score;
-  if (mode === 'endless' && save.dailySeedMode && score > save.dailySeedBest) save.dailySeedBest = score;
-
-  updateModeRecord(world, mode, score, durMs, maxComboRun, foodsRun);
-  save.weeklyProgress.scoreSum += score;
-  if (!runTookHit && isVictory) save.stats.noHitWins++;
-
-  /* بررسی استادی جهان و چالش اختصاصی */
-  var mast = getWorldMastery(world);
-  if (score >= 400) mast.scoreBadge = true;
-  if (maxComboRun >= 5) mast.comboBadge = true;
-  if (!runTookHit && (isVictory || score >= 350)) mast.noHitBadge = true;
-
-  var chRewardTxt = '';
-  if (activeChallenge && !mast.challengeDone){
-    var ch = activeChallenge;
-    var okScore = score >= (ch.targetScore || 0);
-    var okNoHit = !ch.requireNoHit || !runTookHit;
-    var okCombo = !ch.minCombo || maxComboRun >= ch.minCombo;
-    if (okScore && okNoHit && okCombo){
-      mast.challengeDone = true;
-      save.gold += ch.rewardGold;
-      save.crystals += ch.rewardCrystals;
-      chRewardTxt = 'تکمیل چالش جهان! +' + faNum(ch.rewardGold) + ' سکه و +' + faNum(ch.rewardCrystals) + ' کریستال';
+function checkStageSkinUnlocks(unlockedStage){
+  var newly = [];
+  SKINS.forEach(function(sk){
+    if (save.ownedSkins.indexOf(sk.id) === -1 && unlockedStage >= (sk.needStage || 999)){
+      save.ownedSkins.push(sk.id);
+      newly.push(sk.name);
     }
-  }
-
-  var earnedGold = Math.round((Math.floor(score / 18) + (isVictory ? 25 : 4)) * (sk.bonusGold || 1));
-  var earnedCrystals = isVictory ? 2 : (score >= 450 ? 1 : 0);
-  var earnedXp = Math.max(12, Math.floor(score / 12) + (isVictory ? 35 : 0));
-
-  save.gold += earnedGold;
-  save.crystals += earnedCrystals;
-  save.arenaTrophies = (save.arenaTrophies || 0) + (isVictory ? 15 : Math.min(10, Math.floor(score / 80)));
-  save.chestMeter = Math.min(100, (save.chestMeter || 0) + (isVictory ? 40 : Math.min(30, Math.floor(score / 25))));
-  var xpRes = addXP(earnedXp);
-  checkCardUnlocks();
-  evaluateAchievements();
-
-  /* اختصاص صندوق به تک‌جایگاه در صورت خالی بودن یا پر شدن نوار اکتشاف */
-  var chestNotice = '';
-  if (save.slot === null && (isVictory || score >= 120 || save.chestMeter >= 100)){
-    var cType = (save.chestMeter >= 100 || (isVictory && Math.random() < 0.25)) ? 'gold' : ((isVictory || score >= 320) ? 'silver' : 'bronze');
-    if (save.chestMeter >= 100) save.chestMeter = 0;
-    if (setSingleChest(cType)){
-      chestNotice = 'صندوق ' + CHEST_TYPES[cType].name + ' دریافت شد!';
-    }
-  }
-
-  if (runTrace.length > 5){
-    lastRunTrace = runTrace.slice();
-    var rKey = world + '_' + mode;
-    if (!save.bestTraces) save.bestTraces = {};
-    var prevBestT = save.bestTraces[rKey];
-    if (!prevBestT || score > (prevBestT.score || 0)){
-      save.bestTraces[rKey] = {
-        score: score,
-        totalTicks: Math.max(1, runTicks),
-        frames: downsampleFrames(fullGhostTrace, 240)
-      };
-    }
-  }
-  save.pendingRun = null;
-  persist();
-  return { gold:earnedGold, crystals:earnedCrystals, xpRes:xpRes, chestNotice:chestNotice, chRewardTxt:chRewardTxt };
+  });
+  return newly;
 }
 
-function endRunGameOver(){
-  state = 'over';
-  sfx.die();
-  vibrate([60, 40, 60]);
-  var r = finalizeRewards(false);
-  if ($('#ovS')) $('#ovS').textContent = faNum(score);
-  if ($('#ovB')) $('#ovB').textContent = faNum(save.best);
-  if ($('#ovOverGold')) $('#ovOverGold').textContent = '+' + faNum(r.gold);
-  if ($('#ovOverCrystals')) $('#ovOverCrystals').textContent = '+' + faNum(r.crystals);
-  if ($('#btnReplayLast')) $('#btnReplayLast').style.display = lastRunTrace ? 'inline-block' : 'none';
-  if (r.chRewardTxt) showToast(r.chRewardTxt);
-  else if (r.xpRes.newGenes.length) showToast('ژن جدید باز شد: ' + r.xpRes.newGenes[0]);
-  showOv('ovOver');
-}
-
-function endRunWin(){
+function endStageWin(){
   state = 'win';
+  stopMusic();
   sfx.win();
-  vibrate([30,40,30,40,60]);
-  var r = finalizeRewards(true);
+  vibrate([25,35,25]);
+
+  var durMs = Math.max(1000, Date.now() - runStartTs);
+  var sk = getSkinObj(save.skin);
+  var rewardGold = Math.round((15 + currentStageNum * 3 + (secretOpened ? 12 : 0) + (!runTookHit ? 8 : 0)) * (sk.bonusGold || 1));
+  var rewardCrystals = (activeStage && activeStage.isSpecial) ? 1 : 0;
+
+  save.gold += rewardGold;
+  save.crystals += rewardCrystals;
+  save.stats.stagesCleared = (save.stats.stagesCleared || 0) + 1;
+
+  if (score > save.best) save.best = score;
+  if (!save.bestTimeMs || durMs < save.bestTimeMs) save.bestTimeMs = durMs;
+
+  var prevBestSt = save.stageBestScores[currentStageNum] || 0;
+  if (score > prevBestSt) save.stageBestScores[currentStageNum] = score;
+
+  if (!runTookHit){
+    save.stats.noHitWins = (save.stats.noHitWins || 0) + 1;
+    if (save.noHitStages.indexOf(currentStageNum) === -1) save.noHitStages.push(currentStageNum);
+  }
+  if (secretOpened){
+    save.stats.secretsFound = (save.stats.secretsFound || 0) + 1;
+    if (save.secretsFoundStages.indexOf(currentStageNum) === -1) save.secretsFoundStages.push(currentStageNum);
+  }
+  if (currentStageNum <= 3 && save.tutorialStepDone < currentStageNum){
+    save.tutorialStepDone = currentStageNum;
+  }
+
+  var nextSt = currentStageNum + 1;
+  if (nextSt > save.maxStageUnlocked) save.maxStageUnlocked = nextSt;
+  save.currentStage = nextSt;
+
+  var unlockedSkins = checkStageSkinUnlocks(save.maxStageUnlocked);
+  persist();
+
+  if ($('#ovWinTitle')) $('#ovWinTitle').textContent = 'مرحله ' + faNum(currentStageNum) + ' تکمیل شد!';
   if ($('#ovWS')) $('#ovWS').textContent = faNum(score);
-  if ($('#ovWinGold')) $('#ovWinGold').textContent = '+' + faNum(r.gold);
-  if ($('#ovWinCrystals')) $('#ovWinCrystals').textContent = '+' + faNum(r.crystals);
-  if ($('#ovWinChestNotice')) $('#ovWinChestNotice').textContent = r.chRewardTxt || r.chestNotice || 'پیروزی ثبت شد!';
+  if ($('#ovWTime')) $('#ovWTime').textContent = fmtDuration(durMs);
+  if ($('#ovWinGold')){
+    var rTxt = '+' + faNum(rewardGold) + ' سکه' + (rewardCrystals ? ' و +' + faNum(rewardCrystals) + ' کریستال' : '');
+    $('#ovWinGold').textContent = rTxt;
+  }
+  if ($('#ovWinNotice')){
+    var notes = [];
+    if (!runTookHit) notes.push('پاک‌سازی بدون برخورد!');
+    if (secretOpened) notes.push('مسیر مخفی کشف شد!');
+    if (unlockedSkins.length) notes.push('اسکین جدید باز شد: ' + unlockedSkins[0]);
+    $('#ovWinNotice').textContent = notes.join('  •  ');
+  }
   showOv('ovWin');
 }
 
-function startReplay(spd){
-  if (!lastRunTrace || !lastRunTrace.length){ showToast('بازپخشی ذخیره نشده است'); return; }
-  replayTrace = lastRunTrace;
-  replayIdx = 0;
-  replaySpeed = spd || 1;
-  isReplay = true;
-  state = 'play';
-  showScreen('gameScreen');
-  showOv(null);
-  resize();
-  tickAcc = 0;
-  updateHUD();
+function endStageOver(){
+  state = 'over';
+  stopMusic();
+  sfx.die();
+  vibrate([60,40,60]);
+  var durMs = Math.max(1000, Date.now() - runStartTs);
+  if (score > save.best) save.best = score;
+  persist();
+
+  if ($('#ovS')) $('#ovS').textContent = faNum(score);
+  if ($('#ovOTime')) $('#ovOTime').textContent = fmtDuration(durMs);
+  if ($('#ovB')) $('#ovB').textContent = faNum(save.best);
+  showOv('ovOver');
 }
 
-function cycleReplaySpeed(){
-  replaySpeed = replaySpeed === 1 ? 2 : (replaySpeed === 2 ? 0.5 : 1);
-  updateHUD();
-}
-
-/* کنترل‌ها: کیبورد، سوایپ لمسی و D-pad */
+/* کنترل‌های لمسی، کیبورد و D-Pad */
 function queueDir(nd){
-  if (state !== 'play' || isReplay) return;
-  if (onIce) return; /* روی یخ تغییر جهت موقتاً سخت‌تر است تا لغزش حس شود */
+  if (state !== 'play') return;
   var last = dirQueue[dirQueue.length - 1] || dir;
   if (nd !== last && nd !== OPPO[last] && dirQueue.length < 3){
     dirQueue.push(nd);
@@ -1535,9 +632,7 @@ document.addEventListener('keydown', function(e){
   else if (k==='ArrowDown'||k==='s'||k==='S'){ e.preventDefault(); queueDir('down'); }
   else if (k==='ArrowLeft'||k==='a'||k==='A'){ e.preventDefault(); queueDir('left'); }
   else if (k==='ArrowRight'||k==='d'||k==='D'){ e.preventDefault(); queueDir('right'); }
-  else if (k===' '){ e.preventDefault(); triggerDash(); }
-  else if (k==='e'||k==='E'||k==='Shift'){ e.preventDefault(); triggerSkill(); }
-  else if (k==='r'||k==='R'){ e.preventDefault(); triggerRewind(); }
+  else if (k==='Escape'||k==='p'||k==='P'){ e.preventDefault(); pauseGame(); }
 });
 
 $$('.dpad-btn').forEach(function(btn){
@@ -1557,7 +652,7 @@ if (stageWrapEl){
   stageWrapEl.addEventListener('pointermove', function(e){
     if (!touchStart || (save.settings && save.settings.control === 'dpad')) return;
     var dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
-    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+    if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
     if (Math.abs(dx) > Math.abs(dy)) queueDir(dx > 0 ? 'right' : 'left');
     else queueDir(dy > 0 ? 'down' : 'up');
     touchStart = { x:e.clientX, y:e.clientY };
@@ -1572,76 +667,20 @@ function applyControlLayout(){
   nav.style.display = (ctrl === 'swipe') ? 'none' : 'grid';
 }
 
-/* حلقه اصلی ۶۰ فریم با محافظ افت فریم */
+/* حلقه اصلی ۶۰ فریم */
 function loop(t){
-  var rawDt = lastT ? (t - lastT) : 16;
-  var dt = Math.min(60, rawDt);
+  var dt = Math.min(60, lastT ? (t - lastT) : 16);
   lastT = t;
-  if (rawDt > 36){
-    slowFrameStreak++;
-    if (slowFrameStreak >= 8) perfLowMode = true;
-  } else {
-    slowFrameStreak = Math.max(0, slowFrameStreak - 1);
-    if (slowFrameStreak === 0 && perfLowMode) perfLowMode = false;
-  }
 
   if (state === 'play'){
-    if (isReplay && replayTrace){
-      tickAcc += dt * replaySpeed;
-      var rStep = 135;
-      while (tickAcc >= rStep){
-        tickAcc -= rStep;
-        if (replayIdx < replayTrace.length){
-          var f = replayTrace[replayIdx++];
-          prevSnake = snake.length ? snake : f.snake;
-          snake = f.snake; dir = f.dir; items = f.items; score = f.score;
-          updateHUD();
-        } else {
-          isReplay = false;
-          state = 'menu';
-          showScreen('menuScreen');
-          renderMenu();
-          showToast('پایان بازپخش');
-          break;
-        }
-      }
-    } else {
-      if (dashTimer > 0) dashTimer = Math.max(0, dashTimer - dt);
-      if (dashCd > 0) dashCd = Math.max(0, dashCd - dt);
-      if (skillCd > 0) skillCd = Math.max(0, skillCd - dt);
-      if (invulnT > 0) invulnT = Math.max(0, invulnT - dt);
-      if (closeCallCd > 0) closeCallCd = Math.max(0, closeCallCd - dt);
-      if (fogActiveMs > 0) fogActiveMs = Math.max(0, fogActiveMs - dt);
-      if (sandstormMs > 0) sandstormMs = Math.max(0, sandstormMs - dt);
-      if (comboTimer > 0){ comboTimer = Math.max(0, comboTimer - dt); if (comboTimer === 0) combo = 0; }
-      for (var fk in fx) if (typeof fx[fk] === 'number' && fx[fk] > 0) fx[fk] = Math.max(0, fx[fk] - dt);
-      for (var ti=trailCells.length-1;ti>=0;ti--){ trailCells[ti].ms -= dt; if (trailCells[ti].ms <= 0) trailCells.splice(ti,1); }
-      rivals.forEach(function(r){ if (r.frozenMs > 0) r.frozenMs = Math.max(0, r.frozenMs - dt); });
+    if (invulnT > 0) invulnT = Math.max(0, invulnT - dt);
+    stepBossLogic(dt);
 
-      envCd -= dt;
-      if (envCd <= 0){ envCd = 11000; triggerWorldEvent(); }
-
-      arcadeEventCd -= dt;
-      if (arcadeEventCd <= 0){ arcadeEventCd = 19000; triggerArcadeEvent(); }
-
-      if (inSecretRoom && secretTimerMs > 0){
-        secretTimerMs -= dt;
-        if (secretTimerMs <= 0) exitSecretRoom();
-      }
-
-      if (mode === 'timeattack'){
-        arenaTimeLeft -= dt;
-        if (arenaTimeLeft <= 0){ arenaTimeLeft = 0; endRunWin(); }
-      }
-
-      stepBossLogic(dt);
-
-      tickAcc += dt;
-      var stepMs = currentStepMs();
-      if (tickAcc >= stepMs){
-        tickAcc -= stepMs;
-        stepSnakeTick();
-      }
+    tickAcc += dt;
+    var stepMs = currentStepMs();
+    if (tickAcc >= stepMs){
+      tickAcc -= stepMs;
+      stepSnakeTick();
     }
     render(t);
   }
@@ -1649,20 +688,15 @@ function loop(t){
 }
 requestAnimationFrame(loop);
 
-/* قلاب‌های اندروید و ذخیره امن در خروج ناگهانی */
-window.addEventListener('pagehide', saveEmergencyCheckpoint);
-document.addEventListener('visibilitychange', function(){
-  if (document.visibilityState === 'hidden') saveEmergencyCheckpoint();
-});
+/* قلاب‌های اندروید */
 window.getGameState = function(){ return state; };
-window.pauseFromAndroid = function(){ saveEmergencyCheckpoint(); pauseGame(); stopMusic(); };
+window.pauseFromAndroid = function(){ pauseGame(); stopMusic(); };
 window.handleAndroidBack = function(){
-  if ($('#chestModal') && $('#chestModal').classList.contains('show')){ $('#chestModal').classList.remove('show'); return 'handled'; }
   if ($('#settingsModal') && $('#settingsModal').classList.contains('show')){ $('#settingsModal').classList.remove('show'); return 'handled'; }
   if ($('#guideModal') && $('#guideModal').classList.contains('show')){ $('#guideModal').classList.remove('show'); return 'handled'; }
-  if ($('#draftModal') && $('#draftModal').classList.contains('show')){ return 'handled'; }
   if (state === 'play'){ pauseGame(); return 'handled'; }
-  if (state === 'paused'){ state = 'menu'; stopMusic(); showScreen('menuScreen'); renderMenu(); return 'handled'; }
-  if (state === 'over' || state === 'win'){ state = 'menu'; stopMusic(); showScreen('menuScreen'); renderMenu(); return 'handled'; }
+  if (state === 'paused' || state === 'over' || state === 'win'){
+    state = 'menu'; stopMusic(); showScreen('menuScreen'); renderMenu(); return 'handled';
+  }
   return 'exit';
 };

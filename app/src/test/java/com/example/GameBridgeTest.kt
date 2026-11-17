@@ -44,10 +44,10 @@ class GameBridgeTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val html = context.assets.open("snake.html").bufferedReader().use { it.readText() }
 
-    assertTrue(html.contains("SNAKE: MAZE ROYALE"))
-    assertTrue(html.contains("TACTICAL_CARDS"))
-    assertTrue(html.contains("downsampleFrames"))
-    assertTrue(html.contains("generateSecretRoom"))
-    assertTrue(html.contains("openRelicDraft"))
+    assertTrue(html.contains("SNAKE: PIXEL RUSH"))
+    assertTrue(html.contains("generateForestStage"))
+    assertTrue(html.contains("door_open"))
+    assertTrue(html.contains("startStage"))
+    assertTrue(html.contains("validateReachable"))
   }
 }
